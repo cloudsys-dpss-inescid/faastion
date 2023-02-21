@@ -1,105 +1,112 @@
 #define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
+#include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
-
-static inline void
-wrpkru(unsigned int pkru)
-{
-   unsigned int eax = pkru;
-   unsigned int ecx = 0;
-   unsigned int edx = 0;
-
-   asm volatile(".byte 0x0f,0x01,0xef\n\t"
-                : : "a" (eax), "c" (ecx), "d" (edx));
-}
-
-int
-pkey_set(int pkey, unsigned long rights, unsigned long flags)
-{
-   unsigned int pkru = (rights << (2 * pkey));
-   return wrpkru(pkru);
-}
-
-int
-pkey_mprotect(void *ptr, size_t size, unsigned long orig_prot,
-             unsigned long pkey)
-{
-   return syscall(SYS_pkey_mprotect, ptr, size, orig_prot, pkey);
-}
-
-int
-pkey_alloc(void)
-{
-   return syscall(SYS_pkey_alloc, 0, 0);
-}
-
-int
-pkey_free(unsigned long pkey)
-{
-   return syscall(SYS_pkey_free, pkey);
-}
+#include <sys/syscall.h>
+#include <unistd.h>
+#include "timer.h"
 
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
                           } while (0)
 
-int
-main(void)
+int numberThreads = 0;
+
+struct arguments {
+    int* buffer;
+    int pkey;
+};
+
+void parseArgs (int argc, char* argv[])
 {
-   int status;
-   int pkey;
-   int *buffer;
+    if (argc != 2)
+        errExit("Invalid format\n");
+    
+    numberThreads = atoi(argv[1]);
 
-   /*
-    * Allocate one page of memory.
-    */
-   buffer = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE,
-                 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-   if (buffer == MAP_FAILED)
-       errExit("mmap");
+    if (numberThreads <= 0 || numberThreads > 15)
+        errExit("Invalid number of threads\n");
+}
 
-   /*
-    * Put some random data into the page (still OK to touch).
-    */
-   *buffer = __LINE__;
-   printf("buffer contains: %d\n", *buffer);
+int* memAlloc()
+{
+    int *buffer;
 
-   /*
-    * Allocate a protection key:
-    */
-   pkey = pkey_alloc();
-   if (pkey == -1)
-       errExit("pkey_alloc");
+    /*
+     * Allocate one page of memory.
+     */
+    buffer = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE,
+                    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (buffer == MAP_FAILED)
+        errExit("mmap");
 
-   /*
-    * Disable access to any memory with "pkey" set,
-    * even though there is none right now.
-    */
-   status = pkey_set(pkey, PKEY_DISABLE_ACCESS, 0);
-   if (status)
-       errExit("pkey_set");
+    return buffer;   
+}
 
-   /*
-    * Set the protection key on "buffer".
-    * Note that it is still read/write as far as mprotect() is
-    * concerned and the previous pkey_set() overrides it.
-    */
-   status = pkey_mprotect(buffer, getpagesize(),
-                          PROT_READ | PROT_WRITE, pkey);
-   if (status == -1)
-       errExit("pkey_mprotect");
+int pkeyAlloc()
+{
+    int pkey;
 
-   printf("about to read buffer again...\n");
+    /*
+     * Allocate a protection key:
+     */
+    pkey = pkey_alloc(0, PKEY_DISABLE_ACCESS);
+    if (pkey == -1)
+        errExit("pkey_alloc");
+    
+    return pkey;
+}
 
-   /*
-    * This will crash, because we have disallowed access.
-    */
-   printf("buffer contains: %d\n", *buffer);
+void* protect(void *args)
+{
+    TIMER startTime, stopTime, temp;
+    int* buffer = ((struct arguments*)args)->buffer;
+    int pkey = ((struct arguments*)args)->pkey;
 
-   status = pkey_free(pkey);
-   if (status == -1)
-       errExit("pkey_free");
+    /*
+     * Set the protection key on "buffer".
+     */
+    startTime = read_time(temp);
+    if (pkey_mprotect(buffer, getpagesize(),
+                            PROT_READ | PROT_WRITE, pkey) == -1)
+        errExit("pkey_mprotect");
+    stopTime = read_time(temp);
+    fprintf(stdout, "[%ld] Domain change completed in %.8f seconds.\n", pthread_self(), time_diff(startTime, stopTime));
 
-   exit(EXIT_SUCCESS);
+}
+
+void runThreads(struct arguments *args) 
+{
+    pthread_t * slaves = (pthread_t*) malloc(sizeof(pthread_t)*numberThreads);
+
+    for (int i = 0; i < numberThreads; i++) {
+        if (pthread_create(&slaves[i], NULL, protect, (void *)args) != 0){
+            perror("Can't create thread\n");
+            errExit("pthread_create");
+        }
+    }
+
+    for(int i = 0; i < numberThreads; i++) {
+        if(pthread_join(slaves[i], NULL)) {
+            perror("Thread can't join\n");
+            errExit("pthread_join");
+        }
+    }
+    free(slaves);
+    
+}
+
+int main(int argc, char* argv[]) 
+{
+    /* initial arguments */
+    parseArgs(argc, argv);
+
+    struct arguments *args = (struct arguments *)malloc(sizeof(struct arguments));
+    args->buffer = memAlloc();
+    args->pkey = pkeyAlloc();
+    
+    /* create and run threads */
+    runThreads(args);
+
+    exit(EXIT_SUCCESS);
 }
