@@ -12,6 +12,7 @@
 
 std::map<int, float> my_map;
 int numberThreads = 0;
+int numberPages = 0;
 void *(*option)(void*) = NULL;
 
 
@@ -50,13 +51,15 @@ void* access(void *args)
     
     stopTime = read_time(temp);
     my_map[pthread_self()] = time_diff(startTime, stopTime);
+
+    return NULL;
 }
 
 void run_threads() 
 {
     pthread_t * slaves = (pthread_t*) malloc(sizeof(pthread_t)*numberThreads);
 
-    arguments *args = get_thread_args();
+    arguments *args = get_thread_args(numberPages);
 
     for (int i = 0; i < numberThreads; i++) {
         if (pthread_create(&slaves[i], NULL, option, (void *)args) != 0){
@@ -83,18 +86,21 @@ void print_benchmark_results()
     }
     float average = static_cast<float>(sum) / my_map.size();
 
-    fprintf(stdout, "=================================\nAverage time: %.8f seconds.\n=================================\n", average);
+    fprintf(stdout, "%f\n", average);
 }
 
 void parse_args (int argc, char* argv[])
 {   
-    if (argc != 3)
+    if (argc != 4)
         errExit("Invalid format\n");
 
     numberThreads = atoi(argv[2]);
+    numberPages = atoi(argv[3]);
 
     if (numberThreads <= 0)
         errExit("Invalid number of threads\n");
+    if (numberPages <= 0)
+        errExit("Invalid number of pages\n");
     if (!strcmp(argv[1],"domain"))
         option = &domain;
     else if (!strcmp(argv[1],"access"))

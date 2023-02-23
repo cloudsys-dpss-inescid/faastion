@@ -6,6 +6,6 @@ struct arguments {
     int pkey;
 };
 
-arguments* get_thread_args();
-int* mem_alloc();
+arguments* get_thread_args(int numberPages);
+int* mem_alloc(int numberPages);
 int key_alloc();
