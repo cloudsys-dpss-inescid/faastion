@@ -30,5 +30,5 @@ do
 done 
 
 echo "Generating plot..."
-python3 scripts/run-plot.py --option ${OPTION} --to-test ${TO_TEST}
+python3 scripts/generate-plot.py --option ${OPTION} --to-test ${TO_TEST}
 echo "All done!"
