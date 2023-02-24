@@ -8,5 +8,5 @@ TIMER read_time(TIMER time) {
 }                
 
 float time_diff(TIMER start, TIMER stop){
-    return ((double)stop.tv_usec - (double)start.tv_usec);
+    return ((double)stop.tv_sec - (double)start.tv_sec) * 1000000 + ((double)stop.tv_usec - (double)start.tv_usec);
 }
