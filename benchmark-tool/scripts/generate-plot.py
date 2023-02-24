@@ -21,5 +21,5 @@ else:
 plt.ylim(ymin=0)
 plt.legend()
 plt.xlabel(f'Number of {args.to_test}')
-plt.ylabel('Time (us)')
+plt.ylabel('Time (ns)')
 plt.savefig(f'{args.option}-{args.to_test}.pdf')
