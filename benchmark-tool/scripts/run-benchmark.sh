@@ -11,7 +11,7 @@ mkdir results/
 
 for num in 1 2 4 8 16 32 64 128
 do
-	echo "Processing with ${num} ${TO_TEST}(s)..."
+	echo "Processing with ${num} ${TO_TEST}..."
 	for i in $(seq 10) 
 	do	
 		if [ "$TO_TEST" = "threads" ]; then
@@ -26,7 +26,7 @@ do
 	echo "Calculating average and standard deviation..."
 	cat results/${OPTION}-${TO_TEST}-$num-* | scripts/math/mean.py >> results/${OPTION}-${TO_TEST}-mean.dat
 	cat results/${OPTION}-${TO_TEST}-$num-* | scripts/math/stdev.py   >> results/${OPTION}-${TO_TEST}-stdev.dat
-	echo "Done processing with ${num} ${TO_TEST}(s)."
+	echo "Done processing with ${num} ${TO_TEST}."
 done 
 
 echo "Generating plot..."
