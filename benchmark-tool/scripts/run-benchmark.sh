@@ -8,8 +8,8 @@ TO_TEST=$2
 # Cache sudo access.
 sudo -l &> /dev/null
 
-rm -r $DIR/results/ &> /dev/null
-mkdir $DIR/results/
+rm $DIR/results/${OPTION}-${TO_TEST}*
+rm $DIR/results/num.dat
 
 for num in 1 2 4 8 16 32 64 128
 do
@@ -24,7 +24,7 @@ do
 	done
 	wait
 
-	echo $num >> results/num.dat
+	echo $num >> $DIR/results/num.dat
 	echo "Calculating average and standard deviation..."
 	cat $DIR/results/${OPTION}-${TO_TEST}-$num-* | $DIR/../scripts/math/mean.py >> $DIR/results/${OPTION}-${TO_TEST}-mean.dat
 	cat $DIR/results/${OPTION}-${TO_TEST}-$num-* | $DIR/../scripts/math/stdev.py   >> $DIR/results/${OPTION}-${TO_TEST}-stdev.dat
