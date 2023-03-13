@@ -2,9 +2,13 @@ package pt.ulisboa.tecnico.cnv.javassist.tools;
 
 import java.util.List;
 
+import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.CtClass;
 import javassist.Modifier;
+import javassist.NotFoundException;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 
 public class MethodExecutionTimer extends CodeDumper {
 
@@ -14,21 +18,30 @@ public class MethodExecutionTimer extends CodeDumper {
 
     @Override
     protected void transform(CtBehavior behavior) throws Exception {
-        super.transform(behavior);
+        super.transform(behavior); 
 
-        if (Modifier.isNative(behavior.getModifiers())) {
-            behavior.addLocalVariable("startTime", CtClass.longType);
-            behavior.insertBefore("startTime = System.nanoTime();");
+        behavior.instrument(new ExprEditor() {
+            public void edit(MethodCall m) throws CannotCompileException {
+                int mod = -1;
 
-            StringBuilder builder = new StringBuilder();
-            behavior.addLocalVariable("endTime", CtClass.longType);
-            behavior.addLocalVariable("opTime", CtClass.longType);
-            builder.append("endTime = System.nanoTime();");
-            builder.append("opTime = endTime-startTime;");
-            builder.append(String.format("System.out.println(\"[%s] %s method call completed in: \" + opTime + \" ns!\");",
-                    this.getClass().getSimpleName(), behavior.getLongName()));
+                try {
+                    mod = m.getMethod().getModifiers();
+                } catch (NotFoundException e) {}
 
-            behavior.insertAfter(builder.toString());
-        }
+                if (mod != -1 && Modifier.isNative(mod)) {
+                    String methodName = m.getMethodName();
+                    //String className = m.getClassName();
+
+                    String timerName = "timer_" + methodName;
+                    m.replace("{ long " + timerName + " = System.nanoTime(); " +
+                            "try { $_ = $proceed($$); } finally { " +
+                            "long endTime = System.nanoTime();" +
+                            "System.out.println(\"" + timerName + " took \" + " +
+                            "(endTime - " + timerName + ") + \" ns\"); }}");
+
+                    //System.out.println("Wrapped method " + methodName + " in class " + className + " with timer " + timerName);
+                }
+            }
+        });
     }
 }

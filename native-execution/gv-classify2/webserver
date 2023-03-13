@@ -1,7 +1,0 @@
-#!/bin/bash
-
-if [ ! -f tensorflow_inception_graph.pb ];
-then
-    wget https://github.com/martinwicke/tensorflow-tutorial/raw/master/tensorflow_inception_graph.pb
-fi
-python3 -m http.server 8000
