@@ -7,24 +7,14 @@ from multiprocessing import Manager, cpu_count
 from concurrent.futures import ProcessPoolExecutor
 
 
-CMD = "./javassist-cmd.sh {package} {entrypoint}"
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-p", 
-        "--package", 
+        "-c", 
+        "--command", 
         type=str, 
-        dest="package", 
-        help="Package"
-    )
-    parser.add_argument(
-        "-e", 
-        "--entrypoint", 
-        type=str, 
-        dest="entrypoint", 
-        help="Entrypoint"
+        dest="command", 
+        help="Javassist command"
     )
     parser.add_argument(
         "-t",
@@ -37,7 +27,7 @@ def parse_args():
 
     args = parser.parse_args()
 
-    return args.package, args.entrypoint, args.times
+    return args.command.strip(), args.times
 
 
 def native_execution_us(values):
@@ -46,7 +36,7 @@ def native_execution_us(values):
 
 
 def build_table(line, table):
-    if "ns" not in line: return
+    if "timer" not in line: return
 
     splitted = line.split(" ")
     number = int(splitted[2])
@@ -58,15 +48,7 @@ def build_table(line, table):
         table[method] = number
 
 
-def run(cmd, iter, last):
-    start_time = time.perf_counter()
-    b_output = subprocess.check_output(cmd, shell=True)
-    end_time = time.perf_counter()
-    total_time = (end_time - start_time) * 1_000_000  # seconds to microseconds
-
-    output = b_output.decode().split("\n")            # -> array with lines as elements
-    dump = [s for s in output if 'ns' in s]           # -> filter output
-
+def process_results(dump, total_time):
     with Manager() as manager:
         table = manager.dict()
 
@@ -74,32 +56,34 @@ def run(cmd, iter, last):
             executor.map(build_table, dump, [table] * len(dump))
 
         native_time = native_execution_us(table.values())
-        native_percentage = (native_time * 100) / total_time
+    
+    return (native_time * 100) / total_time
 
-        if iter == last:
-            print(f"Number of transitions: {len(dump)}")
-        # print(f"Total time per method (ns): {table}")
 
-    return native_percentage
+def run(cmd):
+    start_time = time.perf_counter()
+    b_output = subprocess.check_output(cmd, shell=True)
+    end_time = time.perf_counter()
+
+    output = b_output.decode().split("\n")            # -> array with lines as elements
+    dump = [s for s in output if 'timer' in s]        # -> filter output
+
+    return dump, (end_time - start_time) * 1_000_000
 
 
 def main():
-    package, entrypoint, times = parse_args()
-    native_percentages = []
+    command, times = parse_args()
 
-    # Get Javassist command
-    javassist_cmd = subprocess.check_output(
-        CMD.format(package=package, entrypoint=entrypoint), shell=True
-    ).decode()
+    results = [(run(command)) for _ in range(times)]
 
-    # Run benchmark
-    for i in range(times):
-        native_percentages.append(run(javassist_cmd, i, times-1))
+    native_percentages = [process_results(result[0], result[1]) for result in results]
+    total_times = [result[1] for result in results]
+
+    avg_total_time = np.sum(total_times) / times
     avg_native_percentage = np.sum(native_percentages) / times
 
-    print(
-        "Average percentage of native execution: {:.2f}%".format(avg_native_percentage)
-    )
+    print("Average percentage of native execution: {:.2f}".format(avg_native_percentage))
+    print(f"Number of transitions per second: {len(results[0][0])/(avg_total_time/1000000)}") # number of transitions is fixed
 
 
 if __name__ == "__main__":
