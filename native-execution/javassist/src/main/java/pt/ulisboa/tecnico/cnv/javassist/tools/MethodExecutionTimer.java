@@ -4,7 +4,6 @@ import java.util.List;
 
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import javassist.CtClass;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
