@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <dlfcn.h>
 #include <sys/mman.h>
@@ -15,7 +16,7 @@ typedef struct {
     size_t size;
 } lib_info;
 
-static void* (*real_pthread_create) (pthread_t *, const pthread_attr_t *, void *(*)(void *), void *) = NULL;
+//static void* (*real_pthread_create) (pthread_t *, const pthread_attr_t *, void *(*)(void *), void *) = NULL;
 static void* (*real_realloc)        (void *, size_t) = NULL;
 static void* (*real_malloc)         (size_t) = NULL;
 static void* (*real_dlopen)         (const char *, int) = NULL;
@@ -23,7 +24,7 @@ static void* (*real_mmap)           (void *, size_t, int, int, int, off_t) = NUL
 
 static void __attribute__((constructor)) init(void)
 {
-    real_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
+    //real_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
     real_realloc        = dlsym (RTLD_NEXT, "realloc");
     real_malloc         = dlsym (RTLD_NEXT, "malloc");
     real_dlopen         = dlsym (RTLD_NEXT, "dlopen");
@@ -85,8 +86,8 @@ void *realloc(void *ptr, size_t size)
     return result;
 }
 
-int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_routine)(void*), void* arg) {
-    int result = real_pthread_create(thread, attr, start_routine, arg);
-    fprintf(stderr, "pthread_create(): thread with id %lu\n", *thread);
-    return result;
-}
+//int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*start_routine)(void*), void* arg) {
+//    int result = real_pthread_create(thread, attr, start_routine, arg);
+//    fprintf(stderr, "pthread_create(): thread with id %lu\n", *thread);
+//    return result; 
+//}
