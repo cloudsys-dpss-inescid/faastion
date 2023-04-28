@@ -14,6 +14,7 @@ import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtMethod;
 import javassist.CtClass;
+import javassist.CtConstructor;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
@@ -40,17 +41,26 @@ public class NativeRedirection extends CodeDumper {
                     
                     if (Modifier.isNative(method.getModifiers()) && !isInternalClass(className)) {
                         CtClass clazz = behavior.getDeclaringClass();
-                        String[] params = getParameterTypes(method.getSignature());
+                        String signature = method.getSignature();
+                        CtClass returnType = method.getReturnType();
+                        String returnJniType = getJniType(returnType.getName());
+                        String methodName = m.getMethodName();
+
+                        String[] params = getParameterTypes(signature);
                         String[] jniTypes = Arrays.stream(params)
                             .map(param -> getJniType(param))
                             .toArray(String[]::new);
 
-                        if (!isCallGateDeclared(clazz, method.getSignature()))
-                            declareCallGate(clazz, params);
-
-                        createHeader(jniTypes, className);
-                        createSnippet(jniTypes, m.getMethodName(), className);
-                        //m.replace("{ $_ = nativeCallGate($$); }");
+                        if (!isCallGateDeclared(clazz, signature)) {
+                            CtConstructor staticInitializer = clazz.makeClassInitializer();        
+                            staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
+                            declareCallGate(clazz, params, returnType);
+                            createHeader(jniTypes, returnJniType, className);
+                            createSnippet(jniTypes, returnJniType, methodName, className);
+                        }
+                        
+                        boolean voidType = returnType.getName().equals("void");
+                        m.replace((!voidType ? "$_=" : "") + "nativeCallGate($$);");
                     }
                 } catch (NotFoundException e) { 
                     System.err.println(e.getMessage()); 
@@ -65,7 +75,7 @@ public class NativeRedirection extends CodeDumper {
         });
     }
 
-    public static void createHeader(String[] jniTypes, String className) throws IOException {
+    public static void createHeader(String[] jniTypes, String returnJniType, String className) throws IOException {
         File file = new File("gen-snippets", className + ".h");
 
         try (FileWriter writer = new FileWriter(file)) {
@@ -75,8 +85,8 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#ifdef __cplusplus\n");
             writer.write("extern \"C\" {\n");
             writer.write("#endif\n\n");
-            writer.write("JNIEXPORT void JNICALL Java_" + className + "_nativeCallGate\n");
-            writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ")\n\n");
+            writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
+            writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
             writer.write("#ifdef __cplusplus\n");
             writer.write("}\n");
             writer.write("#endif\n");
@@ -84,7 +94,9 @@ public class NativeRedirection extends CodeDumper {
         }
     }
 
-    public static void createSnippet(String[] jniTypes, String methodName, String className) throws IOException {
+    public static void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className) throws IOException {
+        System.out.println("Creating Snippet for " + methodName + " from class " + className + "...");
+
         // parameters for call gate
         String[] args = Arrays.stream(jniTypes)
             .map(i -> generateUniqueId())
@@ -94,17 +106,26 @@ public class NativeRedirection extends CodeDumper {
             .mapToObj(i -> jniTypes[i] + " " + args[i])
             .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
         
+        String mc = "Java_" + className + "_" + methodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
+        
         File file = new File("gen-snippets", methodName + ".c");
-
         try (FileWriter writer = new FileWriter(file)) {
-            writer.write("#include <jni.h>\n");
             writer.write("#include \"" + className + ".h\"\n");
             writer.write("#include \"../common/common.h\"\n");
             writer.write("#include \"../erim/erim.h\"\n\n");
-            writer.write("JNIEXPORT void JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
             writer.write("\terim_switch_to_untrusted;\n");
-            writer.write("\t" + methodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n");
-            writer.write("\terim_switch_to_trusted;\n");
+
+            if (returnJniType.equals("void")) {
+                writer.write("\t" + mc);
+                writer.write("\terim_switch_to_trusted;\n");
+            }
+            else {
+                writer.write("\t" + returnJniType + " res = " + mc);
+                writer.write("\terim_switch_to_trusted;\n");
+                writer.write("\treturn res;\n");
+            }
+
             writer.write("}\n");
         }
     }
@@ -204,7 +225,7 @@ public class NativeRedirection extends CodeDumper {
                className.startsWith("org.");
     }
 
-    public static void declareCallGate(CtClass clazz, String[] parameters) throws NotFoundException, CannotCompileException {
+    public static void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType) throws NotFoundException, CannotCompileException {
         ClassPool cp = clazz.getClassPool();
 
         CtClass[] parameterTypes = Arrays.stream(parameters)
@@ -221,7 +242,7 @@ public class NativeRedirection extends CodeDumper {
             throw new NotFoundException("One or more parameter types not found.");
         }
 
-        CtMethod nativeMethod = new CtMethod(CtClass.voidType, "nativeCallGate", parameterTypes, clazz);
+        CtMethod nativeMethod = new CtMethod(returnType, "nativeCallGate", parameterTypes, clazz);
         nativeMethod.setModifiers(Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
 
         clazz.addMethod(nativeMethod);        
