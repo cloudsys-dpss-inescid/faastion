@@ -79,7 +79,7 @@ public class VideoProcessing {
     public static void main(String[] args) {
         HashMap<String, Object> output = new HashMap<>();
         output.put("ffmpeg", "http://127.0.0.1:8000/ffmpeg");
-        output.put("video", "http://127.0.0.1:8000/file_example_MP4_480_1_5MG.mp4");
+        output.put("video", "http://127.0.0.1:8000/video.mp4");
         output = main(output);
         System.out.println(output);
     }

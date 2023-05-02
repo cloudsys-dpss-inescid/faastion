@@ -1,5 +1,4 @@
 *.pdf
 output/
 results/
-*.mp4
 memory.log
