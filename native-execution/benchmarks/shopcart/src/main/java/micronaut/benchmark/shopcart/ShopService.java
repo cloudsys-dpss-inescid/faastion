@@ -36,72 +36,72 @@ import micronaut.benchmark.shopcart.domain.ShoppingCart;
 @CacheConfig("articles")
 public class ShopService {
 
-	private static Map<Integer, Float> prices = new HashMap<Integer,Float>();
+    private static Map<Integer, Float> prices = new HashMap<Integer,Float>();
 
-	static {
-		File file = new File("static-data");
-		if(file.exists() && !file.isDirectory()) {
-			long start, finish;
-			start = System.currentTimeMillis();
-			loadPrices(file);
-			finish = System.currentTimeMillis();
-			System.out.println(String.format("Took %s ms to load static data", finish - start));
-		}
+    static {
+        File file = new File("static-data");
+        if(file.exists() && !file.isDirectory()) {
+            long start, finish;
+            start = System.currentTimeMillis();
+            loadPrices(file);
+            finish = System.currentTimeMillis();
+            System.out.println(String.format("Took %s ms to load static data", finish - start));
+        }
 
-	}
+    }
 
-	public static void loadPrices(File file) {
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-			for(String line; (line = br.readLine()) != null; ) {
-				String[] splits = line.split(",");
-				prices.put(Integer.valueOf(splits[0]), Float.valueOf(splits[1]));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    public static void loadPrices(File file) {
+        try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+            for(String line; (line = br.readLine()) != null; ) {
+                String[] splits = line.split(",");
+                prices.put(Integer.valueOf(splits[0]), Float.valueOf(splits[1]));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Cacheable
-	public Client getClient(String id) {
-		return null;
-	}
+    @Cacheable
+    public Client getClient(String id) {
+        return null;
+    }
 
-	@CachePut(parameters = {"username"})
-	public Client addClient(String username, String name) {
-		return new Client(username, name, new ShoppingCart());
-	}
+    @CachePut(parameters = {"username"})
+    public Client addClient(String username, String name) {
+        return new Client(username, name, new ShoppingCart());
+    }
 
-	@CachePut(parameters = {"username"})
-	public Client addProductToShopCart(String username, Client client, Product product) {
-		client.getCart().addProduct(product);
-		return client;
-	}
+    @CachePut(parameters = {"username"})
+    public Client addProductToShopCart(String username, Client client, Product product) {
+        client.getCart().addProduct(product);
+        return client;
+    }
 
-	@CachePut(parameters = {"username"})
-	public Client removeProductFromShopCart(String username, Client client, Product product) {
-		client.getCart().removeProduct(product);
-		return client;
-	}
+    @CachePut(parameters = {"username"})
+    public Client removeProductFromShopCart(String username, Client client, Product product) {
+        client.getCart().removeProduct(product);
+        return client;
+    }
 
-	@CacheInvalidate
-	public void destroyClient(String username) {
-		// Intentionally left empty. This will invalidate the cache entry.
-	}
+    @CacheInvalidate
+    public void destroyClient(String username) {
+        // Intentionally left empty. This will invalidate the cache entry.
+    }
 
-	@Cacheable
-	public Product getProduct(String id) {
-		return null;
-	}
+    @Cacheable
+    public Product getProduct(String id) {
+        return null;
+    }
 
-	@CachePut(parameters = {"id"})
-	public Product createProduct(String id, String name, Integer amount) {
-		Price price = null;
-		if (id.chars().allMatch(Character::isDigit)) {
-			price = new Price("EUR", Integer.parseInt(id));
-		}
-		return new Product(id, name, amount, System.currentTimeMillis(), price == null ? new Price("EUR", 1.0f) : price);
-	}
+    @CachePut(parameters = {"id"})
+    public Product createProduct(String id, String name, Integer amount) {
+        Price price = null;
+        if (id.chars().allMatch(Character::isDigit)) {
+            price = new Price("EUR", Integer.parseInt(id));
+        }
+        return new Product(id, name, amount, System.currentTimeMillis(), price == null ? new Price("EUR", 1.0f) : price);
+    }
 
-	@CacheInvalidate
-	public void destroyProduct(String id) { }
+    @CacheInvalidate
+    public void destroyProduct(String id) { }
 }

@@ -22,36 +22,36 @@ import io.micronaut.core.annotation.Introspected;
 @Introspected
 public class ProductDeleteCommand {
 
-	@NotBlank
-	private String id;
+    @NotBlank
+    private String id;
 
-	@NotBlank
-	private String username;
+    @NotBlank
+    private String username;
 
-	public ProductDeleteCommand() { }
-	public ProductDeleteCommand(String id, String username) {
-		this.id = id;
-		this.username = username;
-	}
+    public ProductDeleteCommand() { }
+    public ProductDeleteCommand(String id, String username) {
+        this.id = id;
+        this.username = username;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("ProductDeleteCommand = { id = %s, username = %s }", id, username);
-	}
+    @Override
+    public String toString() {
+        return String.format("ProductDeleteCommand = { id = %s, username = %s }", id, username);
+    }
 }

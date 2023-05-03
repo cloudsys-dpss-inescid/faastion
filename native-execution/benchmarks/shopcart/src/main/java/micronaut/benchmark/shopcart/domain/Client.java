@@ -17,30 +17,30 @@ package micronaut.benchmark.shopcart.domain;
 
 public class Client {
 
-	private final String username;
-	private final String name;
-	private final ShoppingCart cart;
+    private final String username;
+    private final String name;
+    private final ShoppingCart cart;
 
-	public Client(String username, String name, ShoppingCart cart) {
-		this.username = username;
-		this.name = name;
-		this.cart = cart;
-	}
+    public Client(String username, String name, ShoppingCart cart) {
+        this.username = username;
+        this.name = name;
+        this.cart = cart;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public ShoppingCart getCart() {
-		return cart;
-	}
+    public ShoppingCart getCart() {
+        return cart;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("Client = { username = %s, name = %s, cart = %s }", username, name, cart);
-	}
+    @Override
+    public String toString() {
+        return String.format("Client = { username = %s, name = %s, cart = %s }", username, name, cart);
+    }
 }

@@ -23,7 +23,7 @@ import java.util.Collections;
 
 public class Application {
 
-    private static boolean INITIALIZED = false; 
+    private static boolean INITIALIZED = false;
 
     public static void main(String[] args) {
         Micronaut.run(Application.class);
@@ -43,5 +43,5 @@ public class Application {
         }
 
         return output;
-    } 
+    }
 }

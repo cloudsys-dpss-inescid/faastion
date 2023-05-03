@@ -35,121 +35,121 @@ import micronaut.benchmark.shopcart.domain.ShoppingCart;
 @Controller
 public class ShopController {
 
-	private final ShopService shopService;
+    private final ShopService shopService;
 
-	protected static AtomicInteger clientCount = new AtomicInteger(0);
+    protected static AtomicInteger clientCount = new AtomicInteger(0);
 
-	public ShopController(ShopService shopService) {
-		this.shopService = shopService;
-	}
+    public ShopController(ShopService shopService) {
+        this.shopService = shopService;
+    }
 
-	@Post
-	public String addClient(@Body @Valid ClientSaveCommand cmd) {
+    @Post
+    public String addClient(@Body @Valid ClientSaveCommand cmd) {
 
-		int ccount = clientCount.incrementAndGet();
+        int ccount = clientCount.incrementAndGet();
 
-		if (cmd.getUsername() == null) {
-			cmd.setUsername(String.format("client%d", ccount));
-		}
+        if (cmd.getUsername() == null) {
+            cmd.setUsername(String.format("client%d", ccount));
+        }
 
-		Client client = shopService.addClient(cmd.getUsername(), cmd.getName());
+        Client client = shopService.addClient(cmd.getUsername(), cmd.getName());
 
-		if (client == null) {
-			return String.format("Error, unable to create client: %s", cmd);
-		}
+        if (client == null) {
+            return String.format("Error, unable to create client: %s", cmd);
+        }
 
-		return client.toString();
-	}
+        return client.toString();
+    }
 
-	@Get("/{cid}")
-	public String getClient(String cid) {
-		Client client = shopService.getClient(cid);
-		if (client != null) {
-			return client.toString();
-		} else {
-			return String.format("Error, no such client: %s", cid);
-		}
-	}
+    @Get("/{cid}")
+    public String getClient(String cid) {
+        Client client = shopService.getClient(cid);
+        if (client != null) {
+            return client.toString();
+        } else {
+            return String.format("Error, no such client: %s", cid);
+        }
+    }
 
-	@Delete("/{cid}")
-	public String removeClient(String cid) {
-		Client client = shopService.getClient(cid);
+    @Delete("/{cid}")
+    public String removeClient(String cid) {
+        Client client = shopService.getClient(cid);
 
-		if (client == null) {
-			return cid;
-		}
+        if (client == null) {
+            return cid;
+        }
 
-		ShoppingCart cart = client.getCart();
-		for (int i = 0; i < cart.getNextProductId(); i++) {
-			shopService.destroyProduct(cid + "$" + i);
-		}
-		shopService.destroyClient(cid);
-		return cid;
-	}
+        ShoppingCart cart = client.getCart();
+        for (int i = 0; i < cart.getNextProductId(); i++) {
+            shopService.destroyProduct(cid + "$" + i);
+        }
+        shopService.destroyClient(cid);
+        return cid;
+    }
 
-	@Post("/cart")
-	public String addProduct(@Body @Valid ProductSaveCommand cmd) {
-		Client client = shopService.getClient(cmd.getUsername());
+    @Post("/cart")
+    public String addProduct(@Body @Valid ProductSaveCommand cmd) {
+        Client client = shopService.getClient(cmd.getUsername());
 
-		if (client == null) {
-			return String.format("Error, no such client: %s", cmd);
-		}
+        if (client == null) {
+            return String.format("Error, no such client: %s", cmd);
+        }
 
-		ShoppingCart cart = client.getCart();
-		Product product = shopService.createProduct(cmd.getUsername() + "$" + cart.getNextProductId(), cmd.getName(), cmd.getAmount());
+        ShoppingCart cart = client.getCart();
+        Product product = shopService.createProduct(cmd.getUsername() + "$" + cart.getNextProductId(), cmd.getName(), cmd.getAmount());
 
-		if (product == null) {
-			return String.format("Error, unable to create product: %s", cmd);
-		}
+        if (product == null) {
+            return String.format("Error, unable to create product: %s", cmd);
+        }
 
-		shopService.addProductToShopCart(client.getUsername(), client, product);
-		return product.toString();
-	}
+        shopService.addProductToShopCart(client.getUsername(), client, product);
+        return product.toString();
+    }
 
-	@Get("/cart/{cid}")
-	public String getProducts(String cid) {
-		Client client = shopService.getClient(cid);
+    @Get("/cart/{cid}")
+    public String getProducts(String cid) {
+        Client client = shopService.getClient(cid);
 
-		if (client == null) {
-			return String.format("Error, no such client: %s", cid);
-		}
+        if (client == null) {
+            return String.format("Error, no such client: %s", cid);
+        }
 
-		ShoppingCart cart = client.getCart();
-		Product[] products = new Product[cart.getNumberProducts()];
-		for (int found = 0, i = 0; i < cart.getNextProductId(); i++) {
-			Product product = shopService.getProduct(cid + "$" + i);
-			if (product != null) {
-				products[found++] = product;
-			}
-		}
-		return Arrays.toString(products);
-	}
+        ShoppingCart cart = client.getCart();
+        Product[] products = new Product[cart.getNumberProducts()];
+        for (int found = 0, i = 0; i < cart.getNextProductId(); i++) {
+            Product product = shopService.getProduct(cid + "$" + i);
+            if (product != null) {
+                products[found++] = product;
+            }
+        }
+        return Arrays.toString(products);
+    }
 
-	@Delete("/cart")
-	public String removeProduct(@Body @Valid ProductDeleteCommand cmd) {
-		Client client = shopService.getClient(cmd.getUsername());
+    @Delete("/cart")
+    public String removeProduct(@Body @Valid ProductDeleteCommand cmd) {
+        Client client = shopService.getClient(cmd.getUsername());
 
-		if (client == null) {
-			return String.format("Error, no such client: %s", cmd);
-		}
+        if (client == null) {
+            return String.format("Error, no such client: %s", cmd);
+        }
 
-		Product product = shopService.getProduct(cmd.getId());
+        Product product = shopService.getProduct(cmd.getId());
 
-		if (product == null) {
-			return String.format("Error, unable to find product: %s", cmd);
-		}
+        if (product == null) {
+            return String.format("Error, unable to find product: %s", cmd);
+        }
 
-		client.getCart().removeProduct(product);
+        client.getCart().removeProduct(product);
 
-		shopService.destroyProduct(cmd.getId());
+        shopService.destroyProduct(cmd.getId());
 
-		return cmd.getId();
-	}
+        return cmd.getId();
+    }
 
-	@Get("/memory")
-	public Long memory() {
-		System.gc();
-		long bytes = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-		return bytes / 1024;
-	}
+    @Get("/memory")
+    public Long memory() {
+        System.gc();
+        long bytes = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        return bytes / 1024;
+    }
 }

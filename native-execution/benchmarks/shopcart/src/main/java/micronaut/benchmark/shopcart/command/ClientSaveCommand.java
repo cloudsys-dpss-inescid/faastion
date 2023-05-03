@@ -22,34 +22,34 @@ import io.micronaut.core.annotation.Introspected;
 @Introspected
 public class ClientSaveCommand {
 
-	private String username;
+    private String username;
 
-	@NotBlank
-	private String name;
+    @NotBlank
+    private String name;
 
-	public ClientSaveCommand() { }
-	public ClientSaveCommand(String username, String name) {
-		this.name = name;
-	}
+    public ClientSaveCommand() { }
+    public ClientSaveCommand(String username, String name) {
+        this.name = name;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("ClientSaveCommand = { username = %s, name = %s }", username, name);
-	}
+    @Override
+    public String toString() {
+        return String.format("ClientSaveCommand = { username = %s, name = %s }", username, name);
+    }
 }

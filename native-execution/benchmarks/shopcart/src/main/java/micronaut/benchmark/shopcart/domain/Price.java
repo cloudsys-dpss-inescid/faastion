@@ -20,24 +20,24 @@ import io.micronaut.core.annotation.Introspected;
 @Introspected
 public class Price {
 
-	final String currency;
-	final float amount;
+    final String currency;
+    final float amount;
 
-	public Price(String currency, float amount) {
-		this.currency = currency;
-		this.amount = amount;
-	}
+    public Price(String currency, float amount) {
+        this.currency = currency;
+        this.amount = amount;
+    }
 
-	public String getCurrency() {
-		return currency;
-	}
+    public String getCurrency() {
+        return currency;
+    }
 
-	public float getAmount() {
-		return amount;
-	}
+    public float getAmount() {
+        return amount;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("Price = { currency = %s, amount = %f }", currency, amount);
-	}
+    @Override
+    public String toString() {
+        return String.format("Price = { currency = %s, amount = %f }", currency, amount);
+    }
 }

@@ -39,76 +39,76 @@ import micronaut.benchmark.shopcart.domain.ShoppingCart;
 @MicronautTest
 public class ShopControllerTest {
 
-	@Inject
-	EmbeddedServer server;
+    @Inject
+    EmbeddedServer server;
 
-	@Inject
-	@Client("/")
-	HttpClient client;
+    @Inject
+    @Client("/")
+    HttpClient client;
 
-	@Test
-	@Order(1)
-	void addClient() {
-		HttpRequest post = HttpRequest.POST(UriBuilder.of("/").build(), "{ \"username\": \"user0\", \"name\": \"myname\" }");
-		String answer = client.toBlocking().retrieve(post);
-		assertEquals(answer, new micronaut.benchmark.shopcart.domain.Client("user0", "myname", new ShoppingCart()).toString());
-	}
+    @Test
+    @Order(1)
+    void addClient() {
+        HttpRequest post = HttpRequest.POST(UriBuilder.of("/").build(), "{ \"username\": \"user0\", \"name\": \"myname\" }");
+        String answer = client.toBlocking().retrieve(post);
+        assertEquals(answer, new micronaut.benchmark.shopcart.domain.Client("user0", "myname", new ShoppingCart()).toString());
+    }
 
-	@Test
-	@Order(2)
-	void getClient() {
-		HttpRequest request = HttpRequest.GET(UriBuilder.of("/").path("user0").build());
-		String answer = client.toBlocking().retrieve(request, String.class);
-		assertEquals(answer, new micronaut.benchmark.shopcart.domain.Client("user0", "myname", new ShoppingCart()).toString());
-	}
+    @Test
+    @Order(2)
+    void getClient() {
+        HttpRequest request = HttpRequest.GET(UriBuilder.of("/").path("user0").build());
+        String answer = client.toBlocking().retrieve(request, String.class);
+        assertEquals(answer, new micronaut.benchmark.shopcart.domain.Client("user0", "myname", new ShoppingCart()).toString());
+    }
 
-	@Test
-	@Order(3)
-	void getEmptyCart() {
-		HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
-		String answer = client.toBlocking().retrieve(request, String.class);
-		assertEquals(answer, "[]");
-	}
+    @Test
+    @Order(3)
+    void getEmptyCart() {
+        HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
+        String answer = client.toBlocking().retrieve(request, String.class);
+        assertEquals(answer, "[]");
+    }
 
-	@Test
-	@Order(4)
-	void addProduct() {
-		HttpRequest post = HttpRequest.POST(UriBuilder.of("/cart").build(), "{ \"username\": \"user0\", \"name\": \"Banana\", \"amount\": \"1\" }");
-		String answer = client.toBlocking().retrieve(post);
-		Pattern p = Pattern.compile("Product = \\{ id = user0\\$0, name = Banana, quantity = 1, timestamp = \\d+, price = Price = \\{ currency = EUR, amount = 1.000000 \\} \\}");
-		assert(p.matcher(answer).find());
-	}
+    @Test
+    @Order(4)
+    void addProduct() {
+        HttpRequest post = HttpRequest.POST(UriBuilder.of("/cart").build(), "{ \"username\": \"user0\", \"name\": \"Banana\", \"amount\": \"1\" }");
+        String answer = client.toBlocking().retrieve(post);
+        Pattern p = Pattern.compile("Product = \\{ id = user0\\$0, name = Banana, quantity = 1, timestamp = \\d+, price = Price = \\{ currency = EUR, amount = 1.000000 \\} \\}");
+        assert(p.matcher(answer).find());
+    }
 
-	@Test
-	@Order(5)
-	void getCartWithBananas() {
-		HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
-		String answer = client.toBlocking().retrieve(request, String.class);
-		Pattern p = Pattern.compile("\\[Product = \\{ id = user0\\$0, name = Banana, quantity = 1, timestamp = \\d+, price = Price = \\{ currency = EUR, amount = 1.000000 \\} \\}\\]");
-		assert(p.matcher(answer).find());
-	}
+    @Test
+    @Order(5)
+    void getCartWithBananas() {
+        HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
+        String answer = client.toBlocking().retrieve(request, String.class);
+        Pattern p = Pattern.compile("\\[Product = \\{ id = user0\\$0, name = Banana, quantity = 1, timestamp = \\d+, price = Price = \\{ currency = EUR, amount = 1.000000 \\} \\}\\]");
+        assert(p.matcher(answer).find());
+    }
 
-	@Test
-	@Order(6)
-	void removeBananasFromCart() {
-		HttpRequest delete = HttpRequest.DELETE(UriBuilder.of("/cart").build(), "{ \"id\": \"user0$0\", \"username\": \"user0\" }");
-		String answer = client.toBlocking().retrieve(delete);
-		assertEquals(answer, "user0$0");
-	}
+    @Test
+    @Order(6)
+    void removeBananasFromCart() {
+        HttpRequest delete = HttpRequest.DELETE(UriBuilder.of("/cart").build(), "{ \"id\": \"user0$0\", \"username\": \"user0\" }");
+        String answer = client.toBlocking().retrieve(delete);
+        assertEquals(answer, "user0$0");
+    }
 
-	@Test
-	@Order(7)
-	void getEmptyCartAfterRemovingBananas() {
-		HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
-		String answer = client.toBlocking().retrieve(request, String.class);
-		assertEquals(answer, "[]");
-	}
+    @Test
+    @Order(7)
+    void getEmptyCartAfterRemovingBananas() {
+        HttpRequest request = HttpRequest.GET(UriBuilder.of("/cart").path("user0").build());
+        String answer = client.toBlocking().retrieve(request, String.class);
+        assertEquals(answer, "[]");
+    }
 
-	@Test
-	@Order(8)
-	void removeClient() {
-		HttpRequest delete = HttpRequest.DELETE(UriBuilder.of("/user0").build(), null);
-		String answer = client.toBlocking().retrieve(delete);
-		assertEquals(answer, "user0");
-	}
+    @Test
+    @Order(8)
+    void removeClient() {
+        HttpRequest delete = HttpRequest.DELETE(UriBuilder.of("/user0").build(), null);
+        String answer = client.toBlocking().retrieve(delete);
+        assertEquals(answer, "user0");
+    }
 }

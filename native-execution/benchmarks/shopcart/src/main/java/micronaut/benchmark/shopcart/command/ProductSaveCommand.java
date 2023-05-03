@@ -22,48 +22,48 @@ import io.micronaut.core.annotation.Introspected;
 @Introspected
 public class ProductSaveCommand {
 
-	@NotBlank
-	private String username;
+    @NotBlank
+    private String username;
 
-	@NotBlank
-	private String name;
+    @NotBlank
+    private String name;
 
-	@NotBlank
-	private Integer amount;
+    @NotBlank
+    private Integer amount;
 
-	public ProductSaveCommand() { }
-	public ProductSaveCommand(String username, String name, Integer amount) {
-		this.username = username;
-		this.name = name;
-		this.amount = amount;
-	}
+    public ProductSaveCommand() { }
+    public ProductSaveCommand(String username, String name, Integer amount) {
+        this.username = username;
+        this.name = name;
+        this.amount = amount;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String id) {
-		this.name = id;
-	}
+    public void setName(String id) {
+        this.name = id;
+    }
 
-	public Integer getAmount() {
-		return amount;
-	}
+    public Integer getAmount() {
+        return amount;
+    }
 
-	public void setAmount(Integer amount) {
-		this.amount = amount;
-	}
+    public void setAmount(Integer amount) {
+        this.amount = amount;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("ProductSaveCommand = { username = %s, name = %s, amount = %s }", username, name, amount);
-	}
+    @Override
+    public String toString() {
+        return String.format("ProductSaveCommand = { username = %s, name = %s, amount = %s }", username, name, amount);
+    }
 }

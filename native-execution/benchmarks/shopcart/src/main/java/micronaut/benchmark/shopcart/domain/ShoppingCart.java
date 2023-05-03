@@ -17,33 +17,33 @@ package micronaut.benchmark.shopcart.domain;
 
 public class ShoppingCart {
 
-	private int nextProductId;
-	private int numberProducts;
+    private int nextProductId;
+    private int numberProducts;
 
-	public ShoppingCart() {
-		this.nextProductId = 0;
-		this.numberProducts = 0;
-	}
+    public ShoppingCart() {
+        this.nextProductId = 0;
+        this.numberProducts = 0;
+    }
 
-	public int getNextProductId() {
-		return nextProductId;
-	}
+    public int getNextProductId() {
+        return nextProductId;
+    }
 
-	public int getNumberProducts() {
-		return numberProducts;
-	}
+    public int getNumberProducts() {
+        return numberProducts;
+    }
 
-	public void addProduct(Product product) {
-		this.nextProductId += 1;
-		this.numberProducts += 1;
-	}
+    public void addProduct(Product product) {
+        this.nextProductId += 1;
+        this.numberProducts += 1;
+    }
 
-	public void removeProduct(Product product) {
-		this.numberProducts -= 1;
-	}
+    public void removeProduct(Product product) {
+        this.numberProducts -= 1;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("ShoppingCart = { nextProductId = %s, numberProducts = %s }", nextProductId, numberProducts);
-	}
+    @Override
+    public String toString() {
+        return String.format("ShoppingCart = { nextProductId = %s, numberProducts = %s }", nextProductId, numberProducts);
+    }
 }

@@ -17,43 +17,43 @@ package micronaut.benchmark.shopcart.domain;
 
 public class Product {
 
-	final private String id;
-	final private String name;
-	final private int quantity;
-	final private Long timestamp;
-	final private Price price;
+    final private String id;
+    final private String name;
+    final private int quantity;
+    final private Long timestamp;
+    final private Price price;
 
-	public Product(String id, String name, int quantity, Long timestamp, Price price) {
-		this.id = id;
-		this.name = name;
-		this.quantity = quantity;
-		this.timestamp = timestamp;
-		this.price = price;
-	}
+    public Product(String id, String name, int quantity, Long timestamp, Price price) {
+        this.id = id;
+        this.name = name;
+        this.quantity = quantity;
+        this.timestamp = timestamp;
+        this.price = price;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public int getQuantity() {
-		return quantity;
-	}
+    public int getQuantity() {
+        return quantity;
+    }
 
-	public Long getTimestamp() {
-		return timestamp;
-	}
+    public Long getTimestamp() {
+        return timestamp;
+    }
 
-	public Price getPrice() {
-		return price;
-	}
+    public Price getPrice() {
+        return price;
+    }
 
-	@Override
-	public String toString() {
-		return String.format("Product = { id = %s, name = %s, quantity = %d, timestamp = %s, price = %s }", id, name, quantity, timestamp, price);
-	}
+    @Override
+    public String toString() {
+        return String.format("Product = { id = %s, name = %s, quantity = %d, timestamp = %s, price = %s }", id, name, quantity, timestamp, price);
+    }
 
 }
