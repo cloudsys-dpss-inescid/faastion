@@ -1,24 +1,28 @@
 #!/usr/bin/python3
 
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 
-transitions = numpy.loadtxt('results/transitions.dat')
-percentages = numpy.loadtxt('results/percentages.dat')
-labels      = numpy.loadtxt('results/benchmarks.dat', dtype='str')
+transitions = np.loadtxt('results/transitions.dat')
+percentages = np.loadtxt('results/percentages.dat')
+labels      = ["ML inference", "Hashing", "helloworld", "REST", "Video encoding"]
+x           = np.arange(len(labels))
 
-def save_plot(subject, y_label):
-    plt.bar(labels, eval(subject), label=subject)
-    plt.ylim(ymin=0)
-    plt.legend()
-    plt.xlabel('Benchmarks')
-    plt.xticks(rotation=45)
-    plt.yscale('log')
-    plt.ylabel(y_label)
-    plt.tight_layout()
-    plt.savefig(f'{subject}.pdf')
+width = .25
+fig, ax1 = plt.subplots()
 
-if __name__ == "__main__":
-    save_plot("transitions", "Number of transitions per second")
-    plt.clf()
-    save_plot("percentages", "Time spent in native execution (%)")
+ax1.bar(x - (width * 1.05)/2, transitions, width, label="Transitions per sec")
+ax1.set_xticks(x, labels)
+ax1.set_yscale('log')
+ax1.set_ylabel("Number of transitions per second")
+
+ax2 = ax1.twinx()
+ax2.bar(x + (width * 1.05)/2, percentages, width, color="red", label="% Native Code")
+ax2.set_ylabel("Percentage of time in native code")
+ax2.set_ylim(ymin=0, ymax=100)
+
+ax2.grid(axis = 'y', linestyle = '--', linewidth = 0.25)
+fig.legend(bbox_to_anchor=(.85,.95))
+plt.tight_layout()
+plt.savefig("native-execution.pdf")
+plt.savefig("native-execution.png")

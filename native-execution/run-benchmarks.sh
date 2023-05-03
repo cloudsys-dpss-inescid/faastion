@@ -18,9 +18,15 @@ function build_benchmark {
 
 #build_javassist_agent
 
+rm -r $DIR/results &> /dev/null
+
 for benchmark in classify filehashing helloworld httprequest videoprocessing
 do
     #build_benchmark
+
+    echo "Running $benchmark..."
+    mkdir -p $DIR/results/$benchmark
+    cd $DIR/results/$benchmark
 
     BUILD=$DIR/benchmarks/$benchmark/build
     MANIFEST=${BUILD}/tmp/shadowJar/MANIFEST.MF
@@ -36,5 +42,13 @@ do
     printf -v packages '%s,' $output
     packages=${packages%,}
 
-    $DIR/native-benchmark.py -c "java -cp ${class_path} -javaagent:${JAVA_AGENT}=${TOOL}:${packages}:output ${entrypoint}"
+    # Run the java code with the agent.
+    $DIR/native-benchmark.py -c "java -cp ${class_path} -javaagent:${JAVA_AGENT}=${TOOL}:${packages}:output ${entrypoint}" &> $DIR/results/$benchmark/native-benchmark.log
+
+    # Capture statistics.
+    cat $DIR/results/$benchmark/native-benchmark.log | grep "Average percentage of native execution" | awk '{print $6}' >> $DIR/results/percentages.dat
+    cat $DIR/results/$benchmark/native-benchmark.log | grep "Number of transitions per second" | awk '{print $6}' >> $DIR/results/transitions.dat
+    echo "$benchmark" >> $DIR/results/benchmarks.dat
+    cd - &> /dev/null
+    echo "Running $benchmark... done!"
 done

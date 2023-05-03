@@ -9,7 +9,7 @@ import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-public class MethodExecutionTimer extends CodeDumper {
+public class MethodExecutionTimer extends AbstractJavassistTool {
 
     public MethodExecutionTimer(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);

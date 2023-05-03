@@ -86,8 +86,6 @@ public class Classify {
     	output.put("labels_url", "http://127.0.0.1:8000/imagenet_comp_graph_label_strings.txt");
     	output.put("image_url", "http://127.0.0.1:8000/eagle.jpg");
         System.out.println(main(output));
-        System.out.println(main(output));
-        System.out.println(main(output));
     }
     
 
