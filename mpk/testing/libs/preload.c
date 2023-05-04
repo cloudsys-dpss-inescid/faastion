@@ -80,7 +80,6 @@ int munmap(void* addr, size_t length) {
 /* Library loading */
 void *dlopen(const char *filename, int flag) 
 {   
-    fprintf(stderr, "DAMASSSSS\n");
     void *handle = real_dlopen(filename, flag);
 
     // get address and size of library
