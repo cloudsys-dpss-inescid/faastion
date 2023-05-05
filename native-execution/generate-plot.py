@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 transitions = np.loadtxt('results/transitions.dat')
 percentages = np.loadtxt('results/percentages.dat')
-labels      = ["ML inference", "Hashing", "Hello World", "REST", "Video\n encoding", "Micronaut"]
+labels      = ["Hello World", "File Hashing", "REST", "Microservice\n (Micronaut)", "ML inference\n (TensorFlow)"]
 x           = np.arange(len(labels))
 
 width = .25
@@ -22,7 +22,7 @@ ax2.bar(x + (width * 1.05)/2, percentages, width, color="red", label="% Native C
 ax2.set_ylabel("Percentage of time in native code")
 ax2.set_ylim(ymin=0, ymax=100)
 
-fig.legend(bbox_to_anchor=(.85,.95))
+fig.legend(bbox_to_anchor=(.65,.935))
 plt.tight_layout()
 plt.savefig("native-execution.pdf")
 plt.savefig("native-execution.png")
