@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 transitions = np.loadtxt('results/transitions.dat')
 percentages = np.loadtxt('results/percentages.dat')
-labels      = ["ML inference", "Hashing", "helloworld", "REST", "Video encoding"]
+labels      = ["ML inference", "Hashing", "Hello World", "REST", "Video\n encoding", "Micronaut"]
 x           = np.arange(len(labels))
 
 width = .25
