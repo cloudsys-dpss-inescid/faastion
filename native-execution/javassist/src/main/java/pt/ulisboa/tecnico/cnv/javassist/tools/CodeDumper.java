@@ -4,6 +4,7 @@ import java.util.List;
 
 import javassist.CtBehavior;
 import javassist.CtClass;
+import javassist.CtConstructor;
 
 public class CodeDumper extends AbstractJavassistTool {
 
@@ -14,6 +15,11 @@ public class CodeDumper extends AbstractJavassistTool {
     @Override
     protected void transform(CtClass clazz) throws Exception {
         super.transform(clazz);
+    }
+
+    @Override
+    protected void transform(CtConstructor constructor) throws Exception {
+        super.transform(constructor);
     }
 
     @Override

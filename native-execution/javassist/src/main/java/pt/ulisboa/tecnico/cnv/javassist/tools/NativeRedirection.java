@@ -25,8 +25,31 @@ import javassist.expr.MethodCall;
 import java.lang.System;
 public class NativeRedirection extends CodeDumper {
 
+    private final String application_id = generateUniqueId();
+
     public NativeRedirection(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);
+    }
+
+    @Override
+    protected void transform(CtConstructor constructor) throws Exception {
+        super.transform(constructor); 
+
+        if (constructor.isClassInitializer()) {
+            CtClass clazz = constructor.getDeclaringClass();
+            ClassPool cp = clazz.getClassPool();
+            CtClass systemClass = cp.get("java.lang.System");
+            CtMethod loadLibraryMethod = systemClass.getMethod("loadLibrary", "(Ljava/lang/String;)V");
+            String signature = loadLibraryMethod.getSignature();
+
+            constructor.instrument(new ExprEditor() {
+                public void edit(MethodCall m) throws CannotCompileException {
+                    if (m.getSignature().equals(signature)) {
+                        m.replace("System.loadLibrary(\"" + application_id + ":$$\");");
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -50,7 +73,7 @@ public class NativeRedirection extends CodeDumper {
                         String[] jniTypes = Arrays.stream(params)
                             .map(param -> getJniType(param))
                             .toArray(String[]::new);
-
+                        
                         if (!isCallGateDeclared(clazz, signature)) {
                             CtConstructor staticInitializer = clazz.makeClassInitializer();        
                             staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
