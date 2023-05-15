@@ -17,7 +17,7 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
 
     @Override
     protected void transform(CtBehavior behavior) throws Exception {
-        super.transform(behavior); 
+        super.transform(behavior);
 
         behavior.instrument(new ExprEditor() {
             public void edit(MethodCall m) throws CannotCompileException {
@@ -29,7 +29,14 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
 
                 if (mod != -1 && Modifier.isNative(mod)) {
                     String methodName = m.getMethodName();
-                    //String className = m.getClassName();
+                    String className = m.getClassName();
+
+                    if (className.startsWith("java.") ||
+                            className.startsWith("javax.") ||
+                            className.startsWith("jdk.") ||
+                            className.startsWith("com.sun.")) {
+                        return;
+                    }
 
                     String timerName = "timer_" + methodName;
                     m.replace("{ long " + timerName + " = System.nanoTime(); " +
@@ -38,7 +45,7 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
                             "System.out.println(\"" + timerName + " took \" + " +
                             "(endTime - " + timerName + ") + \" ns\"); }}");
 
-                    //System.out.println("Wrapped method " + methodName + " in class " + className + " with timer " + timerName);
+                    System.out.println("Wrapped method " + methodName + " in class " + className + " with timer " + timerName);
                 }
             }
         });
