@@ -32,54 +32,36 @@ public class NativeRedirection extends CodeDumper {
     }
 
     @Override
-    protected void transform(CtConstructor constructor) throws Exception {
-        super.transform(constructor); 
-
-        if (constructor.isClassInitializer()) {
-            CtClass clazz = constructor.getDeclaringClass();
-            ClassPool cp = clazz.getClassPool();
-            CtClass systemClass = cp.get("java.lang.System");
-            CtMethod loadLibraryMethod = systemClass.getMethod("loadLibrary", "(Ljava/lang/String;)V");
-            String signature = loadLibraryMethod.getSignature();
-
-            constructor.instrument(new ExprEditor() {
-                public void edit(MethodCall m) throws CannotCompileException {
-                    if (m.getSignature().equals(signature)) {
-                        m.replace("System.loadLibrary(\"" + application_id + ":$$\");");
-                    }
-                }
-            });
-        }
-    }
-
-    @Override
     protected void transform(CtBehavior behavior) throws Exception {
         super.transform(behavior); 
 
         behavior.instrument(new ExprEditor() {
             public void edit(MethodCall m) throws CannotCompileException {
                 try {
+                    CtClass clazz = behavior.getDeclaringClass();
                     CtMethod method = m.getMethod();
-                    String className = m.getClassName();
-                    
-                    if (Modifier.isNative(method.getModifiers()) && !isInternalClass(className)) {
-                        CtClass clazz = behavior.getDeclaringClass();
-                        String signature = method.getSignature();
+                    String methodClassName = m.getClassName();
+                    String methodSignature = method.getSignature();
+                    String methodName = m.getMethodName();
+
+                    if (isLoadLibrary(clazz, methodName, methodSignature)) {
+                        m.replace("System.loadLibrary(\"" + application_id + ":$$\");");
+                    }
+                    else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
                         CtClass returnType = method.getReturnType();
                         String returnJniType = getJniType(returnType.getName());
-                        String methodName = m.getMethodName();
 
-                        String[] params = getParameterTypes(signature);
+                        String[] params = getParameterTypes(methodSignature);
                         String[] jniTypes = Arrays.stream(params)
                             .map(param -> getJniType(param))
                             .toArray(String[]::new);
                         
-                        if (!isCallGateDeclared(clazz, signature)) {
+                        if (!isCallGateDeclared(clazz, methodSignature)) {
                             CtConstructor staticInitializer = clazz.makeClassInitializer();        
                             staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
                             declareCallGate(clazz, params, returnType);
-                            createHeader(jniTypes, returnJniType, className);
-                            createSnippet(jniTypes, returnJniType, methodName, className);
+                            createHeader(jniTypes, returnJniType, methodClassName);
+                            createSnippet(jniTypes, returnJniType, methodName, methodClassName);
                         }
                         
                         boolean voidType = returnType.getName().equals("void");
@@ -96,6 +78,15 @@ public class NativeRedirection extends CodeDumper {
                 }
             }
         });
+    }
+
+    public static boolean isLoadLibrary(CtClass clazz, String name, String signature) throws NotFoundException {
+        ClassPool cp = clazz.getClassPool();
+        CtClass systemClass = cp.get("java.lang.System");
+        CtMethod loadLibMethod =  systemClass.getDeclaredMethod("loadLibrary");
+        String loadLibSignature = loadLibMethod.getSignature();
+
+        return name.equals("loadLibrary") && signature.equals(loadLibSignature);
     }
 
     public static void createHeader(String[] jniTypes, String returnJniType, String className) throws IOException {
@@ -128,9 +119,9 @@ public class NativeRedirection extends CodeDumper {
         String typeArgs = IntStream.range(0, args.length)
             .mapToObj(i -> jniTypes[i] + " " + args[i])
             .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
-        
+
         String mc = "Java_" + className + "_" + methodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
-        
+
         File file = new File("gen-snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include \"" + className + ".h\"\n");
@@ -152,7 +143,7 @@ public class NativeRedirection extends CodeDumper {
             writer.write("}\n");
         }
     }
-    
+
     public static String generateUniqueId() {
         UUID uuid = UUID.randomUUID();
         return "c" + uuid.toString().replaceAll("-", "");

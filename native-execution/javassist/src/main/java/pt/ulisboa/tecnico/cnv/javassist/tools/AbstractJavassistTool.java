@@ -8,7 +8,6 @@ import java.util.List;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
-import javassist.CtConstructor;
 import javassist.bytecode.AccessFlag;
 
 public abstract class AbstractJavassistTool implements ClassFileTransformer {
@@ -24,15 +23,9 @@ public abstract class AbstractJavassistTool implements ClassFileTransformer {
     protected void transform(CtBehavior behavior) throws Exception {
     }
 
-    protected void transform(CtConstructor constructor) throws Exception {
-    }
-
     protected void transform(CtClass clazz) throws Exception {
         for (CtClass nestedClazz : clazz.getDeclaredClasses()) {
             transform(nestedClazz);
-        }
-        for (CtConstructor constructor : clazz.getConstructors()) {
-            transform(constructor);
         }
         for (CtBehavior behavior : clazz.getDeclaredBehaviors()) {
             if ((AccessFlag.ABSTRACT & behavior.getModifiers()) == 0) {
