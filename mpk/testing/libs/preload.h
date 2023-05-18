@@ -5,12 +5,13 @@
 #define _GNU_SOURCE
 #endif
 
+#include <jni.h>
 #include <cstring>
 #include <dlfcn.h>
+#include <fstream>
 #include <iostream>
 #include <link.h>
-#include <list>
-#include <map>
+#include <unordered_map>
 #include <pthread.h>
 #include <sstream>
 #include <stdarg.h>
@@ -19,15 +20,28 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <tuple>
-
+#include <vector>
 #include "../common/common.h"
 #include "../erim/erim.h"
 
-struct lib_info {
-    const char* lib_name;
-    const char* app_id;
+#define errExit(msg) do { \
+    std::cerr << msg << std::endl; \
+    exit(EXIT_FAILURE); \
+} while (0)
+
+
+struct LibraryInfo {
+    const char* appID;
+    const char* path;
 };
 
-extern std::map<std::string, std::list<std::tuple<void*, size_t>>> apps;
+struct MemoryRegion {
+    void* address;
+    size_t size;
+};
+
+void setApplicationPermissions(const char* appID, int protectionFlag);
+
+extern std::unordered_map<std::string, std::vector<MemoryRegion>> apps;
 
 #endif // PRELOAD_H

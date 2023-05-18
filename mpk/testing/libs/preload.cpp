@@ -1,9 +1,14 @@
 #include "preload.h"
 
+#define ERIM_FLAGS = ERIM_FLAG_ISOLATE_TRUSTED | ERIM_FLAG_INTEGRITY_ONLY
+
+std::unordered_map<std::string, std::vector<MemoryRegion>> apps;
+
 
 /* Function pointers declarations */
 static int( * real_pthread_create)(pthread_t * , const pthread_attr_t * , void * ( * )(void * ), void * ) = NULL;
 static void * ( * real_dlopen)(const char * , int) = NULL;
+
 
 /* Constructor */
 static void __attribute__((constructor)) init(void) {
@@ -12,90 +17,102 @@ static void __attribute__((constructor)) init(void) {
     real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
 
     // Initialize isolation
-    if (erim_init(8192, ERIM_FLAG_ISOLATE_TRUSTED | ERIM_FLAG_INTEGRITY_ONLY)) {
+    if (erim_init(8192, ERIM_FLAGS)) {
         exit(EXIT_FAILURE);
     }
 }
 
+
 /* Auxiliary functions */
-void insert_item(const char * app_id, void * start_addr, size_t size) {
-    // Create a new tuple with the start_addr and size
-    auto new_entry = std::make_tuple(start_addr, size);
-
-    // Check if the lib_name already exists in the map
-    auto it = apps.find(app_id);
+void setApplicationPermissions(const char* appID, int protectionFlag) {
+    auto it = apps.find(appID);
     if (it == apps.end()) {
-        // If the lib_name doesn't exist, insert a new entry with a new list
-        std::list < std::tuple < void * , size_t >> new_list;
-        new_list.push_back(new_entry);
-        apps.insert(std::make_pair(app_id, new_list));
-    } else {
-        // If the lib_name exists, append the new tuple to the existing list
-        it -> second.push_back(new_entry);
+        errExit("Application ID not found in the memory map.");
     }
-}
 
-int callback(struct dl_phdr_info* info, size_t size, void* data) {
-    lib_info * callback_data = (lib_info * ) data;
-    const char* lib_name = callback_data->lib_name;
-    const char* app_id = callback_data->app_id;
-
-    if (!strcmp(info -> dlpi_name, lib_name)) {
-        // Iterate over the program headers of the shared object
-        for (int i = 0; i < info->dlpi_phnum; i++) {
-            // Check if the program header is of type PT_DYNAMIC
-            if (info->dlpi_phdr[i].p_type == PT_DYNAMIC) {
-                // Retrieve the address of the dynamic section
-                ElfW(Dyn)* dyn = reinterpret_cast<ElfW(Dyn)*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr);
-
-                ElfW(Sym)* symtab = nullptr;
-                const char* strtab = nullptr;
-
-                // Iterate over the entries in the dynamic section
-                for (ElfW(Dyn)* entry = dyn; entry->d_tag != DT_NULL; entry++) {
-                    // Find the dynamic symbol table
-                    if (entry->d_tag == DT_SYMTAB) {
-                        // Retrieve the address of the dynamic symbol table
-                        symtab = reinterpret_cast<ElfW(Sym)*>(info->dlpi_addr + entry->d_un.d_ptr);
-                    }
-                    // Find the string table containing symbol names
-                    else if (entry->d_tag == DT_STRTAB) {
-                        // Retrieve the address of the string table
-                        strtab = reinterpret_cast<const char*>(info->dlpi_addr + entry->d_un.d_ptr);
-                    }
-                }
-
-                // Iterate over symbols in the dynamic symbol table
-                if (symtab && strtab) {
-                    for (ElfW(Sym)* symbol = symtab; symbol->st_name; symbol++) {
-                        void* address = (void*)(info->dlpi_addr + symbol->st_value);
-                        size_t size = symbol->st_size;
-                        insert_item(app_id, address, size);
-                    }
-                }
-            }
+    const std::vector<MemoryRegion>& memoryRegions = it->second;
+    for (const MemoryRegion& region : memoryRegions) {
+        if (pkey_mprotect(region.address, region.size, protectionFlag, ERIM_TRUSTED_DOMAIN_ID(ERIM_FLAGS)) == -1) {
+            errExit("pkey_mprotect error");
         }
-        return 1;
     }
-
-    return 0;
 }
 
-lib_info getInfo(const char * str) {
-    std::stringstream ss(str);
+std::string extractBaseName(const std::string& filePath) {
+    size_t lastSlashPos = filePath.find_last_of('/');
+    if (lastSlashPos != std::string::npos) {
+        return filePath.substr(lastSlashPos + 1);
+    }
+    return filePath;
+}
+
+void getMemoryRegions(LibraryInfo *info) {
+    const char* libraryPath = info->path;
+    const char* appID = info->appID;
+
+    std::ifstream mapsFile("/proc/self/maps");
+    if (!mapsFile) {
+        errExit("Failed to open /proc/self/maps");
+    }
+
+    std::string libraryName = extractBaseName(libraryPath);    
+    
+    std::string line;
+    while (std::getline(mapsFile, line)) {
+        if (line.find(libraryName) == std::string::npos) 
+            continue;
+            
+        std::istringstream iss(line);
+        std::string addressRange;
+
+        if (!(iss >> addressRange))
+            continue;
+
+        std::istringstream rangeStream(addressRange);
+        std::string startAddress, endAddress;
+        std::getline(rangeStream, startAddress, '-');
+        std::getline(rangeStream, endAddress);
+
+        MemoryRegion memoryRegion;
+        std::istringstream startStream(startAddress);
+        startStream >> std::hex >> memoryRegion.address;
+
+        std::istringstream endStream(endAddress);
+        size_t start = (size_t) memoryRegion.address;
+        endStream >> std::hex >> memoryRegion.size;
+
+        memoryRegion.size -= start;
+        apps[appID].push_back(memoryRegion);
+    }
+
+    mapsFile.close();
+}
+
+void printApps() {
+    for (const auto& entry : apps) {
+        const std::string& appID = entry.first;
+        const std::vector<MemoryRegion>& memoryRegions = entry.second;
+
+        std::cout << "App ID: " << appID << std::endl;
+
+        for (const MemoryRegion& region : memoryRegions) {
+            std::cout << "\tStart Address: " << region.address << ", Size: " << region.size << " bytes" << std::endl;
+        }
+
+        std::cout << std::endl;
+    }
+}
+
+LibraryInfo parse_input(const char* input) {
+    std::stringstream ss(input);
     std::string token1, token2;
 
     std::getline(ss, token1, ':');
     std::getline(ss, token2, ':');
 
-    const char* app_id = token1.c_str();
-    const char* filename = token2.c_str();
-
-    return {
-        filename,
-        app_id
-    };
+    return { token1.c_str(), token2.c_str() };
 }
+
 
 /* Memory allocation and mapping */
 void * malloc(size_t size) {
@@ -122,22 +139,28 @@ int munmap(void * addr, size_t length) {
     return erim_munmap(addr, length);
 }
 
+
 /* Library loading */
-void * dlopen(const char * filename, int flag) {
-    lib_info info = getInfo(filename);
+void * dlopen(const char * input, int flag) {
+    //LibraryInfo info = parse_input(input);
 
-    void * handle = real_dlopen((&info)->lib_name, flag);
+    LibraryInfo info = { // For testing
+        "application_id",
+        input
+    };
 
-    // get address and size of library
-    dl_iterate_phdr(callback, & info);
+    void * handle = real_dlopen((&info)->path, flag);
 
+    getMemoryRegions(&info);
+    //printApps();
+    
     // Scanmem for wrpkru
     if (erim_memScan(NULL, NULL, ERIM_UNTRUSTED_PKRU)) {
         exit(EXIT_FAILURE);
     }
-
     return handle;
 }
+
 
 /* Threads */
 int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * start_routine)(void * ), void * arg) {
