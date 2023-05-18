@@ -25,7 +25,7 @@ import javassist.expr.MethodCall;
 import java.lang.System;
 public class NativeRedirection extends CodeDumper {
 
-    private final String application_id = generateUniqueId();
+    private final static String application_id = generateUniqueId();
 
     public NativeRedirection(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);
@@ -125,18 +125,22 @@ public class NativeRedirection extends CodeDumper {
         File file = new File("gen-snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include \"" + className + ".h\"\n");
+            writer.write("#include \"../libs/preload.h\"\n");
             writer.write("#include \"../common/common.h\"\n");
             writer.write("#include \"../erim/erim.h\"\n\n");
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE)\n");
             writer.write("\terim_switch_to_untrusted;\n");
 
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);
                 writer.write("\terim_switch_to_trusted;\n");
+                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE)\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
                 writer.write("\terim_switch_to_trusted;\n");
+                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE)\n");
                 writer.write("\treturn res;\n");
             }
 
