@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 
 int main() {
     // Load the shared library
@@ -9,7 +11,7 @@ int main() {
         fprintf(stderr, "Error: %s\n", dlerror());
         exit(1);
     }
-
+    
     dlclose(handle);
 
     return 0;

@@ -122,25 +122,33 @@ public class NativeRedirection extends CodeDumper {
 
         String mc = "Java_" + className + "_" + methodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
 
-        File file = new File("gen-snippets", methodName + ".c");
+        File file = new File("gen-snippets", methodName + ".c++");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include \"" + className + ".h\"\n");
-            writer.write("#include \"../libs/preload.h\"\n");
-            writer.write("#include \"../common/common.h\"\n");
-            writer.write("#include \"../erim/erim.h\"\n\n");
+            writer.write("#include \"../libs/preload.h\"\n\n");
+
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE)\n");
+            writer.write("\t// Grant library access from untrusted domain\n");
+            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 0);\n\n");
+
+            writer.write("\t// Isolate method execution\n");
             writer.write("\terim_switch_to_untrusted;\n");
 
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);
-                writer.write("\terim_switch_to_trusted;\n");
-                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE)\n");
+                writer.write("\terim_switch_to_trusted;\n\n");
+                writer.write("\tif (runningThreads[0].empty()) {\n");
+                writer.write("\t\t// Undo previous permission changes\n");
+                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 0);\n");
+                writer.write("\t}\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\terim_switch_to_trusted;\n");
-                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE)\n");
+                writer.write("\terim_switch_to_trusted;\n\n");
+                writer.write("\tif (runningThreads[0].empty()) {\n");
+                writer.write("\t\t// Undo previous permission changes\n");
+                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 0);\n");
+                writer.write("\t}\n");
                 writer.write("\treturn res;\n");
             }
 

@@ -1,12 +1,20 @@
 #include "preload.h"
 
-#define ERIM_FLAGS = ERIM_FLAG_ISOLATE_TRUSTED | ERIM_FLAG_INTEGRITY_ONLY
-
 std::unordered_map<std::string, std::vector<MemoryRegion>> apps;
+std::unordered_map<int, std::vector<pthread_t>> runningThreads;
+std::mutex runningThreadsMutex;
+
+static __thread int no_hook = 0;
 
 
 /* Function pointers declarations */
 static int( * real_pthread_create)(pthread_t * , const pthread_attr_t * , void * ( * )(void * ), void * ) = NULL;
+static int( * real_munmap)(void *, size_t) = NULL;
+static void( * real_pthread_exit)(void *) = NULL;
+static void( * real_free)(void *) = NULL;
+static void * ( * real_malloc)(size_t) = NULL;
+static void * ( * real_realloc)(void *, size_t) = NULL;
+static void * ( * real_mmap)(void *, size_t, int, int, int, off_t) = NULL;
 static void * ( * real_dlopen)(const char * , int) = NULL;
 
 
@@ -14,17 +22,23 @@ static void * ( * real_dlopen)(const char * , int) = NULL;
 static void __attribute__((constructor)) init(void) {
     // Set function pointers
     real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
+    real_pthread_exit = reinterpret_cast < decltype(real_pthread_exit) > (dlsym(RTLD_NEXT, "pthread_exit"));
+    real_malloc = reinterpret_cast < decltype(real_malloc) > (dlsym(RTLD_NEXT, "malloc"));
+    real_realloc = reinterpret_cast < decltype(real_realloc) > (dlsym(RTLD_NEXT, "realloc"));
+    real_free = reinterpret_cast < decltype(real_free) > (dlsym(RTLD_NEXT, "free"));
+    real_mmap = reinterpret_cast < decltype(real_mmap) > (dlsym(RTLD_NEXT, "mmap"));
+    real_munmap = reinterpret_cast < decltype(real_munmap) > (dlsym(RTLD_NEXT, "munmap"));
     real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
 
     // Initialize isolation
-    if (erim_init(8192, ERIM_FLAGS)) {
+    if (erim_init(8192, ERIM_FLAG_ISOLATE_TRUSTED)) {
         exit(EXIT_FAILURE);
     }
 }
 
 
 /* Auxiliary functions */
-void setApplicationPermissions(const char* appID, int protectionFlag) {
+void setApplicationPermissions(const char* appID, int protectionFlag, int pkey) {
     auto it = apps.find(appID);
     if (it == apps.end()) {
         errExit("Application ID not found in the memory map.");
@@ -32,7 +46,7 @@ void setApplicationPermissions(const char* appID, int protectionFlag) {
 
     const std::vector<MemoryRegion>& memoryRegions = it->second;
     for (const MemoryRegion& region : memoryRegions) {
-        if (pkey_mprotect(region.address, region.size, protectionFlag, ERIM_TRUSTED_DOMAIN_ID(ERIM_FLAGS)) == -1) {
+        if (pkey_mprotect(region.address, region.size, protectionFlag, pkey) == -1) {
             errExit("pkey_mprotect error");
         }
     }
@@ -116,27 +130,70 @@ LibraryInfo parse_input(const char* input) {
 
 /* Memory allocation and mapping */
 void * malloc(size_t size) {
-    return erim_malloc(size);
-}
+    void *ret;
 
-void * zalloc(size_t size) {
-    return erim_zalloc(size);
+    if (no_hook) {
+        return (*real_malloc)(size);
+    }
+
+    no_hook = 1;
+    ret = (*erim_malloc)(size);
+    no_hook = 0;
+
+    return ret;
 }
 
 void * realloc(void * ptr, size_t size) {
-    return erim_realloc(ptr, size);
+    void *ret;
+
+    if (no_hook) {
+        return (*real_realloc)(ptr, size);
+    }
+
+    no_hook = 1;
+    ret = (*erim_realloc)(ptr, size);
+    no_hook = 0;
+
+    return ret;
 }
 
 void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offset) {
-    return erim_mmap_isolated(addr, length, prot, flags, fd, offset);
+    void *ret;
+
+    if (no_hook) {
+        return (*real_mmap)(addr, length, prot, flags, fd, offset);
+    }
+
+    no_hook = 1;
+    ret = erim_mmap_isolated(addr, length, prot, flags, fd, offset);
+    no_hook = 0;
+
+    return ret;
 }
 
 void free(void * ptr) {
+    if (no_hook) {
+        real_free(ptr);
+        return;
+    }
+
+    no_hook = 1;
     erim_free(ptr);
+    no_hook = 0;
 }
 
 int munmap(void * addr, size_t length) {
-    return erim_munmap(addr, length);
+    int ret;
+
+    if (no_hook) {
+        return real_munmap(addr, length);
+    }
+
+    no_hook = 1;
+    ret = erim_munmap(addr, length);
+    no_hook = 0;
+
+    return ret;
 }
 
 
@@ -144,7 +201,7 @@ int munmap(void * addr, size_t length) {
 void * dlopen(const char * input, int flag) {
     //LibraryInfo info = parse_input(input);
 
-    LibraryInfo info = { // For testing
+    LibraryInfo info = {
         "application_id",
         input
     };
@@ -152,18 +209,36 @@ void * dlopen(const char * input, int flag) {
     void * handle = real_dlopen((&info)->path, flag);
 
     getMemoryRegions(&info);
-    //printApps();
+    printApps();
     
-    // Scanmem for wrpkru
-    if (erim_memScan(NULL, NULL, ERIM_UNTRUSTED_PKRU)) {
-        exit(EXIT_FAILURE);
-    }
     return handle;
 }
 
 
 /* Threads */
 int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * start_routine)(void * ), void * arg) {
-    //fprintf(stderr, "pthread_create(): thread with id %lu\n", *thread);
-    return real_pthread_create(thread, attr, start_routine, arg);
+    int result = real_pthread_create(thread, attr, start_routine, arg);
+
+    if (result == 0) {
+        int domain = ERIM_EXEC_DOMAIN(__rdpkru());
+        {
+            std::lock_guard<std::mutex> lock(runningThreadsMutex);
+            runningThreads[domain].push_back(*thread);
+        }
+    }
+
+    return result;
+}
+
+void pthread_exit(void* value_ptr) {
+    pthread_t currentThread = pthread_self();
+    int domain = ERIM_EXEC_DOMAIN(__rdpkru());
+
+    {
+        std::lock_guard<std::mutex> lock(runningThreadsMutex);
+        std::vector<pthread_t> tvec = runningThreads[domain];
+        tvec.erase(std::remove(tvec.begin(), tvec.end(), currentThread), tvec.end());
+    }
+
+    real_pthread_exit(value_ptr);
 }
