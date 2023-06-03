@@ -19,19 +19,9 @@ static void * ( * real_dlopen)(const char * , int) = NULL;
 
 
 /* Constructor */
-static void __attribute__((constructor)) init(void) {
-    // Set function pointers
-    real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
-    real_pthread_exit = reinterpret_cast < decltype(real_pthread_exit) > (dlsym(RTLD_NEXT, "pthread_exit"));
-    real_malloc = reinterpret_cast < decltype(real_malloc) > (dlsym(RTLD_NEXT, "malloc"));
-    real_realloc = reinterpret_cast < decltype(real_realloc) > (dlsym(RTLD_NEXT, "realloc"));
-    real_free = reinterpret_cast < decltype(real_free) > (dlsym(RTLD_NEXT, "free"));
-    real_mmap = reinterpret_cast < decltype(real_mmap) > (dlsym(RTLD_NEXT, "mmap"));
-    real_munmap = reinterpret_cast < decltype(real_munmap) > (dlsym(RTLD_NEXT, "munmap"));
-    real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
-
+void __attribute__((constructor)) init() {
     // Initialize isolation
-    if (erim_init(8192, ERIM_FLAG_ISOLATE_TRUSTED)) {
+    if (erim_init(32768, ERIM_FLAG_ISOLATE_TRUSTED)) {
         exit(EXIT_FAILURE);
     }
 }
@@ -61,44 +51,30 @@ std::string extractBaseName(const std::string& filePath) {
 }
 
 void getMemoryRegions(LibraryInfo *info) {
-    const char* libraryPath = info->path;
     const char* appID = info->appID;
+    std::string libraryName = extractBaseName(info->path);    
 
     std::ifstream mapsFile("/proc/self/maps");
     if (!mapsFile) {
         errExit("Failed to open /proc/self/maps");
     }
 
-    std::string libraryName = extractBaseName(libraryPath);    
-    
     std::string line;
+    MemoryRegion memoryRegion;
     while (std::getline(mapsFile, line)) {
-        if (line.find(libraryName) == std::string::npos) 
+        if (line.find(libraryName) == std::string::npos) {
             continue;
-            
-        std::istringstream iss(line);
-        std::string addressRange;
+        }
 
-        if (!(iss >> addressRange))
-            continue;
+        unsigned long startAddress, endAddress;
+        sscanf(line.c_str(), "%lx-%lx", &startAddress, &endAddress);
 
-        std::istringstream rangeStream(addressRange);
-        std::string startAddress, endAddress;
-        std::getline(rangeStream, startAddress, '-');
-        std::getline(rangeStream, endAddress);
+        memoryRegion.address = reinterpret_cast<void*>(startAddress);
+        memoryRegion.size = endAddress - startAddress;
 
-        MemoryRegion memoryRegion;
-        std::istringstream startStream(startAddress);
-        startStream >> std::hex >> memoryRegion.address;
-
-        std::istringstream endStream(endAddress);
-        size_t start = (size_t) memoryRegion.address;
-        endStream >> std::hex >> memoryRegion.size;
-
-        memoryRegion.size -= start;
         apps[appID].push_back(memoryRegion);
     }
-
+    
     mapsFile.close();
 }
 
@@ -129,8 +105,13 @@ LibraryInfo parse_input(const char* input) {
 
 
 /* Memory allocation and mapping */
+
 void * malloc(size_t size) {
     void *ret;
+
+    if (real_malloc == NULL) {
+        real_malloc = reinterpret_cast < decltype(real_malloc) > (dlsym(RTLD_NEXT, "malloc"));
+    }
 
     if (no_hook) {
         return (*real_malloc)(size);
@@ -143,8 +124,31 @@ void * malloc(size_t size) {
     return ret;
 }
 
+
+/*
+void free(void * ptr) {
+    if (real_free == NULL) {
+        real_free = reinterpret_cast < decltype(real_free) > (dlsym(RTLD_NEXT, "free"));
+    }
+
+    if (no_hook) {
+        real_free(ptr);
+        return;
+    }
+
+    no_hook = 1;
+    erim_free(ptr);
+    no_hook = 0;
+}
+*/
+
+/*
 void * realloc(void * ptr, size_t size) {
     void *ret;
+
+    if (real_realloc == NULL) {
+        real_realloc = reinterpret_cast < decltype(real_realloc) > (dlsym(RTLD_NEXT, "realloc"));
+    }
 
     if (no_hook) {
         return (*real_realloc)(ptr, size);
@@ -156,9 +160,13 @@ void * realloc(void * ptr, size_t size) {
 
     return ret;
 }
-
+*/
 void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offset) {
     void *ret;
+    
+    if (real_mmap == NULL) {
+        real_mmap = reinterpret_cast < decltype(real_mmap) > (dlsym(RTLD_NEXT, "mmap"));
+    }
 
     if (no_hook) {
         return (*real_mmap)(addr, length, prot, flags, fd, offset);
@@ -171,19 +179,12 @@ void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offse
     return ret;
 }
 
-void free(void * ptr) {
-    if (no_hook) {
-        real_free(ptr);
-        return;
-    }
-
-    no_hook = 1;
-    erim_free(ptr);
-    no_hook = 0;
-}
-
 int munmap(void * addr, size_t length) {
     int ret;
+    fprintf(stderr, "CARAGOOO\n");
+    if (real_munmap == NULL) {
+        real_munmap = reinterpret_cast < decltype(real_munmap) > (dlsym(RTLD_NEXT, "munmap"));
+    }
 
     if (no_hook) {
         return real_munmap(addr, length);
@@ -198,7 +199,12 @@ int munmap(void * addr, size_t length) {
 
 
 /* Library loading */
+
 void * dlopen(const char * input, int flag) {
+    if (real_dlopen == NULL) {
+        real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
+    }
+
     //LibraryInfo info = parse_input(input);
 
     LibraryInfo info = {
@@ -216,7 +222,12 @@ void * dlopen(const char * input, int flag) {
 
 
 /* Threads */
+
 int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * start_routine)(void * ), void * arg) {
+    if (real_pthread_create == NULL) {
+        real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
+    }
+
     int result = real_pthread_create(thread, attr, start_routine, arg);
 
     if (result == 0) {
@@ -231,6 +242,10 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * s
 }
 
 void pthread_exit(void* value_ptr) {
+    if (real_pthread_exit == NULL) {
+        real_pthread_exit = reinterpret_cast < decltype(real_pthread_exit) > (dlsym(RTLD_NEXT, "pthread_exit"));
+    }
+    
     pthread_t currentThread = pthread_self();
     int domain = ERIM_EXEC_DOMAIN(__rdpkru());
 

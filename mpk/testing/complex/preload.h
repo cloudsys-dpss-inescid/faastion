@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 #include <dlfcn.h>
 #include <fstream>
 #include <iostream>
