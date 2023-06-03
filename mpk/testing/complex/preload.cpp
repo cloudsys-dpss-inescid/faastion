@@ -60,6 +60,7 @@ void getMemoryRegions(LibraryInfo *info) {
     }
 
     std::string line;
+    line.reserve(256);
     MemoryRegion memoryRegion;
     while (std::getline(mapsFile, line)) {
         if (line.find(libraryName) == std::string::npos) {
@@ -74,7 +75,7 @@ void getMemoryRegions(LibraryInfo *info) {
 
         apps[appID].push_back(memoryRegion);
     }
-    
+
     mapsFile.close();
 }
 
@@ -181,7 +182,7 @@ void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offse
 
 int munmap(void * addr, size_t length) {
     int ret;
-    fprintf(stderr, "CARAGOOO\n");
+
     if (real_munmap == NULL) {
         real_munmap = reinterpret_cast < decltype(real_munmap) > (dlsym(RTLD_NEXT, "munmap"));
     }
