@@ -1,8 +1,19 @@
+CC = gcc
+
+CFLAGS = -Wall -g -fno-inline -I..
+
+LIBRARIES=../common/libswscommon.a ../erim/liberim.a
+LDLIBS= -lm $(LIBRARIES)
+
+TARGET = test
+
+.PHONY: build run clean
+
 build:
-	g++ -Wall -g -I.. -fno-inline -o test test_application.c -lm ../common/libswscommon.a ../erim/liberim.a
+	$(CC) $(CFLAGS) -o $(TARGET) test_application.c $(LDLIBS)
 
 run:
-	./test
+	./$(TARGET)
 
 clean:
-	rm test
+	rm -f $(TARGET)
