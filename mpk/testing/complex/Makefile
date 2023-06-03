@@ -23,7 +23,7 @@ libhello.so: hello.c
 target: test.c
 	$(CC) $(CFLAGS) -o $(TARGET) test.c $(LDFLAGS)
 
-run: preload.so test
+run: preload.so target
 	LD_PRELOAD=./preload.so ./$(TARGET)
 
 clean:
