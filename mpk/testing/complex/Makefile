@@ -27,7 +27,7 @@ run: preload.so libhello.so target
 	LD_PRELOAD=./preload.so ./$(TARGET)
 
 gdb: preload.so libhello.so target
-	gdb ./test -ex "set exec-wrapper env 'LD_PRELOAD=./preload.so'"
+	gdb ./$(TARGET) -ex "set exec-wrapper env 'LD_PRELOAD=./preload.so'"
 
 clean:
 	rm -f *.so $(TARGET)
