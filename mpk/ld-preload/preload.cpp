@@ -24,6 +24,7 @@ void __attribute__((constructor)) init() {
     if (erim_init(32768, ERIM_FLAG_ISOLATE_TRUSTED)) {
         exit(EXIT_FAILURE);
     }
+    erim_switch_to_untrusted;
 }
 
 
@@ -125,8 +126,6 @@ void * malloc(size_t size) {
     return ret;
 }
 
-
-/*
 void free(void * ptr) {
     if (real_free == NULL) {
         real_free = reinterpret_cast < decltype(real_free) > (dlsym(RTLD_NEXT, "free"));
@@ -141,9 +140,8 @@ void free(void * ptr) {
     erim_free(ptr);
     no_hook = 0;
 }
-*/
 
-/*
+
 void * realloc(void * ptr, size_t size) {
     void *ret;
 
@@ -161,10 +159,10 @@ void * realloc(void * ptr, size_t size) {
 
     return ret;
 }
-*/
+
 void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offset) {
     void *ret;
-    
+
     if (real_mmap == NULL) {
         real_mmap = reinterpret_cast < decltype(real_mmap) > (dlsym(RTLD_NEXT, "mmap"));
     }
@@ -205,14 +203,12 @@ void * dlopen(const char * input, int flag) {
     if (real_dlopen == NULL) {
         real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
     }
+    
+    if (std::strchr(input, ':') == nullptr) {
+        return real_dlopen(input, flag);
+    }
 
-    //LibraryInfo info = parse_input(input);
-
-    LibraryInfo info = {
-        "application_id",
-        input
-    };
-
+    LibraryInfo info = parse_input(input);
     void * handle = real_dlopen((&info)->path, flag);
 
     getMemoryRegions(&info);
@@ -228,6 +224,7 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * s
     if (real_pthread_create == NULL) {
         real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
     }
+    fprintf(stderr, "pthread_create\n");
 
     int result = real_pthread_create(thread, attr, start_routine, arg);
 
@@ -255,6 +252,7 @@ void pthread_exit(void* value_ptr) {
         std::vector<pthread_t> tvec = runningThreads[domain];
         tvec.erase(std::remove(tvec.begin(), tvec.end(), currentThread), tvec.end());
     }
+
 
     real_pthread_exit(value_ptr);
 }

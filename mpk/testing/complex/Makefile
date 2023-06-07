@@ -5,7 +5,7 @@ CXXFLAGS := -Wall -g -I.. -fno-inline
 CFLAGS := -g
 LDFLAGS := -ldl
 
-LIBRARIES =../common/libswscommon.a ../erim/liberim.a
+LIBRARIES =../../erim/libswscommon.a ../../erim/liberim.a
 LDLIBS = -lm $(LIBRARIES)
 
 TARGET = test
@@ -14,8 +14,9 @@ TARGET = test
 
 build: preload.so libhello.so target
 
-preload.so: preload.cpp
-	$(CXX) $(CXXFLAGS) -fPIC -shared -o preload.so preload.cpp $(LDLIBS)
+preload.so:
+	make build -C ../../ld-preload
+	mv ../../ld-preload/preload.so .
 
 libhello.so: hello.c
 	$(CC) $(CFLAGS) -shared -o libhello.so hello.c

@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -Wall -g -fno-inline -I..
 
-LIBRARIES =../common/libswscommon.a ../erim/liberim.a
+LIBRARIES =../../erim/libswscommon.a ../../erim/liberim.a
 LDLIBS = -lm $(LIBRARIES)
 
 TARGET = test

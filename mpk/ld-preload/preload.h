@@ -23,7 +23,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include "../common/common.h"
+#include "../erim/common.h"
 #include "../erim/erim.h"
 
 #define errExit(msg) do { \
@@ -42,7 +42,7 @@ struct MemoryRegion {
     size_t size;
 };
 
-void setApplicationPermissions(const char* appID, int protectionFlag);
+void setApplicationPermissions(const char* appID, int protectionFlag, int pkey);
 
 extern std::unordered_map<int, std::vector<pthread_t>> runningThreads;
 

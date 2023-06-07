@@ -90,7 +90,7 @@ public class NativeRedirection extends CodeDumper {
     }
 
     public static void createHeader(String[] jniTypes, String returnJniType, String className) throws IOException {
-        File file = new File("gen-snippets", className + ".h");
+        File file = new File("snippets", className + ".h");
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include <jni.h>\n\n");
@@ -120,14 +120,19 @@ public class NativeRedirection extends CodeDumper {
             .mapToObj(i -> jniTypes[i] + " " + args[i])
             .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
 
-        String mc = "Java_" + className + "_" + methodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
+        String nativeMethodName = "Java_" + className + "_" + methodName;
+        String mc = nativeMethodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
 
-        File file = new File("gen-snippets", methodName + ".c++");
+        File file = new File("snippets", methodName + ".c++");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include \"" + className + ".h\"\n");
-            writer.write("#include \"../libs/preload.h\"\n\n");
+            writer.write("#include \"../../../../ld-preload/preload.h\"\n\n");
+            
+            writer.write("static void ( * " + nativeMethodName + ")(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = NULL;\n\n");
 
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("\t" + nativeMethodName + " = reinterpret_cast < decltype(" + nativeMethodName + ") > (dlsym(RTLD_NEXT, \"" + nativeMethodName + "\"));\n");
+            writer.write("\tprintf(\"%p\\n\", " + nativeMethodName + ");\n");
             writer.write("\t// Grant library access from untrusted domain\n");
             writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 0);\n\n");
 
