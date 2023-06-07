@@ -1,0 +1,1 @@
+rm -rf bin snippets HelloJNI.class HelloJNI.h run.sh
