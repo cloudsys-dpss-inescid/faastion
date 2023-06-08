@@ -96,13 +96,11 @@ void printApps() {
 }
 
 LibraryInfo parse_input(const char* input) {
-    std::stringstream ss(input);
-    std::string token1, token2;
+    char appID[256], path[256];
 
-    std::getline(ss, token1, ':');
-    std::getline(ss, token2, ':');
+    sscanf(input, "%s:%s", appID, path);
 
-    return { token1.c_str(), token2.c_str() };
+    return { appID, path };
 }
 
 
@@ -224,7 +222,6 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * s
     if (real_pthread_create == NULL) {
         real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
     }
-    fprintf(stderr, "pthread_create\n");
 
     int result = real_pthread_create(thread, attr, start_routine, arg);
 
