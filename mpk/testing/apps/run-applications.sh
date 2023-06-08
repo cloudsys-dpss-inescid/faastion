@@ -61,7 +61,7 @@ function compile_snippets {
     cd $(DIR)/$application
     for file in $(find "snippets" -type f -name "*.c++"); do
         name=$(basename "$file" .c++)
-        g++ -Wall -O2 -g -I. -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -fno-inline -fPIC -shared -o "bin/lib$name.so" "$file" -lm "../../../erim/libswscommon.a" "../../../erim/liberim.a"
+        g++ -Wall -O2 -g -I. -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -fno-inline -fPIC -shared bin/preload.so -o "bin/lib$name.so" "$file" -lm ../../../erim/libswscommon.a ../../../erim/liberim.a
     done
     cd - &>/dev/null
 }
@@ -85,11 +85,11 @@ do
     echo "Running javassist for $application..."
     run_javassist
 
-    echo "Compiling snippets for $application..."
-    compile_snippets
-
     echo "Copying preload lib to $application..."
     copy_preload_lib
+
+    echo "Compiling snippets for $application..."
+    compile_snippets
 
     echo "Running $application..."
     run_application
