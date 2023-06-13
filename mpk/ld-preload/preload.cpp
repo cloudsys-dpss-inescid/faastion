@@ -198,11 +198,14 @@ int munmap(void * addr, size_t length) {
 /* Library loading */
 
 void * dlopen(const char * input, int flag) {
+    fprintf(stderr, "INPUT %s\n", input);
+
     if (real_dlopen == NULL) {
         real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
     }
     
     if (std::strchr(input, ':') == nullptr) {
+        fprintf(stderr, "IN\n");
         return real_dlopen(input, flag);
     }
 
@@ -226,10 +229,12 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * s
     int result = real_pthread_create(thread, attr, start_routine, arg);
 
     if (result == 0) {
+        fprintf(stderr, "Tou aqui\n");
         int domain = ERIM_EXEC_DOMAIN(__rdpkru());
         {
             std::lock_guard<std::mutex> lock(runningThreadsMutex);
             runningThreads[domain].push_back(*thread);
+            fprintf(stderr, "Tou ali\n");
         }
     }
 

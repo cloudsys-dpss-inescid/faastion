@@ -134,25 +134,25 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t" + nativeMethodName + " = reinterpret_cast < decltype(" + nativeMethodName + ") > (dlsym(RTLD_NEXT, \"" + nativeMethodName + "\"));\n");
             writer.write("\tprintf(\"%p\\n\", " + nativeMethodName + ");\n");
             writer.write("\t// Grant library access from untrusted domain\n");
-            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 0);\n\n");
+            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 1);\n\n");
 
             writer.write("\t// Isolate method execution\n");
-            writer.write("\terim_switch_to_untrusted;\n");
+            writer.write("\terim_switch_to_trusted;\n");
 
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);
-                writer.write("\terim_switch_to_trusted;\n\n");
+                writer.write("\terim_switch_to_untrusted;\n\n");
                 writer.write("\tif (runningThreads[0].empty()) {\n");
                 writer.write("\t\t// Undo previous permission changes\n");
-                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 0);\n");
+                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
                 writer.write("\t}\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\terim_switch_to_trusted;\n\n");
+                writer.write("\terim_switch_to_untrusted;\n\n");
                 writer.write("\tif (runningThreads[0].empty()) {\n");
                 writer.write("\t\t// Undo previous permission changes\n");
-                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 0);\n");
+                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
                 writer.write("\t}\n");
                 writer.write("\treturn res;\n");
             }

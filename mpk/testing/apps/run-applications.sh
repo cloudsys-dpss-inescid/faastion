@@ -95,7 +95,7 @@ do
     run_application
 
     echo "Cleaning..."
-    clean_application
+    #clean_application
     clean_preload
 done
 

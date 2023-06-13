@@ -7,7 +7,7 @@ LDLIBS=-lm $(LIBRARIES)
 .PHONY: build clean
 
 build: preload.cpp preload.h
-	$(CXX) $(CXXFLAGS) -fPIC -shared -o preload.so preload.cpp $(LDLIBS)
+	$(CXX) $(CXXFLAGS) -fPIC -shared -o libpreload.so preload.cpp $(LDLIBS)
 
 clean:
-	rm -f preload.so
+	rm -f libpreload.so
