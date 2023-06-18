@@ -97,7 +97,7 @@ function domain_vary_pages {
 	    --std     $DIR/results/domain-pages-std.dat \
 	    --xvalues $DIR/results/num-pages.dat \
 	    --ylabel  "pkey_protect latency (ns)" \
-	    --xlabel  "Number of Pages" \
+	    --xlabel  "Number of (Contiguous) Pages" \
 	    --plot    "domain_vary_pages"
 
     echo "All done!"
