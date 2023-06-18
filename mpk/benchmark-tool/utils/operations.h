@@ -1,11 +1,11 @@
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                          } while (0)
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 struct arguments {
-    int* buffer;
+    void* buffer;
+    size_t buffer_size;
     int pkey;
 };
 
 arguments* get_thread_args(int numberPages);
-int* mem_alloc(int numberPages);
+void* mem_alloc(int numberPages);
 int key_alloc();

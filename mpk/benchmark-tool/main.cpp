@@ -11,6 +11,7 @@
 #include "utils/operations.h"
 
 #define ROUNDS 100
+#define WARMUP 50
 
 std::map<int, long*> my_map;
 int numberThreads = 0;
@@ -22,7 +23,8 @@ void* domain(void *args)
 {
     long* my_times = (long*)malloc(ROUNDS * sizeof(long));
     TIMER startTime, stopTime, temp;
-    int* buffer = ((struct arguments*)args)->buffer;
+    void* buffer = ((struct arguments*)args)->buffer;
+    size_t buffer_size = ((struct arguments*)args)->buffer_size;
     int pkey = ((struct arguments*)args)->pkey;
 
     if (pkey < 0) {
@@ -36,7 +38,7 @@ void* domain(void *args)
         /*
          * Set the protection key on "buffer".
          */
-        if (pkey_mprotect(buffer, getpagesize(), PROT_READ | PROT_WRITE, pkey) == -1) {
+        if (pkey_mprotect(buffer, buffer_size, PROT_READ, pkey)) {
             errExit("pkey_mprotect");
         }
 
@@ -78,24 +80,22 @@ void* access(void *args)
 
 void run_threads()
 {
-    pthread_t * slaves = (pthread_t*) malloc(sizeof(pthread_t)*numberThreads);
-
-    arguments *args = get_thread_args(numberPages);
+    pthread_t * workers = (pthread_t*) malloc(sizeof(pthread_t)*numberThreads);
 
     for (int i = 0; i < numberThreads; i++) {
-        if (pthread_create(&slaves[i], NULL, option, (void *)args) != 0){
+        if (pthread_create(&workers[i], NULL, option, (void *)get_thread_args(numberPages)) != 0){
             perror("Can't create thread\n");
             errExit("pthread_create");
         }
     }
 
     for(int i = 0; i < numberThreads; i++) {
-        if(pthread_join(slaves[i], NULL)) {
+        if(pthread_join(workers[i], NULL)) {
             perror("Thread can't join\n");
             errExit("pthread_join");
         }
     }
-    free(slaves);
+    free(workers);
 }
 
 void print_benchmark_results()
@@ -104,7 +104,7 @@ void print_benchmark_results()
 
     for (const auto &ele : my_map) {
         long* times = (long*)ele.second;
-        for (int i = 0; i < ROUNDS; i++) {
+        for (int i = WARMUP; i < ROUNDS; i++) {
             fprintf(stdout, "%d\n", times[i]);
         }
     }
@@ -112,33 +112,34 @@ void print_benchmark_results()
 
 void parse_args (int argc, char* argv[])
 {
-    if (argc != 4)
-        errExit("Invalid format\n");
+    if (argc != 4) {
+        errExit("Syntax: ./benchmark <mode> <number of threads> <number of pages>. Mode can be domain or access.\n");
+    }
 
     numberThreads = atoi(argv[2]);
     numberPages = atoi(argv[3]);
 
-    if (numberThreads <= 0)
+    if (numberThreads <= 0) {
         errExit("Invalid number of threads\n");
-    if (numberPages <= 0)
+    }
+
+    if (numberPages <= 0) {
         errExit("Invalid number of pages\n");
-    if (!strcmp(argv[1],"domain"))
+    }
+
+    if (!strcmp(argv[1],"domain")) {
         option = &domain;
-    else if (!strcmp(argv[1],"access"))
+    } else if (!strcmp(argv[1],"access")) {
         option = &access;
-    else
+    } else {
         errExit("Invalid option\n");
+    }
 }
 
 int main(int argc, char* argv[])
 {
-    /* initial arguments */
     parse_args(argc, argv);
-
-    /* create and run threads */
     run_threads();
-
     print_benchmark_results();
-
-    exit(EXIT_SUCCESS);
+    return 0;
 }
