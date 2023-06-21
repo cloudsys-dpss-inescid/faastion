@@ -79,7 +79,7 @@ function domain_vary_pages {
     for num in 4000 8000 16000 32000 64000 12800 256000
     do
         echo "Processing with ${num} pages..."
-        for i in $(seq 10)
+        for i in $(seq 1000)
         do
             $DIR/../benchmark domain $NUM_THREADS $num >> $DIR/results/domain-pages-$NUM_THREADS-$num-$i.log
         done

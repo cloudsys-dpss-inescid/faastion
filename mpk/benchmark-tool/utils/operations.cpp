@@ -9,7 +9,8 @@ arguments* get_thread_args(int numberPages)
     struct arguments *args = (struct arguments *)malloc(sizeof(struct arguments));
     args->buffer_size = numberPages * getpagesize();
     args->buffer = mem_alloc(numberPages);
-    args->pkey = key_alloc();
+    args->pkey = key_alloc(PKEY_DISABLE_ACCESS);
+    args->pkey2 = key_alloc(PKEY_DISABLE_WRITE);
     return args;
 }
 
@@ -22,9 +23,9 @@ void* mem_alloc(int numberPages)
     return buffer;   
 }
 
-int key_alloc()
+int key_alloc(unsigned int access)
 {
-    int pkey = pkey_alloc(0, PKEY_DISABLE_ACCESS);
+    int pkey = pkey_alloc(0, access);
     if (pkey == -1) {
         errExit("pkey_alloc");
     }

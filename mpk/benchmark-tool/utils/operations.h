@@ -4,8 +4,9 @@ struct arguments {
     void* buffer;
     size_t buffer_size;
     int pkey;
+    int pkey2;
 };
 
 arguments* get_thread_args(int numberPages);
 void* mem_alloc(int numberPages);
-int key_alloc();
+int key_alloc(unsigned int access);

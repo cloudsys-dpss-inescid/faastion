@@ -10,8 +10,8 @@
 #include "utils/timer.h"
 #include "utils/operations.h"
 
-#define ROUNDS 100
-#define WARMUP 50
+#define ROUNDS 1000
+#define WARMUP 500
 
 std::map<int, long*> my_map;
 int numberThreads = 0;
@@ -26,6 +26,7 @@ void* domain(void *args)
     void* buffer = ((struct arguments*)args)->buffer;
     size_t buffer_size = ((struct arguments*)args)->buffer_size;
     int pkey = ((struct arguments*)args)->pkey;
+    int pkey2 = ((struct arguments*)args)->pkey2;
 
     if (pkey < 0) {
         errExit("pkey < 0");
@@ -38,7 +39,7 @@ void* domain(void *args)
         /*
          * Set the protection key on "buffer".
          */
-        if (pkey_mprotect(buffer, buffer_size, PROT_READ, pkey)) {
+        if (pkey_mprotect(buffer, buffer_size, PROT_READ, i % 2 ? pkey : pkey2)) {
             errExit("pkey_mprotect");
         }
 
