@@ -45,7 +45,9 @@ public class NativeRedirection extends CodeDumper {
                     String methodName = m.getMethodName();
 
                     if (isLoadLibrary(clazz, methodName, methodSignature)) {
-                        m.replace("System.loadLibrary(\"" + application_id + ":$$\");");
+                        m.replace("{ $1 = \"" + application_id + ":\" + $1; java.io.File file = new java.io.File(\"lib\" + $1 + \".so\"); file.createNewFile(); $proceed($$); }");
+
+                        //m.replace("{ $1 = \"" + application_id + ":\" + $1; $proceed($$); }");
                     }
                     else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
                         CtClass returnType = method.getReturnType();
@@ -121,18 +123,23 @@ public class NativeRedirection extends CodeDumper {
             .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
-        String mc = nativeMethodName + "(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
+        String mc = "nativeMethod(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
 
-        File file = new File("snippets", methodName + ".c++");
+        File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
+            writer.write("#define _GNU_SOURCE\n");
+            writer.write("#include <stdio.h>\n");
             writer.write("#include \"" + className + ".h\"\n");
+
             writer.write("#include \"../../../../ld-preload/preload.h\"\n\n");
             
-            writer.write("static void ( * " + nativeMethodName + ")(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = NULL;\n\n");
-
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            writer.write("\t" + nativeMethodName + " = reinterpret_cast < decltype(" + nativeMethodName + ") > (dlsym(RTLD_NEXT, \"" + nativeMethodName + "\"));\n");
-            writer.write("\tprintf(\"%p\\n\", " + nativeMethodName + ");\n");
+
+            writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write("\tif (nativeMethod == NULL) {\n");
+            writer.write("\t\terrExit(\"Failed to find the symbol: " + nativeMethodName + "\");\n");
+            writer.write("\t}\n\n");
+
             writer.write("\t// Grant library access from untrusted domain\n");
             writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 1);\n\n");
 
@@ -142,18 +149,16 @@ public class NativeRedirection extends CodeDumper {
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);
                 writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\tif (runningThreads[0].empty()) {\n");
-                writer.write("\t\t// Undo previous permission changes\n");
-                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
-                writer.write("\t}\n");
+                writer.write("\twhile (!isDomainEmpty()) { sleep(0.1); }\n");
+                writer.write("\t// Undo previous permission changes\n");
+                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
                 writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\tif (runningThreads[0].empty()) {\n");
-                writer.write("\t\t// Undo previous permission changes\n");
-                writer.write("\t\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
-                writer.write("\t}\n");
+                writer.write("\twhile (!isDomainEmpty()) { sleep(0.1); }\n");
+                writer.write("\t// Undo previous permission changes\n");
+                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
                 writer.write("\treturn res;\n");
             }
 

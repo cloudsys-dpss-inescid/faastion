@@ -1,4 +1,31 @@
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <link.h>
+#include <mutex>
+#include <pthread.h>
+#include <sstream>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
+
 #include "preload.h"
+
+#define MALLOC
+#define REALLOC
+#define FREE
+#define MMAP
+#define MUNMAP
+#define DLOPEN
+#define PTHREAD_CREATE
+#define PTHREAD_EXIT
 
 std::unordered_map<std::string, std::vector<MemoryRegion>> apps;
 std::unordered_map<int, std::vector<pthread_t>> runningThreads;
@@ -6,6 +33,7 @@ std::mutex runningThreadsMutex;
 
 static __thread int no_hook = 0;
 
+int verbose = 1;  // Set this flag to 1 for logging, or 0 to disable logging
 
 /* Function pointers declarations */
 static int( * real_pthread_create)(pthread_t * , const pthread_attr_t * , void * ( * )(void * ), void * ) = NULL;
@@ -28,7 +56,15 @@ void __attribute__((constructor)) init() {
 }
 
 
+
 /* Auxiliary functions */
+void logMessage(const char* message) {
+    if (verbose) {
+        pthread_t tid = pthread_self();  // Get the thread ID
+        fprintf(stderr, "[%lu] %s\n", (unsigned long)tid, message);
+    }
+}
+
 void setApplicationPermissions(const char* appID, int protectionFlag, int pkey) {
     auto it = apps.find(appID);
     if (it == apps.end()) {
@@ -51,9 +87,13 @@ std::string extractBaseName(const std::string& filePath) {
     return filePath;
 }
 
-void getMemoryRegions(LibraryInfo *info) {
-    const char* appID = info->appID;
-    std::string libraryName = extractBaseName(info->path);    
+int isDomainEmpty() {
+    if (runningThreads[1].empty()) return 1;
+    return 0;
+}
+
+void getMemoryRegions(const char * appID, const char * path) {
+    std::string libraryName = extractBaseName(path);    
 
     std::ifstream mapsFile("/proc/self/maps");
     if (!mapsFile) {
@@ -95,17 +135,9 @@ void printApps() {
     }
 }
 
-LibraryInfo parse_input(const char* input) {
-    char appID[256], path[256];
-
-    sscanf(input, "%s:%s", appID, path);
-
-    return { appID, path };
-}
-
 
 /* Memory allocation and mapping */
-
+#ifdef MALLOC
 void * malloc(size_t size) {
     void *ret;
 
@@ -123,7 +155,9 @@ void * malloc(size_t size) {
 
     return ret;
 }
+#endif
 
+#ifdef FREE
 void free(void * ptr) {
     if (real_free == NULL) {
         real_free = reinterpret_cast < decltype(real_free) > (dlsym(RTLD_NEXT, "free"));
@@ -138,8 +172,9 @@ void free(void * ptr) {
     erim_free(ptr);
     no_hook = 0;
 }
+#endif
 
-
+#ifdef REALLOC
 void * realloc(void * ptr, size_t size) {
     void *ret;
 
@@ -157,7 +192,9 @@ void * realloc(void * ptr, size_t size) {
 
     return ret;
 }
+#endif
 
+#ifdef MMAP
 void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offset) {
     void *ret;
 
@@ -170,12 +207,14 @@ void * mmap(void * addr, size_t length, int prot, int flags, int fd, off_t offse
     }
 
     no_hook = 1;
-    ret = erim_mmap_isolated(addr, length, prot, flags, fd, offset);
+    ret = erim_mmap_domain(addr, length, prot, flags, fd, offset, ERIM_EXEC_DOMAIN(__rdpkru()));
     no_hook = 0;
 
     return ret;
 }
+#endif
 
+#ifdef MUNMAP
 int munmap(void * addr, size_t length) {
     int ret;
 
@@ -193,34 +232,48 @@ int munmap(void * addr, size_t length) {
 
     return ret;
 }
-
+#endif
 
 /* Library loading */
 
+#ifdef DLOPEN
 void * dlopen(const char * input, int flag) {
-    fprintf(stderr, "INPUT %s\n", input);
-
     if (real_dlopen == NULL) {
         real_dlopen = reinterpret_cast < decltype(real_dlopen) > (dlsym(RTLD_NEXT, "dlopen"));
     }
     
-    if (std::strchr(input, ':') == nullptr) {
-        fprintf(stderr, "IN\n");
+    if (!input || std::strchr(input, ':') == nullptr) {
         return real_dlopen(input, flag);
     }
 
-    LibraryInfo info = parse_input(input);
-    void * handle = real_dlopen((&info)->path, flag);
+    // Parse input
+    std::string concat = extractBaseName(input);    
+    char appID[256];
 
-    getMemoryRegions(&info);
+    sscanf(concat.c_str(), "%[^:]", appID);
+
+    // remove "lib" prefix
+    std::string application_id(appID);
+    application_id.erase(0, 3);
+
+    std::string pathname(input);
+    size_t pos = pathname.find(application_id);
+    pathname.erase(pos, application_id.length() + 1);
+
+    void * handle = real_dlopen(pathname.c_str(), flag | RTLD_GLOBAL);
+
+    logMessage("Saving library addresses and sizes...");
+    getMemoryRegions(application_id.c_str(), pathname.c_str());
     printApps();
     
+    std::remove(input);
     return handle;
 }
-
+#endif
 
 /* Threads */
 
+#ifdef PTHREAD_CREATE
 int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * start_routine)(void * ), void * arg) {
     if (real_pthread_create == NULL) {
         real_pthread_create = reinterpret_cast < decltype(real_pthread_create) > (dlsym(RTLD_NEXT, "pthread_create"));
@@ -229,18 +282,18 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * s
     int result = real_pthread_create(thread, attr, start_routine, arg);
 
     if (result == 0) {
-        fprintf(stderr, "Tou aqui\n");
         int domain = ERIM_EXEC_DOMAIN(__rdpkru());
         {
             std::lock_guard<std::mutex> lock(runningThreadsMutex);
             runningThreads[domain].push_back(*thread);
-            fprintf(stderr, "Tou ali\n");
         }
     }
 
     return result;
 }
+#endif
 
+#ifdef PTHREAD_EXIT
 void pthread_exit(void* value_ptr) {
     if (real_pthread_exit == NULL) {
         real_pthread_exit = reinterpret_cast < decltype(real_pthread_exit) > (dlsym(RTLD_NEXT, "pthread_exit"));
@@ -255,6 +308,6 @@ void pthread_exit(void* value_ptr) {
         tvec.erase(std::remove(tvec.begin(), tvec.end(), currentThread), tvec.end());
     }
 
-
     real_pthread_exit(value_ptr);
 }
+#endif

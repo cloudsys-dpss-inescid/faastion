@@ -5,37 +5,14 @@
 #define _GNU_SOURCE
 #endif
 
-#include <algorithm>
-#include <cstring>
-#include <cstdio>
 #include <dlfcn.h>
-#include <fstream>
-#include <iostream>
-#include <link.h>
-#include <mutex>
-#include <pthread.h>
-#include <sstream>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
 #include "../erim/common.h"
 #include "../erim/erim.h"
 
 #define errExit(msg) do { \
-    std::cerr << msg << std::endl; \
+    fprintf(stderr, "%s\n", msg); \
     exit(EXIT_FAILURE); \
 } while (0)
-
-
-struct LibraryInfo {
-    const char* appID;
-    const char* path;
-};
 
 struct MemoryRegion {
     void* address;
@@ -43,7 +20,6 @@ struct MemoryRegion {
 };
 
 void setApplicationPermissions(const char* appID, int protectionFlag, int pkey);
-
-extern std::unordered_map<int, std::vector<pthread_t>> runningThreads;
+int isDomainEmpty();
 
 #endif // PRELOAD_H
