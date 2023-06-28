@@ -6,7 +6,7 @@
 
 int main() {
     // Load the shared library
-    void *handle = dlopen("./libhello.so", RTLD_LAZY);
+    void *handle = dlopen("/home/cidra/faastion/mpk/testing/complex/libappID:libhello.so", RTLD_LAZY);
     if (!handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
         exit(1);

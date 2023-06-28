@@ -10,8 +10,9 @@ TARGET = test
 build: preload.so libhello.so target
 
 preload.so:
-	make build -C ../../ld-preload
+	make -C ../../ld-preload
 	mv ../../ld-preload/libpreload.so .
+	make clean -C ../../ld-preload
 
 libhello.so: hello.c
 	$(CC) $(CFLAGS) -shared -o libhello.so hello.c
@@ -19,7 +20,7 @@ libhello.so: hello.c
 target: test.c
 	$(CC) $(CFLAGS) -o $(TARGET) test.c $(LDFLAGS)
 
-run: preload.so libhello.so target
+run:
 	LD_PRELOAD=./libpreload.so ./$(TARGET)
 
 gdb: preload.so libhello.so target

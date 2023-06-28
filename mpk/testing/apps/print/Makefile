@@ -12,22 +12,13 @@ ENTRYPOINT=HelloJNI
 CC=gcc
 INCLUDE_PATH=-I../../.. -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux"
 CFLAGS=$(INCLUDE_PATH) -g -fPIC -shared
-
-CXX=g++
 CXXFLAGS=-Wall -O2 -fno-inline $(CFLAGS)
-
-LIBRARIES=../../../erim/libswscommon.a ../../../erim/liberim.a
-LDLIBS=-lm $(LIBRARIES)
 
 include ../common.mk
 
 .PHONY: build javassist snippets run gdb clean
 
 build: create_bin preload.so HelloJNI.h libhello.so javassist
-
-preload.so:
-	make build -C $(PATH_TO_PRELOAD)
-	mv $(PATH_TO_PRELOAD)/libpreload.so $(PATH_TO_BIN)
 
 HelloJNI.h: HelloJNI.java
 	javac -h . HelloJNI.java
@@ -41,7 +32,7 @@ javassist: build_javassist_agent create_snippets
 snippets:
 	for file in $$(find "snippets" -type f -name "*.c"); do \
 		name=$$(basename "$$file" .c); \
-		$(CC) $(CXXFLAGS) -o "$(PATH_TO_BIN)/lib$$name.so" "$$file" -L$(PATH_TO_BIN) -lpreload $(LDLIBS) -ldl; \
+		$(CC) $(CXXFLAGS) -o "$(PATH_TO_BIN)/lib$$name.so" "$$file" -L$(PATH_TO_BIN) -lpreload -ldl; \
 	done
 
 run:
