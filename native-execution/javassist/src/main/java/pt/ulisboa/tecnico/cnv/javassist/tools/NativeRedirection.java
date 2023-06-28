@@ -137,11 +137,12 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\tif (nativeMethod == NULL) {\n");
-            writer.write("\t\terrExit(\"Failed to find the symbol: " + nativeMethodName + "\");\n");
+            writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+            writer.write("\t\texit(EXIT_FAILURE);\n");
             writer.write("\t}\n\n");
 
             writer.write("\t// Grant library access from untrusted domain\n");
-            writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_READ|PROT_WRITE, 1);\n\n");
+            writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE, 1);\n\n");
 
             writer.write("\t// Isolate method execution\n");
             writer.write("\terim_switch_to_trusted;\n");
@@ -149,16 +150,16 @@ public class NativeRedirection extends CodeDumper {
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);
                 writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\twhile (!isDomainEmpty()) { sleep(0.1); }\n");
+                writer.write("\twhile (!isEmpty(1)) { sleep(0.1); }\n");
                 writer.write("\t// Undo previous permission changes\n");
-                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, 1);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
                 writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\twhile (!isDomainEmpty()) { sleep(0.1); }\n");
+                writer.write("\twhile (!isEmpty(1)) { sleep(0.1); }\n");
                 writer.write("\t// Undo previous permission changes\n");
-                writer.write("\tsetApplicationPermissions(\"" + application_id + "\", PROT_NONE, 1);\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, 1);\n");
                 writer.write("\treturn res;\n");
             }
 
