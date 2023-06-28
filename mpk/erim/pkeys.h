@@ -89,8 +89,8 @@
  */
 #ifndef SYS_mprotect_key
 #define SYS_mprotect_key 329//__NR_pkey_mprotect
-#define SYS_pkey_alloc   330//__NR_pkey_alloc
-#define SYS_pkey_free    331//__NR_pkey_free
+//#define SYS_pkey_alloc   330//__NR_pkey_alloc
+//#define SYS_pkey_free    331//__NR_pkey_free
 #endif     
 
 #define pkey_mprotect(ptr, size, flags, pkey)         \
