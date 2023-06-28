@@ -1,25 +1,18 @@
-#ifndef PRELOAD_H
-#define PRELOAD_H
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#include <dlfcn.h>
+#include "utils/appmap.h"
+#include "utils/threadmap.h"
+#include "helpers/helpers.h"
 #include "../erim/common.h"
 #include "../erim/erim.h"
 
-#define errExit(msg) do { \
-    fprintf(stderr, "%s\n", msg); \
-    exit(EXIT_FAILURE); \
-} while (0)
+#define MALLOC
+#define REALLOC
+#define FREE
+#define MMAP
+#define MUNMAP
+#define DLOPEN
+#define PTHREAD_CREATE
+#define PTHREAD_EXIT
 
-struct MemoryRegion {
-    void* address;
-    size_t size;
-};
+void setAppPermissions(const char* id, int protectionFlag, int pkey);
+int isEmpty(int domain);
 
-void setApplicationPermissions(const char* appID, int protectionFlag, int pkey);
-int isDomainEmpty();
-
-#endif // PRELOAD_H
