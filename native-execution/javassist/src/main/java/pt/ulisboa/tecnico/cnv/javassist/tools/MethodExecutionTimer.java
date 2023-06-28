@@ -4,6 +4,7 @@ import java.util.List;
 
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
@@ -21,31 +22,40 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
 
         behavior.instrument(new ExprEditor() {
             public void edit(MethodCall m) throws CannotCompileException {
+                CtMethod calleeMethod;
                 int mod = -1;
 
                 try {
-                    mod = m.getMethod().getModifiers();
-                } catch (NotFoundException e) {}
-
-                if (mod != -1 && Modifier.isNative(mod)) {
+                    calleeMethod = m.getMethod();
+                    mod = calleeMethod.getModifiers();
+                } catch (NotFoundException e) {
                     String methodName = m.getMethodName();
                     String className = m.getClassName();
+                    System.out.println(String.format("Warning unable to check modifier for %s:%s", className, methodName));
+                    return;
+                }
 
-                    if (className.startsWith("java.") ||
-                            className.startsWith("javax.") ||
-                            className.startsWith("jdk.") ||
-                            className.startsWith("com.sun.")) {
+                if (mod != -1 && Modifier.isNative(mod)) {
+                    String callerClassName = m.getEnclosingClass().getName();
+                    String callerMethodName = m.where().getName();
+                    String calleeMethodName = calleeMethod.getName();
+                    String calleeClassName = calleeMethod.getDeclaringClass().getName();
+                    if (calleeClassName.startsWith("java.") ||
+                            calleeClassName.startsWith("javax.") ||
+                            calleeClassName.startsWith("jdk.") ||
+                            calleeClassName.startsWith("com.sun.")) {
+                        System.out.println(String.format("Ignoring method call %s:%s -> %s:%s", callerClassName, callerMethodName, calleeClassName, calleeMethodName));
                         return;
                     }
 
-                    String timerName = "timer_" + methodName;
+                    String timerName = "timer_" + calleeMethodName;
                     m.replace("{ long " + timerName + " = System.nanoTime(); " +
                             "try { $_ = $proceed($$); } finally { " +
                             "long endTime = System.nanoTime();" +
                             "System.out.println(\"" + timerName + " took \" + " +
                             "(endTime - " + timerName + ") + \" ns\"); }}");
 
-                    System.out.println("Wrapped method " + methodName + " in class " + className + " with timer " + timerName);
+                    System.out.println(String.format("Wrapped method call %s:%s -> %s:%s", callerClassName, callerMethodName, calleeClassName, calleeMethodName));
                 }
             }
         });

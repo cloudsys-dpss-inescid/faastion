@@ -23,7 +23,7 @@ build_javassist_agent
 
 rm -rf $(DIR)/results
 
-for benchmark in helloworld filehashing httprequest shopcart classify
+for benchmark in helloworld filehashing httprequest shopcart petclinic classify
 do
     build_benchmark
 
