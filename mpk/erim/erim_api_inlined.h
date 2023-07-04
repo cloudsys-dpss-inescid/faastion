@@ -77,8 +77,8 @@ extern "C"
    #endif
 #endif
 
-// PKRU when running trusted (access to both domain 0 and 1)
-#define ERIM_TRUSTED_PKRU (0x55555550)
+// PKRU when running trusted (access to domain 1)
+#define ERIM_TRUSTED_PKRU (0x55555551)
 
   // accessing stack values
 #define erim_get_stackptr(ptr)				\
