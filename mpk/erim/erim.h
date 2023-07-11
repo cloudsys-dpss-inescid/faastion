@@ -56,7 +56,7 @@ extern "C"
 {
 #endif
 
-//#define ERIM_DBG
+#define ERIM_DBG
   
 /*
  * ERIM stats

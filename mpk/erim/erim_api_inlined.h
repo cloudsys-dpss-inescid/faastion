@@ -39,7 +39,7 @@ extern "C"
 #include <stdint.h>
 #include "pkeys.h"
 
-#define ERIM_ISOLATED_DOMAIN 1
+#define ERIM_ISOLATED_DOMAIN 0
 
 #define ERIM_TRUSTED_DOMAIN_IDENT_LOC ((void*)(1ull<<44))
 #define ERIM_TRUSTED_DOMAIN_IDENT (*(int*)ERIM_TRUSTED_DOMAIN_IDENT_LOC)
@@ -54,31 +54,21 @@ extern "C"
 // Get currently executing domain
 //                                ISO Trusted (exec U)      ISO Untrusted (exec U)  ISO TRUSTED 
 #define ERIM_EXEC_DOMAIN(pkru) ((0x0000000C & pkru) ? 0 : (0x00000003 & pkru) ? 1 : ERIM_TRUSTED_DOMAIN_IDENT )
-  
-#ifndef ERIM_ISOLATE_UNTRUSTED
-  // trusted -> domain 1, untrusted -> domain 0
-  #define ERIM_TRUSTED_DOMAIN 1
-   #ifdef ERIM_INTEGRITY_ONLY
-  // read(trusted = allowed, write(trusted) = disallowed
-      #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOTRS_UNTRUSTED_IO
-   #else
-      // read(trusted = write(trusted) = disallowed
-      #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOTRS_UNTRUSTED_CI
-   #endif
-#else
-// trusted -> domain 0, untrusted -> domain 1
-  #define ERIM_TRUSTED_DOMAIN 0
-   #ifdef ERIM_INTEGRITY_ONLY
-      // read(trusted = allowed, write(trusted) = disallowed
-      #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOUTS_UNTRUSTED_IO
-   #else
-      // read(trusted = write(trusted) = disallowed
-      #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOUTS_UNTRUSTED_CI
-   #endif
-#endif
 
-// PKRU when running trusted (access to domain 1)
-#define ERIM_TRUSTED_PKRU (0x55555551)
+// trusted -> domain 0, untrusted -> domain 1
+#define ERIM_TRUSTED_DOMAIN 0
+  #ifdef ERIM_INTEGRITY_ONLY
+    // read(trusted = allowed, write(trusted) = disallowed
+    #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOUTS_UNTRUSTED_IO
+  #else
+    // read(trusted = write(trusted) = disallowed
+    #define ERIM_UNTRUSTED_PKRU ERIM_PKRU_ISOUTS_UNTRUSTED_CI
+  #endif
+
+// PKRU when running trusted (access to both domain 0 and 1)
+#define ERIM_TRUSTED_PKRU (0x55555554)
+// PKRU Monitor (access to all domains)
+#define ERIM_MONITOR_PKRU (0x00000000)
 
   // accessing stack values
 #define erim_get_stackptr(ptr)				\
@@ -119,6 +109,12 @@ extern char * ERIM_REGULAR_STACK;
   
   
 // Switching between isolated and application
+#define erim_switch_to_monitor            \
+  do {                                                                  \
+    __wrpkru(ERIM_MONITOR_PKRU);					\
+    ERIM_DBM("pkru: %x", __rdpkru());					\
+  } while(0)
+
 #define erim_switch_to_trusted						\
   do {                                                                  \
     __wrpkru(ERIM_TRUSTED_PKRU);					\

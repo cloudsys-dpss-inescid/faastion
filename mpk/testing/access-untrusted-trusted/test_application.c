@@ -18,7 +18,7 @@ unsigned long read_var(unsigned long * var) {
 
 unsigned long * create_secret_var() {
   // init isolation and sh mem
-  if(erim_init(8192, ERIM_FLAG_ISOLATE_TRUSTED)) {
+  if(erim_init(8192, ERIM_FLAG_ISOLATE_UNTRUSTED)) {
     exit(EXIT_FAILURE);
   }
   erim_switch_to_untrusted;
@@ -30,6 +30,7 @@ unsigned long * create_secret_var() {
     exit(EXIT_FAILURE);
   }
   
+  erim_switch_to_trusted;
   return var;
 }
 
@@ -40,10 +41,7 @@ int main(int argc, char **argv) {
 
   // try to read, shouldn't work (not trusted)
   fprintf(stderr, "should segfault:\n");
-
-  erim_switch_to_trusted;
   fprintf(stderr, "var: %lx\n", read_var(var));
-  erim_switch_to_untrusted;
 
   return SWS_SUCCESS;
 }
