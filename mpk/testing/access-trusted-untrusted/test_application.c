@@ -12,28 +12,27 @@
 #include <common.h>
 #include <erim.h>
 
-int inc(int a) { return a++; }
+int inc(int a) { return ++a; }
 
-void wrapper() {
-  // TODO - extract arguments from shared storage;
-  // TODO - call inc
-  // TODO - insert arguments back in storage;
+int wrapper(int a) {
+  int ret = 123;
+  __wrpkru(ERIM_UNTRUSTED_PKRU);
+  ret = inc(a);
+  __wrpkru(ERIM_TRUSTED_PKRU);
+  fprintf(stderr, "a = %d ret = %d\n", a, ret);
+  return ret;
 }
 
 int main(int argc, char **argv) {
+  int a = 0;
   if(erim_init(8192, ERIM_FLAG_ISOLATE_TRUSTED | ERIM_FLAG_SWAP_STACK)) {
     exit(EXIT_FAILURE);
   }
   __wrpkru(ERIM_TRUSTED_PKRU);
-  // TODO - copy in arguments
 
   ERIM_SWITCH_TO_ISOLATED_STACK;
-  __wrpkru(ERIM_UNTRUSTED_PKRU);
-  wrapper();
-  __wrpkru(ERIM_TRUSTED_PKRU);
+  a = wrapper(a);
   ERIM_SWITCH_TO_REGULAR_STACK;
-
-  // TODO - copy out arguments
-
+  fprintf(stderr, "a = %d\n", a);
   return 0;
 }
