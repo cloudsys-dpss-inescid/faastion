@@ -13,10 +13,10 @@
 #include <erim.h>
 
 int inc(int a) { 
-  //__wrpkru(ERIM_TRUSTED_PKRU);
-  //fprintf(stderr, "a = %d\n", a);
-  //__wrpkru(ERIM_UNTRUSTED_PKRU);
-  
+  __wrpkru(ERIM_TRUSTED_PKRU);
+  fprintf(stderr, "a = %d\n", a);
+  __wrpkru(ERIM_UNTRUSTED_PKRU);
+
   return ++a; 
 }
 
@@ -30,6 +30,9 @@ int wrapper(int a) {
 
 int main(int argc, char **argv) {
   int a = 321;
+
+  // trusted (regular) domain -> 0 (can access both domains 0 and 1, pkru = 0x55555550)
+  // untrusted (isolated) domain -> 1 (con only access domain 1, pkry = 0x55555553)
   if(erim_init(8192, ERIM_FLAG_ISOLATE_UNTRUSTED | ERIM_FLAG_SWAP_STACK)) {
     exit(EXIT_FAILURE);
   }
