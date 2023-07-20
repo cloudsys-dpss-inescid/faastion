@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#include "../../erim/common.h"
 
-//#define ERIM_DBG 1
-#include "../../erim/erim.h"
+// Erim includes
+#include <common.h>
+#include <erim.h>
 
 unsigned long read_var(unsigned long * var) {
   return *var;
