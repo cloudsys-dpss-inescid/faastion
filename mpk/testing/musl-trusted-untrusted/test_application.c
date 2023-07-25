@@ -13,6 +13,31 @@
 #include <common.h>
 #include <erim.h>
 
+void protectMemoryRegions() {
+    FILE* mapsFile = fopen("/proc/self/maps", "r");
+    if (!mapsFile) {
+        fprintf(stderr, "Failed to open /proc/self/maps\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), mapsFile)) {
+        if (strstr(line, "libinc.so") == NULL) {
+            continue;
+        }
+
+        unsigned long startAddress, endAddress;
+        sscanf(line, "%lx-%lx", &startAddress, &endAddress);
+
+        void * address = (void*)startAddress;
+        size_t size = endAddress - startAddress;
+
+        pkey_mprotect(address, size, PROT_READ|PROT_WRITE, 1);
+    }
+
+    fclose(mapsFile);
+}
+
 int wrapper(int a) {
     int ret = 123;
 
@@ -22,13 +47,15 @@ int wrapper(int a) {
         return -1;
     }  
 
-    int (*inc)() = dlsym(handle, "inc");
+    int (*inc)(int) = (int (*)(int))dlsym(handle, "inc");
     if (!inc) {
         fprintf(stderr, "dlsym error: %s\n", dlerror());
         dlclose(handle);
         return -1;
     }
-
+    
+    protectMemoryRegions();
+    
     __wrpkru(ERIM_UNTRUSTED_PKRU);
     ret = inc(a);
     __wrpkru(ERIM_TRUSTED_PKRU);
