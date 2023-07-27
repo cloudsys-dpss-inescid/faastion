@@ -1,7 +1,7 @@
 PATH_TO_ERIM=../../erim
 
 CC = gcc
-CFLAGS = -Wall -g -fno-inline -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
+CFLAGS = -Wall -O0 -g -fno-inline -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
 
 LIBRARIES =$(PATH_TO_ERIM)/bin/common/libswscommon.a $(PATH_TO_ERIM)/bin/erim/liberim.a
 LDLIBS = -lm $(LIBRARIES) -ldl
@@ -14,10 +14,10 @@ erim:
 	make clean -C $(PATH_TO_ERIM)/src && make -C $(PATH_TO_ERIM)/src
 
 libinc.so:
-	musl-gcc -shared -fPIC -o libinc.so inc.c
+	musl-gcc -static -g -shared -fPIC -o libinc.so inc.c
 
 test:
-	musl-gcc $(CFLAGS) -o test test_application.c $(LDLIBS)
+	gcc $(CFLAGS) -o test test_application.c $(LDLIBS)
 
 run:
 	./test

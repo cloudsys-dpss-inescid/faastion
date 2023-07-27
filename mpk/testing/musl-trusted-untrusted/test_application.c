@@ -32,7 +32,7 @@ void protectMemoryRegions() {
         void * address = (void*)startAddress;
         size_t size = endAddress - startAddress;
 
-        pkey_mprotect(address, size, PROT_READ|PROT_WRITE, 1);
+        pkey_mprotect(address, size, PROT_READ|PROT_WRITE|PROT_EXEC, 1);
     }
 
     fclose(mapsFile);
@@ -41,7 +41,7 @@ void protectMemoryRegions() {
 int wrapper(int a) {
     int ret = 123;
 
-    void *handle = dlopen("./libinc.so", RTLD_LAZY);
+    void *handle = dlopen("./libinc.so", RTLD_NOW | RTLD_DEEPBIND);
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
         return -1;
