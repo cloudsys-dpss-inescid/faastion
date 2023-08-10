@@ -59,9 +59,9 @@ int incWrapper(int a) {
     
     protectMemoryRegions("libinc.so", 1);
     
-    __wrpkru(ERIM_DOMAIN_1);
+    __wrpkru(ERIM_DOMAIN(1));
     ret = inc(a);
-    __wrpkru(ERIM_MONITOR);
+    __wrpkru(ERIM_DOMAIN(0));
 
     dlclose(handle);
 
@@ -70,7 +70,7 @@ int incWrapper(int a) {
 
 void* incMain(void* arg) {
     int value = *(int*)arg;
-    ERIM_SWITCH_STACK(ERIM_DOMAIN_1_STACK_LOC, regular);
+    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(1), regular);
     value = incWrapper(value);
     ERIM_SWITCH_BACK(regular);
     fprintf(stderr, "value = %d\n", value);
@@ -83,7 +83,7 @@ void logWrapper(const char * message) {
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
         return;
-    }  
+    }
 
     void (*logMessage)(const char*) = (void (*)(const char*))dlsym(handle, "logMessage");
     if (!logMessage) {
@@ -94,21 +94,21 @@ void logWrapper(const char * message) {
     
     protectMemoryRegions("liblog.so", 2);
     
-    __wrpkru(ERIM_DOMAIN_2);
+    __wrpkru(ERIM_DOMAIN(2));
     logMessage(message);
-    __wrpkru(ERIM_MONITOR);
+    __wrpkru(ERIM_DOMAIN(0));
     
     dlclose(handle);
 }
 
 void* logMain(void* arg) {
     const char* message = (const char*)arg;
-    ERIM_SWITCH_STACK(ERIM_DOMAIN_2_STACK_LOC, regular);
+    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(2), regular);
 
-    memcpy(ERIM_DOMAIN_2_STACK_LOC, message, strlen(message) + 1);
-
-    char *charPtr = (char*)ERIM_DOMAIN_2_STACK_LOC;
-    char cpMessage[strlen(message) + 1];
+    int size = strlen(message) + 1;
+    memcpy(ERIM_DOMAIN_STACK_LOC(2), message, size);
+    char *charPtr = (char*)ERIM_DOMAIN_STACK_LOC(2);
+    char cpMessage[size];
     strcpy(cpMessage, charPtr);
     logWrapper(cpMessage);
 
