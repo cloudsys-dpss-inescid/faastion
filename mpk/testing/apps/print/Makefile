@@ -10,7 +10,7 @@ CLASS_PATH=HelloJNI
 ENTRYPOINT=HelloJNI
 
 CC=gcc
-INCLUDE_PATH=-I../../.. -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/linux"
+INCLUDE_PATH=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -I$(PATH_TO_BIN)
 CFLAGS=$(INCLUDE_PATH) -g -fPIC -shared
 CXXFLAGS=-Wall -O2 -fno-inline $(CFLAGS)
 
@@ -18,13 +18,13 @@ include ../common.mk
 
 .PHONY: build javassist snippets run gdb clean
 
-build: create_bin preload.so HelloJNI.h libhello.so javassist
+build: create_bin libpreload.so HelloJNI.h libhello.so javassist snippets
 
 HelloJNI.h: HelloJNI.java
 	javac -h . HelloJNI.java
 
 libhello.so: HelloJNI.c
-	$(CC) $(CFLAGS) -o $(PATH_TO_BIN)/libhello.so HelloJNI.c
+	musl-gcc $(CFLAGS) -o $(PATH_TO_BIN)/libhello.so HelloJNI.c
 
 javassist: build_javassist_agent create_snippets
 	java -javaagent:$(JAVA_AGENT)=$(TOOL):$(CLASS_PATH):$(PATH_TO_BIN) $(ENTRYPOINT)
