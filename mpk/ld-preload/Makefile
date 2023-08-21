@@ -1,7 +1,9 @@
-CC = gcc
-CFLAGS = -Wall -g -I.. -fno-inline -fPIC
+PATH_TO_ERIM=../erim
 
-LIBRARIES=../erim/libswscommon.a ../erim/liberim.a
+CC = gcc
+CFLAGS = -Wall -g -I.. -fno-inline -fPIC -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
+
+LIBRARIES=$(PATH_TO_ERIM)/bin/common/libswscommon.a $(PATH_TO_ERIM)/bin/erim/liberim.a
 LDLIBS=-lm $(LIBRARIES)
 
 .PHONY: all clean
