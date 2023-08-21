@@ -23,6 +23,7 @@ import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
 import java.lang.System;
+import java.nio.file.Files;
 public class NativeRedirection extends CodeDumper {
 
     private final static String application_id = generateUniqueId();
@@ -93,6 +94,24 @@ public class NativeRedirection extends CodeDumper {
 
     public static void createHeader(String[] jniTypes, String returnJniType, String className) throws IOException {
         File file = new File("snippets", className + ".h");
+        
+        if (file.exists()) {
+            List<String> lines = Files.readAllLines(file.toPath());
+
+            // Keep only the first lines (removing the last 4 lines)
+            lines.subList(Math.max(0, lines.size() - 4), lines.size()).clear();
+
+            // Add new method
+            lines.add("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
+            lines.add("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
+            lines.add("#ifdef __cplusplus\n");
+            lines.add("}\n");
+            lines.add("#endif\n");
+            lines.add("#endif\n");  
+
+            // Write the modified lines back to the file
+            Files.write(file.toPath(), lines);
+        }
 
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include <jni.h>\n\n");
@@ -123,47 +142,84 @@ public class NativeRedirection extends CodeDumper {
             .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
-        String mc = "nativeMethod(env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args) + ");\n";
+        String arguments = "env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args);
+        String mc = "nativeMethod(" + arguments + ");\n";
 
         File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#define _GNU_SOURCE\n");
             writer.write("#include <stdio.h>\n");
-            writer.write("#include \"" + className + ".h\"\n");
+            writer.write("#include <preload.h>\n");
+            writer.write("#include \"" + className + ".h\"\n\n");
 
-            writer.write("#include \"../../../../ld-preload/preload.h\"\n\n");
+            writer.write("static __thread char* regular = NULL;\n\n");
             
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-
-            writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-            writer.write("\tif (nativeMethod == NULL) {\n");
-            writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
-            writer.write("\t\texit(EXIT_FAILURE);\n");
+            writer.write("\t// Get available domain\n");
+            writer.write("\tint domain = findEmptyDomain();\n");
+            writer.write("\twhile (domain == -1) {\n");
+            writer.write("\t\t//FIXME: active waiting\n");
+            writer.write("\t\tsleep(1);\n");
+            writer.write("\t\tdomain = findEmptyDomain();\n");
             writer.write("\t}\n\n");
-
-            writer.write("\t// Grant library access from untrusted domain\n");
-            writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE, 1);\n\n");
-
-            writer.write("\t// Isolate method execution\n");
-            writer.write("\terim_switch_to_trusted;\n");
-
+            
+            writer.write("\t// Switch to new stack\n");
+            writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
+            
             if (returnJniType.equals("void")) {
+                writer.write("\twrapper(domain, " + arguments + ");\n");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n");
+                writer.write("}\n\n");
+                
+                writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+                writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("\tif (nativeMethod == NULL) {\n");
+                writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+                writer.write("\t\texit(EXIT_FAILURE);\n");
+                writer.write("\t}\n\n");
+                
+                writer.write("\t// Grant library access from domain\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+
+                writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + mc);
-                writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\twhile (!isEmpty(1)) { sleep(0.1); }\n");
-                writer.write("\t// Undo previous permission changes\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, 1);\n");
+                writer.write("\twhile (!isEmpty(domain)) { sleep(1); }\n");
+
+                writer.write("\t// Undo previous changes\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n");
+                writer.write("\t#ifdef EAGER_LOAD\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
+                writer.write("\t#endif\n");
+                writer.write("}\n");
             }
             else {
-                writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\terim_switch_to_untrusted;\n\n");
-                writer.write("\twhile (!isEmpty(1)) { sleep(0.1); }\n");
-                writer.write("\t// Undo previous permission changes\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, 1);\n");
+                writer.write("\t" + returnJniType + " res = wrapper(" + arguments + ");");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n");
                 writer.write("\treturn res;\n");
-            }
+                writer.write("}\n\n");
+                
+                writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+                writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("\tif (nativeMethod == NULL) {\n");
+                writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+                writer.write("\t\texit(EXIT_FAILURE);\n");
+                writer.write("\t}\n\n");
+                
+                writer.write("\t// Grant library access from domain\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
 
-            writer.write("}\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
+                writer.write("\t" + returnJniType + " res = " + mc);
+                writer.write("\twhile (!isEmpty(domain)) { sleep(1); }\n");
+
+                writer.write("\t// Undo previous changes\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n");
+                writer.write("\t#ifdef EAGER_LOAD\n");
+                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
+                writer.write("\t#endif\n");
+                writer.write("\treturn res;\n");
+                writer.write("}\n");
+            }
         }
     }
 
