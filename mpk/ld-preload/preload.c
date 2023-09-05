@@ -7,17 +7,19 @@
 
 AppMap appMap;
 ThreadMap threadMap;
+char* appIds[16];
+pthread_mutex_t mutex;
 
 /* Function pointers declarations */
-static int( * real_pthread_create)(pthread_t * , const pthread_attr_t * , void * ( * )(void * ), void * ) = NULL;
-static void( * real_pthread_exit)(void *) = NULL;
 static void * ( * real_dlopen)(const char * , int) = NULL;
 
 /* Constructor */
 static void __attribute__((constructor)) init(void) {
     initAppMap(&appMap);
     initThreadMap(&threadMap);
-
+    initAppArray(&appIds);
+    pthread_mutex_init(&mutex, NULL);
+    
     // Initialize isolation
     if (erim_init(32768, ERIM_FLAG_ISOLATE_TRUSTED | ERIM_FLAG_SWAP_STACK, 16)) {
         exit(EXIT_FAILURE);
@@ -25,31 +27,51 @@ static void __attribute__((constructor)) init(void) {
 }
 
 /* App functions */
-int isEmpty(int domain) {
-    unsigned long index = hash_int(domain);
-    ThreadNode* currentNode = threadMap.buckets[index];
-    while (currentNode != NULL) {
-        if (currentNode->domain == domain) {
-            return 0;
+void insertApp(int domain, const char* id) {
+    appIds[domain] = strdup(id);
+}
+
+int findApp(const char* id) {
+    for (int i = 0; i < 16; i++) {
+        if (appIds[i] != NULL && !strcmp(id, appIds[i])) {
+            return i;
         }
-        currentNode = currentNode->next;
     }
-    // Domain not found
-    return 1;
+    return -1; // App not found
+}
+
+char* getApp(const char* domain) {
+    return (appIds[domain] != NULL) ? appIds[domain] : "";
+}
+
+/* Thread Map functions */
+void insertThreadInMap(int domain) {
+    insertThread(&threadMap, domain, pthread_self());
+}
+
+int isEmpty(int domain) {
+    return threadMap.buckets[index] == NULL;
 }
 
 int findEmptyDomain() {
-    unsigned long index = -1;
-
     for (int i = 1; i < 16; i++) {
-        index = hash_int(i);
-        if (threadMap.buckets[index] == NULL)
+        if (isEmpty(i))
             return i;
     }
-    // Domain not found
-    return -1;
+    return -1; // Empty Domain not found
 }
 
+void joinThreads(int domain) {
+    ThreadNode* currentNode = threadMap->buckets[domain];
+
+    while (currentNode != NULL) {
+        pthread_join(currentNode->threadId, NULL);
+        currentNode = currentNode->next;
+        removeThread(&threadMap, domain, currentNode->threadId);
+    }
+}
+
+/* */
 void setAppPermissions(const char* id, int protectionFlag, int pkey) {
     size_t count;
     MemoryRegion* regions = getRegions(appMap, (char*)id, &count);
@@ -96,39 +118,5 @@ void * dlopen(const char * input, int flag) {
 
     remove(input);
     return handle;
-}
-#endif
-
-/* Threads */
-#ifdef PTHREAD_CREATE
-int pthread_create(pthread_t * thread, const pthread_attr_t * attr, void * ( * start_routine)(void * ), void * arg) {
-    if (real_pthread_create == NULL) {
-        real_pthread_create = (int (*) (pthread_t *, const pthread_attr_t *, void * ( * start_routine)(void * ), void *)) dlsym(RTLD_NEXT, "pthread_create");
-    }
-
-    int result = real_pthread_create(thread, attr, start_routine, arg);
-
-    if (result == 0) {
-        int domain = ERIM_EXEC_DOMAIN(__rdpkru());
-        PRELOAD_DBM("New thread running on domain %d in map", domain);
-        insertThread(&threadMap, domain, *thread);
-    }
-
-    return result;
-}
-#endif
-
-#ifdef PTHREAD_EXIT
-void pthread_exit(void* value_ptr) {
-    if (real_pthread_exit == NULL) {
-        real_pthread_exit =  (void (*) (void *)) dlsym(RTLD_NEXT, "pthread_exit");
-    }
-    
-    pthread_t currentThread = pthread_self();
-    int domain = ERIM_EXEC_DOMAIN(__rdpkru());
-    PRELOAD_DBM("Removing thread running on domain %d from map", domain);
-    removeThread(&threadMap, domain, currentThread);
-
-    real_pthread_exit(value_ptr);
 }
 #endif

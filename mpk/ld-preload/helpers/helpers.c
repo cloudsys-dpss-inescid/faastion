@@ -5,10 +5,9 @@
 #include "helpers.h"
 
 /* Auxiliary functions */
-void logMessage(const char* message, int verbose) {
-    if (verbose) {
-        pthread_t tid = pthread_self();  // Get the thread ID
-        fprintf(stderr, "[%lu] %s\n", (unsigned long)tid, message);
+void initAppArray(char** appIds) {
+    for (size_t i = 0; i < 16; i++) {
+        appIds[i] = NULL;
     }
 }
 

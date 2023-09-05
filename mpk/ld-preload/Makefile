@@ -1,30 +1,43 @@
-PATH_TO_ERIM=../erim
-
 CC = gcc
-CFLAGS = -Wall -g -I.. -fno-inline -fPIC -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
+CFLAGS = -Wall -g -fno-inline -fPIC
+BUILD_DIR := build
+OBJ_DIR := $(BUILD_DIR)/obj
+BIN_DIR := $(BUILD_DIR)/bin
 
+PATH_TO_ERIM = ../../erim
+ERIM_SRC_DIR = $(PATH_TO_ERIM)/src
+ERIM_BIN_DIR = $(PATH_TO_ERIM)/bin
+EFLAGS = -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
 LIBRARIES=$(PATH_TO_ERIM)/bin/common/libswscommon.a $(PATH_TO_ERIM)/bin/erim/liberim.a
 LDLIBS=-lm $(LIBRARIES)
 
-.PHONY: all clean
+.PHONY: all erim clean
 
-all: libpreload.so
+all: erim $(BUILD_DIR) $(BIN_DIR)/libpreload.so
 
-libpreload.so: utils/appmap.o utils/threadmap.o helpers/helpers.o preload.o
-	$(CC) $(CFLAGS) -shared -o libpreload.so utils/appmap.o utils/threadmap.o helpers/helpers.o preload.o $(LDLIBS)
+$(BUILD_DIR):
+	mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
-utils/appmap.o: utils/appmap.c utils/appmap.h
-	$(CC) $(CFLAGS) -o utils/appmap.o -c utils/appmap.c
+# Executables
+$(BIN_DIR)/libpreload.so: erim utils/appmap.o utils/threadmap.o helpers/helpers.o preload.o
+	$(CC) $(CFLAGS) $(EFLAGS) -shared -o $@ $^ $(LDLIBS)
 
-utils/threadmap.o: utils/threadmap.c utils/threadmap.h
-	$(CC) $(CFLAGS) -o utils/threadmap.o -c utils/threadmap.c
+# Object Files
+$(OBJ_DIR)/utils/appmap.o: utils/appmap.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-helpers/helpers.o: helpers/helpers.c helpers/helpers.h
-	$(CC) $(CFLAGS) -o helpers/helpers.o -c helpers/helpers.c
+$(OBJ_DIR)/utils/threadmap.o: utils/threadmap.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-preload.o: preload.c utils/appmap.h
-	$(CC) $(CFLAGS) -o preload.o -c preload.c
+$(OBJ_DIR)/helpers/helpers.o: helpers/helpers.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
+$(OBJ_DIR)/preload.o: preload.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+erim:
+	$(MAKE) -C $(ERIM_SRC_DIR) clean && $(MAKE) -C $(ERIM_SRC_DIR)
+	
 clean:
 	@echo Cleaning...
-	rm -f helpers/*.o utils/*.o *.o libpreload.so
+	rm -f $(BIN_DIR)/* $(OBJ_DIR)/*
