@@ -1,11 +1,19 @@
-.PHONY: all run clean
-
 CC := gcc
+CFLAGS := -g -Wall
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj
 BIN_DIR := $(BUILD_DIR)/bin
-CFLAGS := -g -Wall
-MODE := --mode-mpk
+
+#PATH_TO_LD = ../../ld-preload
+#LD_BIN_DIR = $(PATH_TO_LD)/build/bin
+#
+#PATH_TO_ERIM = ../../erim
+#ERIM_SRC_DIR = $(PATH_TO_ERIM)/src
+#ERIM_BIN_DIR = $(PATH_TO_ERIM)/bin
+#LIBRARIES = $(ERIM_BIN_DIR)/common/libswscommon.a $(ERIM_BIN_DIR)/erim/liberim.a
+#LDLIBS = -lm $(LIBRARIES)
+
+.PHONY: all run gdb clean
 
 all: $(BUILD_DIR) $(BIN_DIR)/test_seccomp $(BIN_DIR)/test_application
 
@@ -27,7 +35,11 @@ $(OBJ_DIR)/seccomp.o: utils/seccomp.c
 	$(CC) $(CFLAGS) -DSECC_DBG -c $< -o $@
 
 run: all
-	$(BIN_DIR)/test_seccomp $(MODE) $(BIN_DIR)/test_application
+	$(BIN_DIR)/test_seccomp $(BIN_DIR)/test_application
+
+gdb: all
+	gdb -ex run --args $(BIN_DIR)/test_seccomp $(BIN_DIR)/test_application
 
 clean:
+	@echo Cleaning...
 	rm -f $(BIN_DIR)/* $(OBJ_DIR)/* seccomp.out

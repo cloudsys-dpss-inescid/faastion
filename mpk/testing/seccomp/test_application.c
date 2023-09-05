@@ -12,10 +12,5 @@ int main() {
         return 1;
     }
 
-    if (munmap(mapped_mem, size) == -1) {
-        perror("munmap");
-        return 1;
-    }
-
     return 0;
 }

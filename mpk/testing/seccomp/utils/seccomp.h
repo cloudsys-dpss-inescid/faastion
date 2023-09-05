@@ -16,8 +16,6 @@
   #define SECC_DBG(...)
 #endif
 
-char *get_pathname(char name[]);
-int exec(char pathname[], char *argv[], int mode);
-int get_seccomp_mode(char *mode);
+int exec(char *argv[]);
 
 #endif
