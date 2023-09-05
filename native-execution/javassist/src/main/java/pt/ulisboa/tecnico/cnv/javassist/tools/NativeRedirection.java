@@ -112,20 +112,21 @@ public class NativeRedirection extends CodeDumper {
             // Write the modified lines back to the file
             Files.write(file.toPath(), lines);
         }
-
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write("#include <jni.h>\n\n");
-            writer.write("#ifndef _Included_" + className + "\n");
-            writer.write("#define _Included_" + className + "\n");
-            writer.write("#ifdef __cplusplus\n");
-            writer.write("extern \"C\" {\n");
-            writer.write("#endif\n\n");
-            writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
-            writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
-            writer.write("#ifdef __cplusplus\n");
-            writer.write("}\n");
-            writer.write("#endif\n");
-            writer.write("#endif\n");  
+        else {
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write("#include <jni.h>\n\n");
+                writer.write("#ifndef _Included_" + className + "\n");
+                writer.write("#define _Included_" + className + "\n");
+                writer.write("#ifdef __cplusplus\n");
+                writer.write("extern \"C\" {\n");
+                writer.write("#endif\n\n");
+                writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
+                writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
+                writer.write("#ifdef __cplusplus\n");
+                writer.write("}\n");
+                writer.write("#endif\n");
+                writer.write("#endif\n");  
+            }
         }
     }
 
@@ -153,19 +154,31 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("static __thread char* regular = NULL;\n\n");
+            writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
             
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
             writer.write("\t// Get available domain\n");
-            writer.write("\tint domain = findEmptyDomain();\n");
+            writer.write("\tpthread_mutex_lock(&mutex);\n");
+            writer.write("\tint domain = findApp(\"lib" + application_id + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
             writer.write("\t\tsleep(1);\n");
             writer.write("\t\tdomain = findEmptyDomain();\n");
             writer.write("\t}\n\n");
-            
+            writer.write("\tinsertThreadInMap(domain);\n\n");
+            writer.write("\t#ifndef EAGER_LOAD\n");
+            writer.write("\tchar* app = getApp(domain);\n");
+            writer.write("\tif (strcmp(app, \"lib" + application_id + "\")) {\n");
+            writer.write("\t\tsetAppPermissions(app, PROT_NONE, domain);\n");
+            writer.write("\t\tinsertApp(domain, \"lib" + application_id + "\");\n");
+            writer.write("\t\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+            writer.write("\t}\n");
+            writer.write("\t#endif\n\n");
+            writer.write("\tpthread_mutex_unlock(&mutex);\n");
+
             writer.write("\t// Switch to new stack\n");
             writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
-            
+
             if (returnJniType.equals("void")) {
                 writer.write("\twrapper(domain, " + arguments + ");\n");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n");
@@ -178,15 +191,16 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t\texit(EXIT_FAILURE);\n");
                 writer.write("\t}\n\n");
                 
-                writer.write("\t// Grant library access from domain\n");
+                writer.write("\t#ifndef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+                writer.write("\t#endif\n");
 
                 writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + mc);
-                writer.write("\twhile (!isEmpty(domain)) { sleep(1); }\n");
-
+                writer.write("void joinThreads(domain);\n\n");
+                
                 writer.write("\t// Undo previous changes\n");
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n"); //FIXME: This should be above joinThreads?
                 writer.write("\t#ifdef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
                 writer.write("\t#endif\n");
@@ -205,15 +219,16 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t\texit(EXIT_FAILURE);\n");
                 writer.write("\t}\n\n");
                 
-                writer.write("\t// Grant library access from domain\n");
+                writer.write("\t#ifndef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
-
+                writer.write("\t#endif\n");
+                
                 writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\twhile (!isEmpty(domain)) { sleep(1); }\n");
+                writer.write("void joinThreads(domain);\n\n");
 
                 writer.write("\t// Undo previous changes\n");
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n"); //FIXME: This should be above joinThreads?
                 writer.write("\t#ifdef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
                 writer.write("\t#endif\n");
