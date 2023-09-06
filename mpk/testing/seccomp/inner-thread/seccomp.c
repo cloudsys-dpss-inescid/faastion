@@ -72,12 +72,15 @@ installNotifyFilter(void)
         BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_pkey_free, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL),
 
-        /* mmap(2) and clone(2) trigger notifications to user-space supervisor */
+        /* mmap(2), clone3(2) and exit(2) trigger notifications to user-space supervisor */
 
         BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_mmap, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
 
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_clone, 0, 1),
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_clone3, 0, 1),
+        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
+
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_exit, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
 
         /* Every other system call is allowed */
@@ -101,32 +104,45 @@ installNotifyFilter(void)
     return nfd;
 }
 
+/* Create an inner child thread that makes more system calls 
+    to be handled by the supervisor thread. */
+
+static void *
+innerThread(void *arg)
+{
+    void *mapped_mem = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    if (mapped_mem == MAP_FAILED)
+        perror("mmap");
+    else
+        printf("[IT]: SUCCESS: mmap() returned %p\n", mapped_mem);
+
+    return NULL;
+}
 
 /* Create a child thread--the "target"--that makes system calls
     to be handled by the supervisor thread. */
 
 static void *
 target(void *arg)
-{       
+{      
+    pthread_t worker;
+
     /* Install seccomp filter(s) */
 
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0))
         err(EXIT_FAILURE, "prctl");
 
     notifyFd = installNotifyFilter();
+    
+    /* clone3(2) syscall */
 
-    /* Execute binary */
-    
-    //execv(argv[0], &argv[0]);
-    
-    void *mapped_mem = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    if (mapped_mem == MAP_FAILED)
-        perror("mmap");
+    if (pthread_create(&worker, NULL, innerThread, NULL) != 0)
+        perror("pthread_create\n");
     else
-        printf("[T]: SUCCESS: mmap() returned %p\n", mapped_mem);
-
+        printf("[T]: SUCCESS: pthread created correctly\n");
+    
     return NULL;
-}  
+}
 
 /* Check that the notification ID provided by a SECCOMP_IOCTL_NOTIF_RECV
     operation is still valid. It will no longer be valid if the target
@@ -209,6 +225,7 @@ handleMmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
         printf("\t[S]: success! spoofed return = %p; spoofed val = %lld\n",
                 mapped_mem, resp->val);
     }
+
     //int domain = ERIM_EXEC_DOMAIN(__rdpkru());
     //if (pkey_mprotect((void *)req->data.args[0], (size_t)req->data.args[1],
     //                  (int)req->data.args[2], domain) == -1) {
@@ -220,15 +237,17 @@ static void
 handleClone(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 {
     SECC_DBM("\t----clone syscall----");
-
-    //int child_tid = clone((void *)req->data.args[0],
-    //                 (void *)req->data.args[1], (int)req->data.args[2], 
-    //                 (void *)req->data.args[3]);
-    //SECC_DBM("tid: %d", child_tid);
-    //SECC_DBM("self: %ld", pthread_self());
-    //int domain = ERIM_EXEC_DOMAIN(__rdpkru());
+    resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
 
 }
+
+static void 
+handleExit(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
+{
+    SECC_DBM("\t----exit syscall----");
+    resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+}
+
 
 /* Handle notifications that arrive via the SECCOMP_RET_USER_NOTIF file
     descriptor, 'notifyFd'. */
@@ -262,6 +281,7 @@ handleNotifications(int notifyFd)
             perror("ioctl(SECCOMP_IOCTL_NOTIF_ID_VALID)");
             continue;
         }
+
         /* Prepopulate some fields of the response */
 
         resp->id = req->id;     /* Response includes notification ID */
@@ -273,8 +293,11 @@ handleNotifications(int notifyFd)
             case __NR_mmap:
                 handleMmap(req, resp);
                 break;
-            case __NR_clone:
+            case __NR_clone3:
                 handleClone(req, resp);
+                break;
+            case __NR_exit:
+                handleExit(req, resp);
                 break;
             default:
                 resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;

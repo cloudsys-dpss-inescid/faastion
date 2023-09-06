@@ -1,4 +1,4 @@
-PATH_TO_ERIM = ../../erim
+PATH_TO_ERIM = ../../../../erim
 ERIM_SRC_DIR = $(PATH_TO_ERIM)/src
 ERIM_BIN_DIR = $(PATH_TO_ERIM)/bin
 

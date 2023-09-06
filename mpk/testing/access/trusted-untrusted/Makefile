@@ -1,4 +1,4 @@
-PATH_TO_ERIM=../../erim
+PATH_TO_ERIM=../../../../erim
 
 CC = gcc
 CFLAGS = -Wall -g -fno-inline -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
@@ -8,13 +8,13 @@ LDLIBS = -lm $(LIBRARIES)
 
 TARGET = test
 
-.PHONY: build run clean
+.PHONY: build erim run clean
 
 build: erim
 	$(CC) $(CFLAGS) -o $(TARGET) test_application.c $(LDLIBS)
 
 erim:
-	make clean -C $(PATH_TO_ERIM)/src && make -C $(PATH_TO_ERIM)/src
+	$(MAKE) clean -C $(PATH_TO_ERIM)/src && $(MAKE) -C $(PATH_TO_ERIM)/src
 
 run:
 	./$(TARGET)

@@ -1,4 +1,4 @@
-PATH_TO_ERIM=../../erim
+PATH_TO_ERIM=../../../erim
 
 CC = gcc
 CFLAGS = -Wall -g -fno-inline -I$(PATH_TO_ERIM)/src/erim -I$(PATH_TO_ERIM)/src/common -DERIM_DBG -DERIM_SWAP_STACKS
