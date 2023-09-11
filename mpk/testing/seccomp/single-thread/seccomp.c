@@ -77,7 +77,10 @@ installNotifyFilter(void)
         BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_mmap, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
 
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_clone, 0, 1),
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_clone3, 0, 1),
+        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
+
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_exit, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
 
         /* Every other system call is allowed */
@@ -216,7 +219,15 @@ static void
 handleClone(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 {
     SECC_DBM("\t----clone syscall----");
+    resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
 
+}
+
+static void 
+handleExit(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
+{
+    SECC_DBM("\t----exit syscall----");
+    resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
 }
 
 /* Handle notifications that arrive via the SECCOMP_RET_USER_NOTIF file
@@ -231,6 +242,8 @@ handleNotifications(int notifyFd)
 
     allocSeccompNotifBuffers(&req, &resp, &sizes);
 
+    int nthreads = 1;
+    
     /* Loop handling notifications */
 
     for (;;) {
@@ -263,9 +276,13 @@ handleNotifications(int notifyFd)
             case __NR_mmap:
                 handleMmap(req, resp);
                 break;
-            case __NR_clone:
+            case __NR_clone3:
+                nthreads++;
                 handleClone(req, resp);
                 break;
+            case __NR_exit:
+                nthreads--;
+                handleExit(req, resp);
             default:
                 resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
                 break;
@@ -286,12 +303,14 @@ handleNotifications(int notifyFd)
                 perror("ioctl-SECCOMP_IOCTL_NOTIF_SEND");
         }
         SECC_DBM("\t--------------------\n");
+
+        if (!nthreads)
+            break;
     }
 
     free(req);
     free(resp);
     SECC_DBM("\t[S]: terminating **********\n");
-    exit(EXIT_FAILURE);
 }
 
 /* Implementation of the supervisor thread:

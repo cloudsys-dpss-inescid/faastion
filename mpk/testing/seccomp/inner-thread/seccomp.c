@@ -261,8 +261,10 @@ handleNotifications(int notifyFd)
 
     allocSeccompNotifBuffers(&req, &resp, &sizes);
 
-    /* Loop handling notifications */
+    int nthreads = 1;
 
+    /* Loop handling notifications */
+    
     for (;;) {
 
         /* Wait for next notification, returning info in '*req' */
@@ -294,9 +296,11 @@ handleNotifications(int notifyFd)
                 handleMmap(req, resp);
                 break;
             case __NR_clone3:
+                nthreads++;
                 handleClone(req, resp);
                 break;
             case __NR_exit:
+                nthreads--;
                 handleExit(req, resp);
                 break;
             default:
@@ -319,12 +323,14 @@ handleNotifications(int notifyFd)
                 perror("ioctl-SECCOMP_IOCTL_NOTIF_SEND");
         }
         SECC_DBM("\t--------------------\n");
+
+        if (!nthreads)
+            break;
     }
 
     free(req);
     free(resp);
     SECC_DBM("\t[S]: terminating **********\n");
-    exit(EXIT_FAILURE);
 }
 
 /* Implementation of the supervisor thread:
