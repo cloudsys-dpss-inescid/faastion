@@ -11,7 +11,7 @@ LDLIBS = -lm $(LIBRARIES) -ldl
 build: erim libinc.so liblog.so test
 
 erim:
-	make clean -C $(PATH_TO_ERIM)/src && make -C $(PATH_TO_ERIM)/src
+	$(MAKE) clean -C $(PATH_TO_ERIM)/src && $(MAKE) -C $(PATH_TO_ERIM)/src
 
 libinc.so:
 	musl-gcc -static -g -shared -fPIC -o libinc.so inc.c
