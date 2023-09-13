@@ -26,7 +26,7 @@ static void __attribute__((constructor)) init(void) {
     }
 }
 
-/* App functions */
+/* App array functions */
 void insertApp(int domain, const char* id) {
     appIds[domain] = strdup(id);
 }
@@ -46,32 +46,22 @@ char* getApp(const char* domain) {
 
 /* Thread Map functions */
 void insertThreadInMap(int domain) {
-    insertThread(&threadMap, domain, pthread_self());
+    insertThread(&threadMap, domain);
 }
 
-int isEmpty(int domain) {
-    return threadMap.buckets[index] == NULL;
+void removeThreadFromMap(int domain) {
+    removeThread(&threadMap, domain);
 }
 
 int findEmptyDomain() {
     for (int i = 1; i < 16; i++) {
-        if (isEmpty(i))
+        if (threadMap.buckets[domain]->nthreads == 0) // is domain empty
             return i;
     }
     return -1; // Empty Domain not found
 }
 
-void joinThreads(int domain) {
-    ThreadNode* currentNode = threadMap->buckets[domain];
-
-    while (currentNode != NULL) {
-        pthread_join(currentNode->threadId, NULL);
-        currentNode = currentNode->next;
-        removeThread(&threadMap, domain, currentNode->threadId);
-    }
-}
-
-/* */
+/* Permission set */
 void setAppPermissions(const char* id, int protectionFlag, int pkey) {
     size_t count;
     MemoryRegion* regions = getRegions(appMap, (char*)id, &count);

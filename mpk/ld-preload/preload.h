@@ -7,10 +7,9 @@
 #define DLOPEN
 
 /* Thread map methods */
-int isEmpty(int domain);
-int findEmptyDomain();
 void insertThreadInMap(int domain);
-void joinThreads(int domain);
+void removeThreadFromMap(int domain);
+int findEmptyDomain();
 
 /* App array methods (Lazy loading) */
 void insertApp(int domain, const char* id);
