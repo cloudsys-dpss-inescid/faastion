@@ -44,6 +44,7 @@ public class NativeRedirection extends CodeDumper {
                     String methodClassName = m.getClassName();
                     String methodSignature = method.getSignature();
                     String methodName = m.getMethodName();
+                    String gateName = methodName + "CallGate";
 
                     if (isLoadLibrary(clazz, methodName, methodSignature)) {
                         m.replace("{ $1 = \"" + application_id + ":\" + $1; java.io.File file = new java.io.File(\"lib\" + $1 + \".so\"); file.createNewFile(); $proceed($$); }");
@@ -59,16 +60,16 @@ public class NativeRedirection extends CodeDumper {
                             .map(param -> getJniType(param))
                             .toArray(String[]::new);
                         
-                        if (!isCallGateDeclared(clazz, methodSignature)) {
+                        if (!isCallGateDeclared(clazz, methodSignature, gateName)) {
                             CtConstructor staticInitializer = clazz.makeClassInitializer();        
-                            staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
-                            declareCallGate(clazz, params, returnType);
-                            createHeader(jniTypes, returnJniType, methodClassName);
-                            createSnippet(jniTypes, returnJniType, methodName, methodClassName);
+                            staticInitializer.insertBefore("System.loadLibrary(\"" + gateName + "\");");
+                            declareCallGate(clazz, params, returnType, gateName);
+                            createHeader(jniTypes, returnJniType, methodClassName, gateName);
+                            createSnippet(jniTypes, returnJniType, methodName, methodClassName, gateName);
                         }
                         
                         boolean voidType = returnType.getName().equals("void");
-                        m.replace((!voidType ? "$_=" : "") + "nativeCallGate($$);");
+                        m.replace((!voidType ? "$_=" : "") + gateName + "($$);");
                     }
                 } catch (NotFoundException e) { 
                     System.err.println(e.getMessage()); 
@@ -92,7 +93,7 @@ public class NativeRedirection extends CodeDumper {
         return name.equals("loadLibrary") && signature.equals(loadLibSignature);
     }
 
-    public static void createHeader(String[] jniTypes, String returnJniType, String className) throws IOException {
+    public static void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) throws IOException {
         File file = new File("snippets", className + ".h");
         
         if (file.exists()) {
@@ -102,7 +103,7 @@ public class NativeRedirection extends CodeDumper {
             lines.subList(Math.max(0, lines.size() - 4), lines.size()).clear();
 
             // Add new method
-            lines.add("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
+            lines.add("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "\n");
             lines.add("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
             lines.add("#ifdef __cplusplus\n");
             lines.add("}\n");
@@ -120,7 +121,7 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("#ifdef __cplusplus\n");
                 writer.write("extern \"C\" {\n");
                 writer.write("#endif\n\n");
-                writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate\n");
+                writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "\n");
                 writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
                 writer.write("#ifdef __cplusplus\n");
                 writer.write("}\n");
@@ -130,7 +131,7 @@ public class NativeRedirection extends CodeDumper {
         }
     }
 
-    public static void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className) throws IOException {
+    public static void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className, String gateName) throws IOException {
         System.out.println("Creating Snippet for " + methodName + " from class " + className + "...");
 
         // parameters for call gate
@@ -144,37 +145,34 @@ public class NativeRedirection extends CodeDumper {
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
         String arguments = "env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args);
-        String mc = "nativeMethod(" + arguments + ");\n";
+        String mc = "native_method(" + arguments + ");\n";
 
         File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#define _GNU_SOURCE\n");
             writer.write("#include <stdio.h>\n");
-            writer.write("#include <preload.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("static __thread char* regular = NULL;\n\n");
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
             
-            writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_nativeCallGate(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
             writer.write("\t// Get available domain\n");
             writer.write("\tpthread_mutex_lock(&mutex);\n");
-            writer.write("\tint domain = findApp(\"lib" + application_id + "\");\n");
+            writer.write("\tint domain = find_app_domain(\"lib" + application_id + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
             writer.write("\t\tsleep(1);\n");
-            writer.write("\t\tdomain = findEmptyDomain();\n");
+            writer.write("\t\tdomain = find_empty_domain();\n");
             writer.write("\t}\n\n");
-            writer.write("\tinsertThreadInMap(domain);\n\n");
-            writer.write("\t#ifndef EAGER_LOAD\n");
-            writer.write("\tchar* app = getApp(domain);\n");
+            writer.write("#ifndef EAGER_LOAD\n");
+            writer.write("\tchar* app = get_app_id(domain);\n");
             writer.write("\tif (strcmp(app, \"lib" + application_id + "\")) {\n");
-            writer.write("\t\tsetAppPermissions(app, PROT_NONE, domain);\n");
-            writer.write("\t\tinsertApp(domain, \"lib" + application_id + "\");\n");
-            writer.write("\t\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+            writer.write("\t\tset_permissions(app, PROT_NONE, domain);\n");
+            writer.write("\t\tinsert_app_id(domain, \"lib" + application_id + "\");\n");
+            writer.write("\t\tset_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
             writer.write("\t}\n");
-            writer.write("\t#endif\n\n");
-            writer.write("\tpthread_mutex_unlock(&mutex);\n");
+            writer.write("#endif\n\n");
 
             writer.write("\t// Switch to new stack\n");
             writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
@@ -185,25 +183,28 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("}\n\n");
                 
                 writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-                writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-                writer.write("\tif (nativeMethod == NULL) {\n");
+                writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("\tif (native_method == NULL) {\n");
                 writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
                 writer.write("\t\texit(EXIT_FAILURE);\n");
                 writer.write("\t}\n\n");
                 
-                writer.write("\t#ifndef EAGER_LOAD\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
-                writer.write("\t#endif\n");
+                writer.write("#ifndef EAGER_LOAD\n");
+                writer.write("\tset_app_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+                writer.write("#endif\n\n");
+
+                writer.write("\t// Install seccomp filter\n");
+                writer.write("\tinstall_notify_filter(domain);\n\n");
+
+                writer.write("\tpthread_mutex_unlock(&mutex);\n\n");
 
                 writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
-                writer.write("\t" + mc);
-                writer.write("void joinThreads(domain);\n\n");
-                
-                writer.write("\t// Undo previous changes\n");
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n"); //FIXME: This should be above joinThreads?
-                writer.write("\t#ifdef EAGER_LOAD\n");
+                writer.write("\t" + mc);                
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n\n");
+
+                writer.write("#ifdef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
-                writer.write("\t#endif\n");
+                writer.write("#endif\n");
                 writer.write("}\n");
             }
             else {
@@ -213,25 +214,29 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("}\n\n");
                 
                 writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-                writer.write("\tvoid (*nativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-                writer.write("\tif (nativeMethod == NULL) {\n");
+                writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("\tif (native_method == NULL) {\n");
                 writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
                 writer.write("\t\texit(EXIT_FAILURE);\n");
                 writer.write("\t}\n\n");
                 
-                writer.write("\t#ifndef EAGER_LOAD\n");
+                writer.write("#ifndef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
-                writer.write("\t#endif\n");
+                writer.write("#endif\n\n");
                 
+                writer.write("\t// Install seccomp filter\n");
+                writer.write("\tinstall_notify_filter(domain);\n\n");
+
+                writer.write("\tpthread_mutex_unlock(&mutex);\n\n");
+
                 writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("void joinThreads(domain);\n\n");
+                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n\n");
 
-                writer.write("\t// Undo previous changes\n");
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n"); //FIXME: This should be above joinThreads?
-                writer.write("\t#ifdef EAGER_LOAD\n");
+                writer.write("#ifdef EAGER_LOAD\n");
                 writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
-                writer.write("\t#endif\n");
+                writer.write("#endif\n\n");
+
                 writer.write("\treturn res;\n");
                 writer.write("}\n");
             }
@@ -313,11 +318,11 @@ public class NativeRedirection extends CodeDumper {
         }
     }
 
-    public static boolean isCallGateDeclared(CtClass clazz, String signature) {
+    public static boolean isCallGateDeclared(CtClass clazz, String signature, String gateName) {
         CtMethod[] declaredMethods = clazz.getDeclaredMethods();
 
         for (CtMethod method : declaredMethods) {
-            if (method.getName().equals("nativeCallGate") && method.getSignature().equals(signature)) {
+            if (method.getName().equals(gateName) && method.getSignature().equals(signature)) {
                 return true;
             }
         }
@@ -333,7 +338,7 @@ public class NativeRedirection extends CodeDumper {
                className.startsWith("org.");
     }
 
-    public static void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType) throws NotFoundException, CannotCompileException {
+    public static void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType, String gateName) throws NotFoundException, CannotCompileException {
         ClassPool cp = clazz.getClassPool();
 
         CtClass[] parameterTypes = Arrays.stream(parameters)
@@ -350,7 +355,7 @@ public class NativeRedirection extends CodeDumper {
             throw new NotFoundException("One or more parameter types not found.");
         }
 
-        CtMethod nativeMethod = new CtMethod(returnType, "nativeCallGate", parameterTypes, clazz);
+        CtMethod nativeMethod = new CtMethod(returnType, gateName, parameterTypes, clazz);
         nativeMethod.setModifiers(Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
 
         clazz.addMethod(nativeMethod);        
