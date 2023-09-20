@@ -175,7 +175,7 @@ public class NativeRedirection extends CodeDumper {
             writer.write("void *execute(void *arg);\n\n\n");
 
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            writer.write("\tpthread_mutex_lock(&mutex);\n\n");
+            writer.write("\tlock();\n\n");
             writer.write("\t// Get available domain\n");
             writer.write("\tint domain = find_app_domain(\"lib" + application_id + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
@@ -234,7 +234,7 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t// Install seccomp filter\n");
                 writer.write("\tinstall_notify_filter(domain);\n\n");
 
-                writer.write("\tpthread_mutex_unlock(&mutex);\n\n");
+                writer.write("\tunlock();\n\n");
 
                 writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + mc);                
@@ -257,7 +257,7 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t// Install seccomp filter\n");
                 writer.write("\tinstall_notify_filter(domain);\n\n");
 
-                writer.write("\tpthread_mutex_unlock(&mutex);\n\n");
+                writer.write("\tunlock();\n\n");
 
                 writer.write("\tpthread_t worker;\n");
                 writer.write("\tstruct Args args = { domain, " + args + " };\n");
