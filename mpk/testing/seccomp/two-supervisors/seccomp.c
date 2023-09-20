@@ -8,6 +8,7 @@
 #include <linux/seccomp.h>
 #include <pthread.h>
 #include <sched.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -28,7 +29,12 @@
 
 #define ARRAY_SIZE(arr)  (sizeof(arr) / sizeof((arr)[0]))
 
-int notifyFds[2] = {0};
+struct NotifyFileDescriptor {
+    sem_t semaphore;
+    int fd;
+};
+
+struct NotifyFileDescriptor array[2];
 
 static int
 seccomp(unsigned int operation, unsigned int flags, void *args)
@@ -47,6 +53,28 @@ seccomp(unsigned int operation, unsigned int flags, void *args)
         BPF_STMT(BPF_LD | BPF_W | BPF_ABS, \
                 (offsetof(struct seccomp_data, nr)))
 
+// Function to signal a thread waiting on the semaphore
+static void
+signalSemaphore(int domain)
+{
+    sem_post(&array[domain].semaphore);
+}
+
+// Function to wait for a signal using the semaphore
+static void
+waitSemaphore(int domain)
+{
+    sem_wait(&array[domain].semaphore);
+}
+
+static void
+initNotifyFDs(void)
+{
+    for (int i = 0; i < 2; i++) {
+        sem_init(&array[i].semaphore, 0, 0);
+        array[i].fd = 0;
+    }
+}
 
 /* installNotifyFilter() installs a seccomp filter that blocks all pkey
     related system calls; the filter generates user-space notifications 
@@ -55,8 +83,8 @@ seccomp(unsigned int operation, unsigned int flags, void *args)
     The function return value is a file descriptor from which the
     user-space notifications can be fetched. */
 
-static int
-installNotifyFilter(void)
+static void
+installNotifyFilter(int domain)
 {    
     struct sock_filter filter[] = {
         X86_64_CHECK_ARCH,
@@ -101,7 +129,8 @@ installNotifyFilter(void)
     if (nfd == -1)
         err(EXIT_FAILURE, "seccomp-install-notify-filter");
 
-    return nfd;
+    array[domain].fd = nfd;
+    signalSemaphore(domain);
 }
 
 /* Create a child thread--the "target"--that makes system calls
@@ -110,14 +139,15 @@ installNotifyFilter(void)
 static void *
 target(void *arg)
 {      
-    int* notifyFd = (int*)arg; // Cast the argument back to an integer pointer
+    int *domain = (int*)arg;
+    SECC_DBM("Target on domain %d is up", *domain);
 
     /* Install seccomp filter(s) */
 
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0))
         err(EXIT_FAILURE, "prctl");
 
-    *notifyFd = installNotifyFilter();
+    installNotifyFilter(*domain);
     
     /* mmap(2) syscall */
 
@@ -327,10 +357,12 @@ handleNotifications(int notifyFd)
 static void *
 supervisor(void *arg)
 {   
-    int* notifyFd = (int*)arg; // Cast the argument back to an integer pointer
+    int *domain = (int*)arg;
+    SECC_DBM("Supervisor on domain %d is up", *domain);
 
-    while (*notifyFd == 0);
-    handleNotifications(*notifyFd);
+    waitSemaphore(*domain);
+    SECC_DBM("Supervisor on domain %d received a signal", *domain);
+    handleNotifications(array[*domain].fd);
     return NULL;
 }
 
@@ -338,16 +370,23 @@ int
 main()
 {
     pthread_t worker[4];
-
+    initNotifyFDs();
+    
     /* Create child threads */
     
-    for (int i = 0; i < 2; i++)
-        pthread_create(&worker[i], NULL, target, &notifyFds[i]); 
+    for (int i = 0; i < 2; i++) {
+        int *domain = (int *)malloc(sizeof(int));
+        *domain = i;
+        pthread_create(&worker[i], NULL, target, domain); 
+    }
 
     /* Supervise children */
 
-    for (int i = 2; i < 4; i++)
-        pthread_create(&worker[i], NULL, supervisor, &notifyFds[i-2]);
+    for (int i = 0; i < 2; i++) {
+        int *domain = (int *)malloc(sizeof(int));
+        *domain = i;
+        pthread_create(&worker[i+2], NULL, supervisor, domain);
+    }
 
     /* Wait for supervisors */
 
