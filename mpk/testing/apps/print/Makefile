@@ -18,7 +18,7 @@ include ../common.mk
 
 .PHONY: build javassist snippets run gdb clean
 
-build: create_bin libpreload.so HelloJNI.h libhello.so javassist snippets
+build: create_bin HelloJNI.h libhello.so javassist snippets
 
 HelloJNI.h: HelloJNI.java
 	javac -h . HelloJNI.java

@@ -135,17 +135,17 @@ public class NativeRedirection extends CodeDumper {
         System.out.println("Creating Snippet for " + methodName + " from class " + className + "...");
 
         // parameters for call gate
-        String[] args = Arrays.stream(jniTypes)
-            .map(i -> generateUniqueId())
+        String[] arguments = IntStream.range(0, jniTypes.length)
+            .mapToObj(i -> "arg" + i)
             .toArray(String[]::new);   
 
-        String typeArgs = IntStream.range(0, args.length)
-            .mapToObj(i -> jniTypes[i] + " " + args[i])
-            .collect(Collectors.joining(", ",  args.length > 0 ? ", " : "", ""));
+        String typeArgs = IntStream.range(0, arguments.length)
+            .mapToObj(i -> jniTypes[i] + " " + arguments[i])
+            .collect(Collectors.joining(", ",  arguments.length > 0 ? ", " : "", ""));
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
-        String arguments = "env, obj" + (args.length > 0 ? ", " : "") + String.join(", ", args);
-        String mc = "native_method(" + arguments + ");\n";
+        String args = "env, obj" + (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
+        String mc = "native_method(" + args + ");\n";
 
         File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
@@ -153,12 +153,30 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include <stdio.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
 
-            writer.write("static __thread char* regular = NULL;\n\n");
-            writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
+            writer.write("struct Args {\n");
+            writer.write("\tint domain;\n");
+            writer.write("\tJNIEnv *env;\n");
+            writer.write("\tjobject obj;\n");
+            for (int i = 0; i < jniTypes.length; i++) {
+                writer.write("\t" + jniTypes[i] + " " + arguments[i] + ";\n");
+            }
+            writer.write("};\n\n");
+
+            if (!returnJniType.equals("void")) {
+                writer.write("struct Result {\n");
+                writer.write("\t" + returnJniType + " res;\n");
+                writer.write("};\n\n");
+            }
+
+            writer.write("static __thread char* regular = NULL; // thread regular stack\n\n");
             
+            writer.write("/* Function declarations */\n");
+            writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n");
+            writer.write("void *execute(void *arg);\n\n\n");
+
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("\tpthread_mutex_lock(&mutex);\n\n");
             writer.write("\t// Get available domain\n");
-            writer.write("\tpthread_mutex_lock(&mutex);\n");
             writer.write("\tint domain = find_app_domain(\"lib" + application_id + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
@@ -168,9 +186,10 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#ifndef EAGER_LOAD\n");
             writer.write("\tchar* app = get_app_id(domain);\n");
             writer.write("\tif (strcmp(app, \"lib" + application_id + "\")) {\n");
-            writer.write("\t\tset_permissions(app, PROT_NONE, domain);\n");
+            writer.write("\t\tif (strcmp(app, \"\"))\n");
+            writer.write("\t\t\tset_permissions(app, PROT_NONE, domain);\n");
             writer.write("\t\tinsert_app_id(domain, \"lib" + application_id + "\");\n");
-            writer.write("\t\tset_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+            writer.write("\t\tset_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n");
             writer.write("\t}\n");
             writer.write("#endif\n\n");
 
@@ -178,20 +197,39 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
 
             if (returnJniType.equals("void")) {
-                writer.write("\twrapper(domain, " + arguments + ");\n");
+                writer.write("\twrapper(domain, " + args + ");\n");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n");
-                writer.write("}\n\n");
+                writer.write("}\n\n\n");
                 
                 writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-                writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("#ifdef EAGER_LOAD\n");
+                writer.write("\tset_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n");
+                writer.write("#endif\n\n");
+                
+                writer.write("\tpthread_t worker;\n");
+                writer.write("\tstruct Args args = { domain, " + args + " };\n");
+                writer.write("\tpthread_create(&worker, NULL, execute, &args);\n");
+                writer.write("\tpthread_join(worker, NULL);\n\n");
+
+                writer.write("#ifdef EAGER_LOAD\n");
+                writer.write("\tset_permissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
+                writer.write("#endif\n");
+                writer.write("}\n\n\n");
+
+                writer.write("void *execute(void *arg) {\n");
+                writer.write("\tstruct Args *args = (struct Args *)arg;\n\n");
+                writer.write("\tint domain = args->domain;\n");
+                writer.write("\tJNIEnv *env = args->env;\n");
+                writer.write("\tjobject obj = args->obj;\n");
+                for (int i = 0; i < jniTypes.length; i++) {
+                    writer.write("\t" + jniTypes[i] + " " + arguments[i] + " = args->" + arguments[i] + ";\n");
+                }
+
+                writer.write("\n\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
                 writer.write("\tif (native_method == NULL) {\n");
                 writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
                 writer.write("\t\texit(EXIT_FAILURE);\n");
                 writer.write("\t}\n\n");
-                
-                writer.write("#ifndef EAGER_LOAD\n");
-                writer.write("\tset_app_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
-                writer.write("#endif\n\n");
 
                 writer.write("\t// Install seccomp filter\n");
                 writer.write("\tinstall_notify_filter(domain);\n\n");
@@ -202,26 +240,18 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t" + mc);                
                 writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n\n");
 
-                writer.write("#ifdef EAGER_LOAD\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
-                writer.write("#endif\n");
+                writer.write("\treturn NULL;\n");
                 writer.write("}\n");
             }
             else {
-                writer.write("\t" + returnJniType + " res = wrapper(" + arguments + ");");
+                writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n");
                 writer.write("\treturn res;\n");
-                writer.write("}\n\n");
+                writer.write("}\n\n\n");
                 
                 writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-                writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-                writer.write("\tif (native_method == NULL) {\n");
-                writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
-                writer.write("\t\texit(EXIT_FAILURE);\n");
-                writer.write("\t}\n\n");
-                
-                writer.write("#ifndef EAGER_LOAD\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
+                writer.write("#ifdef EAGER_LOAD\n");
+                writer.write("\tset_permissions(\"lib" + application_id + "\", PROT_READ|PROT_WRITE|PROT_EXEC, domain);\n\n");
                 writer.write("#endif\n\n");
                 
                 writer.write("\t// Install seccomp filter\n");
@@ -229,15 +259,42 @@ public class NativeRedirection extends CodeDumper {
 
                 writer.write("\tpthread_mutex_unlock(&mutex);\n\n");
 
-                writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
+                writer.write("\tpthread_t worker;\n");
+                writer.write("\tstruct Args args = { domain, " + args + " };\n");
+                writer.write("\tpthread_create(&worker, NULL, execute, &args);\n");
+                writer.write("\tstruct Result *result;\n");
+                writer.write("\tpthread_join(worker, (void **)&result);\n\n");
+
+                writer.write("#ifdef EAGER_LOAD\n");
+                writer.write("\tset_permissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
+                writer.write("#endif\n\n");
+
+                writer.write("\treturn result->res;\n");
+                writer.write("}\n\n\n");
+
+                writer.write("void *execute(void *arg) {\n");
+                writer.write("\tstruct Args *args = (struct Args *)arg;\n");
+                writer.write("\tJNIEnv *env = args->env;\n");
+                writer.write("\tjobject obj = args->obj;\n");
+                for (int i = 0; i < jniTypes.length; i++) {
+                    writer.write("\t" + jniTypes[i] + " " + arguments[i] + " = args->" + arguments[i] + ";\n");
+                }
+
+                writer.write("\n\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+                writer.write("\tif (native_method == NULL) {\n");
+                writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+                writer.write("\t\texit(EXIT_FAILURE);\n");
+                writer.write("\t}\n\n");
+
+                writer.write("\t// Install seccomp filter\n");
+                writer.write("\tinstall_notify_filter(domain);\n\n");
+
+                writer.write("\n\t__wrpkru(ERIM_DOMAIN(domain));\n");
                 writer.write("\t" + returnJniType + " res = " + mc);
                 writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n\n");
 
-                writer.write("#ifdef EAGER_LOAD\n");
-                writer.write("\tsetAppPermissions(\"lib" + application_id + "\", PROT_NONE, domain);\n");
-                writer.write("#endif\n\n");
-
-                writer.write("\treturn res;\n");
+                writer.write("\tstruct Result result = { res };\n");
+                writer.write("\tpthread_exit(result);\n");
                 writer.write("}\n");
             }
         }
