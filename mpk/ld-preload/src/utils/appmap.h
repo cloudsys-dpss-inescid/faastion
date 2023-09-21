@@ -22,11 +22,10 @@ typedef struct AppMap {
     AppNode* buckets[TABLE_SIZE];
 } AppMap;
 
-void initAppMap(AppMap* map);
+void init_app_map(AppMap* map);
+void insert_app(AppMap* map, char* id, MemoryRegion memReg);
 unsigned long hash_str(const char *str);
-AppNode* createAppNode(char* id, MemoryRegion memReg);
-void insertApp(AppMap* map, char* id, MemoryRegion memReg);
-MemoryRegion* getRegions(AppMap map, char* id, size_t* count);
-void printAppMap(AppMap map, int verbose);
+AppNode* create_app_node(char* id, MemoryRegion memReg);
+MemoryRegion* get_regions(AppMap map, char* id, size_t* count);
 
 #endif

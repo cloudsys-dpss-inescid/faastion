@@ -4,13 +4,17 @@
 #include <string.h>
 #include "threadmap.h"
 
-void initThreadMap(ThreadMap* map) {
+void
+init_thread_map(ThreadMap* map)
+{
     for (int i = 0; i < TABLE_SIZE; i++) {
-        map->buckets[i] = createThreadNode();
+        map->buckets[i] = create_thread_node();
     }
 }
 
-ThreadNode* createThreadNode() {
+ThreadNode*
+create_thread_node()
+{
     ThreadNode* newNode = (ThreadNode*)malloc(sizeof(ThreadNode));
     if (newNode == NULL) {
         fprintf(stderr, "Memory allocation failed!\n");
@@ -23,7 +27,9 @@ ThreadNode* createThreadNode() {
     return newNode;
 }
 
-void insertThread(ThreadMap* map, int domain) {
+void
+insert_thread(ThreadMap* map, int domain)
+{
     ThreadNode* node = map->buckets[domain];
     
     pthread_mutex_lock(&(node->mutex));
@@ -31,7 +37,9 @@ void insertThread(ThreadMap* map, int domain) {
     pthread_mutex_unlock(&(node->mutex));
 }
 
-void removeThread(ThreadMap* map, int domain) {
+void
+remove_thread(ThreadMap* map, int domain)
+{
     ThreadNode* node = map->buckets[domain];
 
     pthread_mutex_lock(&(node->mutex));
