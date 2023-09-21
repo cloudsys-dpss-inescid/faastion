@@ -4,28 +4,26 @@ function DIR {
     echo "$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 }
 
-LD_PRELOAD_DIR=$(DIR)/../../ld-preload
-JAVASSIST_DIR=$(DIR)/../../../native-execution/javassist
-JAVA_AGENT=$JAVASSIST_DIR/target/JavassistWrapper-1.0-jar-with-dependencies.jar
+JAVA_AGENT=$JAVASSIST_HOME/target/JavassistWrapper-1.0-jar-with-dependencies.jar
 JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 TOOL="NativeRedirection"
 
 function build_javassist_agent {
-    cd $JAVASSIST_DIR
+    cd $JAVASSIST_HOME
     mvn package
     cd - &> /dev/null
 }
 
 function build_preload_lib {
-    make build -C $LD_PRELOAD_DIR
+    make build -C $PRELOAD_HOME
 }
 
 function clean_preload {
-    make clean -C $LD_PRELOAD_DIR
+    make clean -C $PRELOAD_HOME
 }
 
 function copy_preload_lib {
-    cp $LD_PRELOAD_DIR/preload.so $(DIR)/$application/bin
+    cp $PRELOAD_HOME/build/bin/libpreload.so $(DIR)/$application/bin
 }
 
 function build_application {
@@ -68,7 +66,7 @@ function compile_snippets {
 
 function run_application {
     cd $(DIR)/$application/bin
-    LD_PRELOAD=./preload.so java -Djava.library.path=. $entrypoint
+    LD_PRELOAD=./libpreload.so java -Djava.library.path=. $entrypoint
     cd - &>/dev/null
 }
 
