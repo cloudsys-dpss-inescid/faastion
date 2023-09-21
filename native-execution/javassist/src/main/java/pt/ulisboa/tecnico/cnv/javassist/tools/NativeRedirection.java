@@ -149,8 +149,7 @@ public class NativeRedirection extends CodeDumper {
 
         File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
-            writer.write("#define _GNU_SOURCE\n");
-            writer.write("#include <stdio.h>\n");
+            writer.write("#include <preload.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("struct Args {\n");
