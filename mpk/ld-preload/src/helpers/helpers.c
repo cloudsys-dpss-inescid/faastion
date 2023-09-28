@@ -6,23 +6,26 @@
 
 /* Auxiliary functions */
 void
-signal_semaphore(struct NotifyFileDescriptor* nfd)
+signal_semaphore(sem_t* semaphore)
 {
-    sem_post(&nfd->semaphore);
+    sem_post(semaphore);
 }
 
 void
-wait_semaphore(struct NotifyFileDescriptor* nfd)
+wait_semaphore(sem_t* semaphore)
 {
-    sem_wait(&nfd->semaphore);
+    sem_wait(semaphore);
 }
 
 void
-init_notify_array(struct NotifyFileDescriptor array[])
+init_supervisors(struct Supervisor array[])
 {
     for (int i = 0; i < 16; i++) {
-        sem_init(&array[i].semaphore, 0, 0);
+        sem_init(&array[i].perms, 0, 0);
+        sem_init(&array[i].filter, 0, 0);
+        array[i].status = IN_PROGRESS;
         array[i].fd = 0;
+        array[i].app = NULL;
     }
 }
 

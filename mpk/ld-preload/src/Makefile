@@ -17,7 +17,7 @@ $(BUILD_DIR):
 
 # Executables
 $(BIN_DIR)/libpreload.so: $(OBJ_DIR)/appmap.o $(OBJ_DIR)/threadmap.o $(OBJ_DIR)/helpers.o $(OBJ_DIR)/preload.o
-	$(CC) $(CFLAGS) $ -shared -o $@ $^ -lm $(LIBRARIES) -DERIM_DBG -DERIM_SWAP_STACKS
+	$(CC) $(CFLAGS) -shared -o $@ $^ -lm $(LIBRARIES) -DERIM_DBG -DERIM_SWAP_STACKS
 
 # Object Files
 $(OBJ_DIR)/appmap.o: utils/appmap.c
