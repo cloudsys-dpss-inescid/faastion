@@ -1,4 +1,4 @@
-requirements: create_bin build_preload_lib
+requirements: create_bin create_snippets build_preload_lib build_javassist_agent
 
 # Make directories
 create_bin:
@@ -16,7 +16,7 @@ build_javassist_agent:
 	cd $(JAVASSIST_HOME) && mvn -q package
 
 # Compile files
-javassist: build_javassist_agent create_snippets
+javassist:
 	java -javaagent:$(JAVA_AGENT)=$(TOOL):$(CLASS_PATH):$(PATH_TO_BIN) $(ENTRYPOINT)
 
 snippets:
@@ -28,7 +28,7 @@ snippets:
 # Execution
 run:
 	export LD_LIBRARY_PATH=$(PATH_TO_BIN)
-    LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so java -Djava.library.path=$(PATH_TO_BIN) $(PATH_TO_BIN)/$(ENTRYPOINT)
+	LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so java -Djava.library.path=$(PATH_TO_BIN) $(PATH_TO_BIN)/$(ENTRYPOINT)
 	
 gdb:
 	export LD_LIBRARY_PATH=$(PATH_TO_BIN)

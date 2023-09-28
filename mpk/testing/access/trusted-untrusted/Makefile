@@ -11,7 +11,8 @@ TARGET = test
 .PHONY: build erim run clean
 
 build: erim
-	$(CC) $(CFLAGS) -o $(TARGET) test_application.c $(LDLIBS)
+	$(CC) $(CFLAGS) -c test_application.c -o test_application.o
+	$(CC) -o $(TARGET) test_application.o $(LDLIBS)
 
 erim:
 	$(MAKE) clean -C $(PATH_TO_ERIM)/src && $(MAKE) -C $(PATH_TO_ERIM)/src

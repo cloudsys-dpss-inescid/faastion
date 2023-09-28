@@ -7,5 +7,5 @@ JNI_INCLUDE=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
 ERIM_INCLUDE=-I$(ERIM_HOME)/src/erim -I$(ERIM_HOME)/src/common
 
 CC=gcc
-CFLAGS=-g -fPIC -shared $(JNI_INCLUDE)
-SFLAGS=-Wall -O0 -fno-inline $(CFLAGS) $(ERIM_INCLUDE) -I$(PRELOAD_HOME)
+CFLAGS=-Wall -g -fPIC -shared $(JNI_INCLUDE)
+SFLAGS=$(CFLAGS) -O0 -fno-inline $(ERIM_INCLUDE) -I$(PRELOAD_HOME)
