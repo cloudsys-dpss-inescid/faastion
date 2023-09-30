@@ -21,19 +21,27 @@
 char* get_app_id(int domain);
 int find_app_domain(const char* id);
 void insert_app_id(int domain, const char* id);
-void update_supervisor_app(int domain, const char* app);
 
 /* Thread synchronization */
 void lock();
 void unlock();
 
-/* MPK */
+/* Supervisors */
+void wait_set(int domain);
+void signal_set(int domain);
+void wait_filter(int domain);
+void signal_filter(int domain);
+void wait_perms(int domain);
 void signal_perms(int domain);
+void update_supervisor_app(int domain, const char* app);
+void update_supervisor_status(int domain);
+
+/* MPK domains */
+void change_domain(int domain);
+void switch_stack(int domain, char* regular);
 
 /* Seccomp */
 void install_notify_filter(int domain);
-void signal_filter(int domain);
-void update_supervisor_status(int domain);
 
 /* Domain management */
 int find_empty_domain();

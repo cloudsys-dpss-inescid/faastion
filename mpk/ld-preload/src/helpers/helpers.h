@@ -7,16 +7,13 @@ enum Status {
 };
 
 struct Supervisor {
-    sem_t perms;
     sem_t filter;
+    sem_t perms;
+    sem_t set;
     enum Status status;
     int fd;
-    char* app;
+    char app[33];
 };
-
-/* Semaphore synchronization */
-void signal_semaphore(sem_t* semaphore);
-void wait_semaphore(sem_t* semaphore);
 
 /* Lazy loading */
 void init_app_array(char* array[]);

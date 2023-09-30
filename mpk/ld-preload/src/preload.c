@@ -69,7 +69,7 @@ seccomp(unsigned int operation, unsigned int flags, void *args)
     return syscall(SYS_seccomp, operation, flags, args);
 }
 
-/* extern functions */
+/* Thread sync */
 void
 lock()
 {
@@ -82,18 +82,7 @@ unlock()
     pthread_mutex_unlock(&mutex);
 }
 
-void
-signal_perms(int domain)
-{
-    signal_semaphore(&supervisors[domain].perms);
-}
-
-void
-signal_filter(int domain)
-{
-    signal_semaphore(&supervisors[domain].filter);
-}
-
+/* Domain Management algorithm */
 int
 find_empty_domain()
 {
@@ -104,6 +93,7 @@ find_empty_domain()
     return -1; /* Empty Domain not found */
 }
 
+/* Lazy Loading */
 void 
 insert_app_id(int domain, const char* id)
 {
@@ -127,9 +117,56 @@ get_app_id(int domain)
     return (appIDs[domain] != NULL) ? appIDs[domain] : "";
 }
 
+/* Supervisors */
+void
+wait_set(int domain)
+{
+    int value;
+    if (sem_getvalue(&supervisors[domain].set, &value) == 0)
+        if (value) sem_wait(&supervisors[domain].set);
+    sem_wait(&supervisors[domain].set);
+}
+
+void
+signal_set(int domain)
+{
+    sem_post(&supervisors[domain].set);
+}
+
+void
+wait_filter(int domain)
+{
+    int value;
+    if (sem_getvalue(&supervisors[domain].filter, &value) == 0)
+        if (value) sem_wait(&supervisors[domain].filter);
+    sem_wait(&supervisors[domain].filter);
+}
+
+void
+signal_filter(int domain)
+{
+    sem_post(&supervisors[domain].filter);
+}
+
+void
+wait_perms(int domain)
+{
+    int value;
+    if (sem_getvalue(&supervisors[domain].perms, &value) == 0)
+        if (value) sem_wait(&supervisors[domain].perms);
+    sem_wait(&supervisors[domain].perms);
+}
+
+void
+signal_perms(int domain)
+{
+    sem_post(&supervisors[domain].perms);
+}
+
 void
 update_supervisor_app(int domain, const char* app)
 {
+    SEC_DBM("\t[S%d]: assigning application -> %s", domain, app);
     strcpy(supervisors[domain].app, app);
 }
 
@@ -138,6 +175,75 @@ update_supervisor_status(int domain)
 {
     supervisors[domain].status = DONE;
 }
+
+/* MPK domains */
+void
+change_domain(int domain)
+{   
+	__wrpkrumem(ERIM_DOMAIN(domain));
+}
+
+void
+switch_stack(int domain, char* regular)
+{
+    if (!domain)
+        ERIM_SWITCH_BACK(regular);
+    else
+	    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);
+}
+
+static void 
+set_permissions(const char* id, int protectionFlag, int pkey)
+{
+    size_t count;
+    MemoryRegion* regions = get_regions(appMap, (char*)id, &count);
+
+    for (size_t i = 0; i < count; ++i) {
+        if (pkey_mprotect(regions[i].address, regions[i].size, protectionFlag, pkey) == -1) {
+            fprintf(stderr, "pkey_mprotect error\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+/* Library loading */
+void *
+dlopen(const char * input, int flag)
+{
+    if (real_dlopen == NULL) {
+        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
+    }
+    
+    if (!input || strchr(input, ':') == NULL) {
+        return real_dlopen(input, flag);
+    }
+
+    // Parse input
+    char pathname[256] = "";
+    char libname[256] = "lib";
+    char id[256] = "";
+    char filename[256] = "";
+    
+    char * basename = extract_basename(input);
+    sscanf(basename, "%[^:]:%s", id, filename);
+    strcat(libname, filename);
+
+    size_t size = strlen(input) - strlen(basename);
+    strncpy(pathname, input, size);
+    strcat(pathname, libname);
+
+    void *handle = real_dlopen(pathname, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+
+    SEC_DBM("\t[PRELOAD]: storing %s addresses and sizes in map...", libname);
+    get_memory_regions(&appMap, id, pathname);
+
+    remove(input);
+    fprintf(stderr, "Handle: %p\n", handle);
+
+    return handle;
+}
+
+/* Seccomp */
 
 /* Installs a seccomp filter that blocks all pkey related system calls;
     the filter generates user-space notifications (SECCOMP_RET_USER_NOTIF)
@@ -189,61 +295,11 @@ install_notify_filter(int domain)
 
     int nfd = seccomp(SECCOMP_SET_MODE_FILTER,
                         SECCOMP_FILTER_FLAG_NEW_LISTENER, &prog);
+    
     if (nfd == -1)
         err(EXIT_FAILURE, "seccomp-install-notify-filter");
 
     supervisors[domain].fd = nfd;
-    signal_semaphore(&supervisors[domain].filter);
-}
-
-/* Library loading */
-void *
-dlopen(const char * input, int flag)
-{
-    if (real_dlopen == NULL) {
-        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
-    }
-    
-    if (!input || strchr(input, ':') == NULL) {
-        return real_dlopen(input, flag);
-    }
-
-    // Parse input
-    char pathname[256] = "";
-    char libname[256] = "lib";
-    char id[256] = "";
-    char filename[256] = "";
-    
-    char * basename = extract_basename(input);
-    sscanf(basename, "%[^:]:%s", id, filename);
-    strcat(libname, filename);
-
-    size_t size = strlen(input) - strlen(basename);
-    strncpy(pathname, input, size);
-    strcat(pathname, libname);
-
-    void *handle = real_dlopen(pathname, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
-
-    SEC_DBM("Storing %s addresses and sizes in map...", libname);
-    get_memory_regions(&appMap, id, pathname);
-
-    remove(input);
-    return handle;
-}
-
-
-static void 
-set_permissions(const char* id, int protectionFlag, int pkey)
-{
-    size_t count;
-    MemoryRegion* regions = get_regions(appMap, (char*)id, &count);
-
-    for (size_t i = 0; i < count; ++i) {
-        if (pkey_mprotect(regions[i].address, regions[i].size, protectionFlag, pkey) == -1) {
-            fprintf(stderr, "pkey_mprotect error\n");
-            exit(EXIT_FAILURE);
-        }
-    }
 }
 
 /* Check that the notification ID provided by a SECCOMP_IOCTL_NOTIF_RECV
@@ -445,10 +501,12 @@ static void *
 supervisor(void *arg)
 {   
     int* domain = (int*)arg;
+    SEC_DBM("\t[S%d]: up and running...", *domain);
 
     while(1) {
         // wait to set permissions
-        wait_semaphore(&supervisors[*domain].perms);
+        wait_perms(*domain);
+        SEC_DBM("\t[S%d]: setting library permissions...", *domain);
 
 #ifdef EAGER_LOAD
 	    set_permissions(supervisors[*domain].app, PROT_READ|PROT_WRITE|PROT_EXEC, *domain);
@@ -462,11 +520,14 @@ supervisor(void *arg)
         }
 #endif
 
+        /* Populate domain */
         insert_thread(&threadMap, *domain);
 
-        SEC_DBM("\t[S%d]: checking filters (waiting signal)...", *domain);
-        wait_semaphore(&supervisors[*domain].filter);
-        SEC_DBM("\t[S%d]: received signal", *domain);
+        SEC_DBM("\t[S%d]: permissions set, signaling app...", *domain);
+        signal_set(*domain);
+
+        wait_filter(*domain);
+        SEC_DBM("\t[S%d]: filter is applied, handling notifications...", *domain);
 
         handle_notifications(supervisors[*domain].fd, *domain);
 
@@ -493,11 +554,11 @@ __attribute__((constructor)) init(void)
         exit(EXIT_FAILURE);
     }
 
-    pthread_t workers[NUM_DOMAINS];
+    pthread_t workers[NUM_DOMAINS-1];
 
-    for (int i = 0; i < NUM_DOMAINS; i++) {
+    for (int i = 1; i < NUM_DOMAINS; i++) {
         int *domain = (int *)malloc(sizeof(int));
         *domain = i;
-        pthread_create(&workers[i], NULL, supervisor, domain);
+        pthread_create(&workers[i-1], NULL, supervisor, domain);
     }
 }

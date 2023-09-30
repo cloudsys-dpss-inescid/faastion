@@ -6,26 +6,15 @@
 
 /* Auxiliary functions */
 void
-signal_semaphore(sem_t* semaphore)
-{
-    sem_post(semaphore);
-}
-
-void
-wait_semaphore(sem_t* semaphore)
-{
-    sem_wait(semaphore);
-}
-
-void
 init_supervisors(struct Supervisor array[])
 {
     for (int i = 0; i < 16; i++) {
-        sem_init(&array[i].perms, 0, 0);
+        sem_init(&array[i].set, 0, 0);
         sem_init(&array[i].filter, 0, 0);
+        sem_init(&array[i].perms, 0, 0);
+        strcpy(array[i].app, "");
         array[i].status = IN_PROGRESS;
         array[i].fd = 0;
-        array[i].app = NULL;
     }
 }
 
@@ -62,6 +51,7 @@ get_memory_regions(AppMap* map, char* id, const char* path)
     MemoryRegion memReg;
 
     while (fgets(line, sizeof(line), mapsFile)) {
+
         if (strstr(line, libraryName) == NULL) {
             continue;
         }
