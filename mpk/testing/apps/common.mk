@@ -27,11 +27,11 @@ snippets:
 
 # Execution
 run:
-	export LD_LIBRARY_PATH=$(PATH_TO_BIN)
-	LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so java -Djava.library.path=$(PATH_TO_BIN) $(PATH_TO_BIN)/$(ENTRYPOINT)
+	export LD_LIBRARY_PATH=$(PATH_TO_BIN); \
+	LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so java -Djava.library.path=$(PATH_TO_BIN) -cp $(PATH_TO_BIN) $(ENTRYPOINT)
 	
 gdb:
 	export LD_LIBRARY_PATH=$(PATH_TO_BIN)
 	gdb java \
 		-ex "set exec-wrapper env 'LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so'" \
-		-ex "run -Djava.library.path=$(PATH_TO_BIN) $(PATH_TO_BIN)/$(ENTRYPOINT)"
+		-ex "run -Djava.library.path=$(PATH_TO_BIN) -cp $(PATH_TO_BIN) $(ENTRYPOINT)"
