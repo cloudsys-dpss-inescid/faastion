@@ -47,7 +47,7 @@ public class NativeRedirection extends CodeDumper {
                     String gateName = methodName + "CallGate";
 
                     if (isLoadLibrary(clazz, methodName, methodSignature)) {
-                        m.replace("{ $1 = \"" + application_id + ":\" + $1; java.io.File file = new java.io.File(\"lib\" + $1 + \".so\"); file.createNewFile(); $proceed($$); }");
+                        m.replace("{ $1 = \"" + application_id + ":\" + $1; java.io.File file = new java.io.File(\"bin/lib\" + $1 + \".so\"); file.createNewFile(); $proceed($$); }");
 
                         //m.replace("{ $1 = \"" + application_id + ":\" + $1; $proceed($$); }");
                     }
@@ -62,7 +62,7 @@ public class NativeRedirection extends CodeDumper {
                         
                         if (!isCallGateDeclared(clazz, methodSignature, gateName)) {
                             CtConstructor staticInitializer = clazz.makeClassInitializer();        
-                            staticInitializer.insertBefore("System.loadLibrary(\"" + gateName + "\");");
+                            staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
                             declareCallGate(clazz, params, returnType, gateName);
                             createHeader(jniTypes, returnJniType, methodClassName, gateName);
                             createSnippet(jniTypes, returnJniType, methodName, methodClassName, gateName);
@@ -117,6 +117,16 @@ public class NativeRedirection extends CodeDumper {
 
                 writer.write("#ifndef _Included_" + className + "\n");
                 writer.write("#define _Included_" + className + "\n\n");
+                
+                writer.write("#ifdef SNI_DBG\n");
+                writer.write("#define SNI_DBM(...) \\\n");
+                writer.write("\tdo { \\\n");
+                writer.write("\tfprintf(stderr, __VA_ARGS__); \\\n");
+                writer.write("\tfprintf(stderr, \"\\n\"); \\\n");
+                writer.write("\t} while(0)\n");
+                writer.write("#else // disable debug\n");
+                writer.write("#define SNI_DBG(...)\n");
+                writer.write("#endif\n\n");
 
                 writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "\n");
                 writer.write("\t(JNIEnv *, jclass" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
@@ -145,11 +155,9 @@ public class NativeRedirection extends CodeDumper {
         File file = new File("snippets", methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
             writer.write("#include <preload.h>\n");
+            writer.write("#include <unistd.h>\n");
+            writer.write("#include <stdlib.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
-
-            writer.write("/* erim includes */\n");
-            writer.write("#include <common.h>\n");
-            writer.write("#include <erim.h>\n\n");
 
             writer.write("static __thread char* regular = NULL; // thread regular stack\n");
             writer.write("static __thread int hasFilter = 0; // seccomp filter is applied\n\n");
@@ -161,6 +169,7 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\tlock();\n\n");
 
             writer.write("\t/* Get available domain */\n");
+            writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
             writer.write("\tint domain = find_app_domain(\"lib" + application_id + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
@@ -169,24 +178,30 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t}\n\n");
             
             writer.write("\t/* Handle native library permissions */\n");
+            writer.write("\tSNI_DBM(\"[s]: Handling permissions for domain %d...\", domain);\n");
             writer.write("\tupdate_supervisor_app(domain, \"lib" + application_id + "\");\n");
             writer.write("\tsignal_perms(domain);\n\n");
+
+            writer.write("\t/* Wait for all permissions to be set */\n");
+            writer.write("\twait_set(domain);\n");
+            writer.write("\tSNI_DBM(\"[s]: permissions are all set, continuing...\");\n\n");
 
             writer.write("\tunlock();\n\n");
 
             writer.write("\t/* Switch to new stack */\n");
-            writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
+            writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
+            writer.write("\tswitch_stack(domain, regular);\n");
 
             if (returnJniType.equals("void")) {
                 writer.write("\twrapper(domain, " + args + ");\n");
-                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\tswitch_stack(0, regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
                 writer.write("\tupdate_supervisor_status(domain);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
-                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\tswitch_stack(0, regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
                 writer.write("\tupdate_supervisor_status(domain);\n\n");
@@ -203,22 +218,23 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t}\n\n");
 
             writer.write("\t/* Install seccomp filter */\n");
-            writer.write("\tif (hasFilter)\n");
-            writer.write("\t\tsignal_filter(domain);\n");
-            writer.write("\telse {\n");
+            writer.write("\tSNI_DBM(\"[s]: installing filter...\");\n");
+            writer.write("\tif (!hasFilter) {\n");
             writer.write("\t\tinstall_notify_filter(domain);\n");
             writer.write("\t\thasFilter = 1;\n");
-            writer.write("\t}\n\n");
+            writer.write("\t}\n");
+            writer.write("\tsignal_filter(domain);\n\n");
 
             writer.write("\t/* Change thread domain */\n");
-            writer.write("\t__wrpkru(ERIM_DOMAIN(domain));\n");
+            writer.write("\tSNI_DBM(\"[s]: changing domain...\");\n");
+            writer.write("\tchange_domain(domain);\n");
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);                
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n");
+                writer.write("\tchange_domain(0);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\t__wrpkru(ERIM_DOMAIN(0));\n\n");
+                writer.write("\tchange_domain(0);\n\n");
 
                 writer.write("\treturn res;\n");
             }
