@@ -13,7 +13,7 @@ HelloJNI.h: HelloJNI.java
 	javac -h . HelloJNI.java
 
 libhello.so: HelloJNI.c
-	musl-gcc $(CFLAGS) -o $(PATH_TO_BIN)/libhello.so HelloJNI.c
+	musl-gcc -static $(CFLAGS) -o $(PATH_TO_BIN)/libhello.so HelloJNI.c
 
 # Clean process
 clean:
