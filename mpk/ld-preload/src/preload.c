@@ -238,7 +238,6 @@ dlopen(const char * input, int flag)
     get_memory_regions(&appMap, id, pathname);
 
     remove(input);
-    fprintf(stderr, "Handle: %p\n", handle);
 
     return handle;
 }
@@ -289,6 +288,9 @@ install_notify_filter(int domain)
         .len = ARRAY_SIZE(filter),
         .filter = filter,
     };
+
+    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0))
+        err(EXIT_FAILURE, "prctl");
 
     /* Install the filter with the SECCOMP_FILTER_FLAG_NEW_LISTENER flag;
         as a result, seccomp() returns a notification file descriptor. */
@@ -424,7 +426,6 @@ handle_notifications(int notifyFd, int domain)
     alloc_seccomp_notif_buffers(&req, &resp, &sizes, domain);
 
     /* Loop handling notifications */
-
     for (;;) {
 
         /* Wait for next notification, returning info in '*req' */
