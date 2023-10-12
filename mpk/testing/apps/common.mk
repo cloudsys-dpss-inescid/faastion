@@ -17,6 +17,8 @@ build_javassist_agent:
 
 # Compile files
 javassist:
+	export SNIPPETS_DIR=snippets; \
+	export ENV=preload; \
 	java -javaagent:$(JAVA_AGENT)=$(TOOL):$(CLASS_PATH):$(PATH_TO_BIN) $(ENTRYPOINT)
 
 snippets:
@@ -31,7 +33,7 @@ run:
 	LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so java -Djava.library.path=$(PATH_TO_BIN) -cp $(PATH_TO_BIN) $(ENTRYPOINT)
 	
 gdb:
-	export LD_LIBRARY_PATH=$(PATH_TO_BIN)
+	export LD_LIBRARY_PATH=$(PATH_TO_BIN); \
 	gdb java \
 		-ex "set exec-wrapper env 'LD_PRELOAD=$(PATH_TO_BIN)/libpreload.so'" \
 		-ex "run -Djava.library.path=$(PATH_TO_BIN) -cp $(PATH_TO_BIN) $(ENTRYPOINT)"
