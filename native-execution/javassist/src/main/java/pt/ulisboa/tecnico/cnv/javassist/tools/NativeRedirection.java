@@ -64,6 +64,11 @@ public class NativeRedirection extends CodeDumper {
                             CtConstructor staticInitializer = clazz.makeClassInitializer();        
                             staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
                             declareCallGate(clazz, params, returnType, gateName);
+
+                            if (methodClassName.contains(".")) {
+                                methodClassName = methodClassName.replace(".", "_");
+                            }
+
                             createHeader(jniTypes, returnJniType, methodClassName, gateName);
                             createSnippet(jniTypes, returnJniType, methodName, methodClassName, gateName);
                         }
@@ -94,7 +99,7 @@ public class NativeRedirection extends CodeDumper {
     }
 
     public static void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) throws IOException {
-        File file = new File("snippets", className + ".h");
+        File file = new File(System.getenv("SNIPPETS_DIR"), className + ".h");
         
         if (file.exists()) {
             List<String> lines = Files.readAllLines(file.toPath());
@@ -137,8 +142,6 @@ public class NativeRedirection extends CodeDumper {
     }
 
     public static void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className, String gateName) throws IOException {
-        System.out.println("Creating Snippet for " + methodName + " from class " + className + "...");
-
         // parameters for call gate
         String[] arguments = IntStream.range(0, jniTypes.length)
             .mapToObj(i -> "arg" + i)
@@ -152,12 +155,17 @@ public class NativeRedirection extends CodeDumper {
         String args = "env, obj" + (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
         String mc = "native_method(" + args + ");\n";
 
-        File file = new File("snippets", methodName + ".c");
+        File file = new File(System.getenv("SNIPPETS_DIR"), methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
-            writer.write("#include <preload.h>\n");
+            writer.write("#include <" + System.getenv("ENV") + ".h>\n");
             writer.write("#include <unistd.h>\n");
             writer.write("#include <stdlib.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
+
+            writer.write("// Erim includes\n");
+            writer.write("#include <erim.h>\n");
+            writer.write("#include <common.h>\n\n");
+
 
             writer.write("static __thread char* regular = NULL; // thread regular stack\n");
             writer.write("static __thread int hasFilter = 0; // seccomp filter is applied\n\n");
@@ -190,18 +198,19 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\t/* Switch to new stack */\n");
             writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
-            writer.write("\tswitch_stack(domain, regular);\n");
+            writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
 
             if (returnJniType.equals("void")) {
                 writer.write("\twrapper(domain, " + args + ");\n");
-                writer.write("\tswitch_stack(0, regular);\n\n");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
+                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
                 writer.write("\tupdate_supervisor_status(domain);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
-                writer.write("\tswitch_stack(0, regular);\n\n");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
                 writer.write("\tupdate_supervisor_status(domain);\n\n");
@@ -225,16 +234,16 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t}\n");
             writer.write("\tsignal_filter(domain);\n\n");
 
-            writer.write("\t/* Change thread domain */\n");
-            writer.write("\tSNI_DBM(\"[s]: changing domain...\");\n");
-            writer.write("\tchange_domain(domain);\n");
+            writer.write("\twait_handler(domain);\n");
+            writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
+            writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
             if (returnJniType.equals("void")) {
                 writer.write("\t" + mc);                
-                writer.write("\tchange_domain(0);\n");
+                writer.write("\t__wrpkru(0);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
-                writer.write("\tchange_domain(0);\n\n");
+                writer.write("\t__wrpkru(0);\n\n");
 
                 writer.write("\treturn res;\n");
             }
