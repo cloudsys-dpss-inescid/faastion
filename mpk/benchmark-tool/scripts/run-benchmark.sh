@@ -14,7 +14,7 @@ function domain_vary_threads {
     NUM_PAGES=64000
     rm $DIR/results/domain-threads-* &> /dev/null
     rm $DIR/results/num-threads.dat &> /dev/null
-    for num in 1 2 3 4 5 6 7 8
+    for num in 1 2 3 4 5 6 7 
     do
         echo "Processing with ${num} threads..."
         for i in $(seq 10)
@@ -45,7 +45,7 @@ function access_vary_threads {
     NUM_PAGES=64000
     rm $DIR/results/access-threads-* &> /dev/null
     rm $DIR/results/num-threads.dat &> /dev/null
-    for num in 1 2 3 4 5 6 7 8
+    for num in 1 2 3 4 5 6 7
     do
         echo "Processing with ${num} threads..."
         for i in $(seq 10)
