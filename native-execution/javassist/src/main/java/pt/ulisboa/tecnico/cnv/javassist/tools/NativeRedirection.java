@@ -26,8 +26,6 @@ import java.lang.System;
 import java.nio.file.Files;
 public class NativeRedirection extends CodeDumper {
 
-    private final static String application_id = generateUniqueId();
-
     public NativeRedirection(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);
     }
@@ -46,12 +44,7 @@ public class NativeRedirection extends CodeDumper {
                     String methodName = m.getMethodName();
                     String gateName = methodName + "CallGate";
 
-                    if (isLoadLibrary(clazz, methodName, methodSignature)) {
-                        m.replace("{ $1 = \"" + application_id + ":\" + $1; java.io.File file = new java.io.File(\"bin/lib\" + $1 + \".so\"); file.createNewFile(); $proceed($$); }");
-
-                        //m.replace("{ $1 = \"" + application_id + ":\" + $1; $proceed($$); }");
-                    }
-                    else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
+                    if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
                         CtClass returnType = method.getReturnType();
                         String returnJniType = getJniType(returnType.getName());
 
@@ -87,15 +80,6 @@ public class NativeRedirection extends CodeDumper {
                 }
             }
         });
-    }
-
-    public static boolean isLoadLibrary(CtClass clazz, String name, String signature) throws NotFoundException {
-        ClassPool cp = clazz.getClassPool();
-        CtClass systemClass = cp.get("java.lang.System");
-        CtMethod loadLibMethod =  systemClass.getDeclaredMethod("loadLibrary");
-        String loadLibSignature = loadLibMethod.getSignature();
-
-        return name.equals("loadLibrary") && signature.equals(loadLibSignature);
     }
 
     public static void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) throws IOException {
@@ -178,7 +162,7 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
-            writer.write("\tint domain = find_app_domain(\"lib" + application_id + "\");\n");
+            writer.write("\tint domain = find_app_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
             writer.write("\t\tsleep(1);\n");
@@ -187,7 +171,7 @@ public class NativeRedirection extends CodeDumper {
             
             writer.write("\t/* Handle native library permissions */\n");
             writer.write("\tSNI_DBM(\"[s]: Handling permissions for domain %d...\", domain);\n");
-            writer.write("\tupdate_supervisor_app(domain, \"lib" + application_id + "\");\n");
+            writer.write("\tupdate_supervisor_app(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             writer.write("\tsignal_perms(domain);\n\n");
 
             writer.write("\t/* Wait for all permissions to be set */\n");
