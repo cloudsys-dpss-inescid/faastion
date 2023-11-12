@@ -12,6 +12,7 @@ init_supervisors(struct Supervisor array[])
         sem_init(&array[i].set, 0, 0);
         sem_init(&array[i].filter, 0, 0);
         sem_init(&array[i].perms, 0, 0);
+        sem_init(&array[i].handler, 0, 0);
         strcpy(array[i].app, "");
         array[i].status = IN_PROGRESS;
         array[i].fd = 0;
@@ -37,10 +38,8 @@ extract_basename(const char* filePath)
 }
 
 void
-get_memory_regions(AppMap* map, char* id, const char* path)
+get_memory_regions(AppMap* map, char* id, char* libraryName)
 {
-    const char* libraryName = extract_basename(path);
-
     FILE* mapsFile = fopen("/proc/self/maps", "r");
     if (!mapsFile) {
         fprintf(stderr, "Failed to open /proc/self/maps\n");

@@ -33,12 +33,10 @@ void wait_filter(int domain);
 void signal_filter(int domain);
 void wait_perms(int domain);
 void signal_perms(int domain);
+void wait_handler(int domain);
+void signal_handler(int domain);
 void update_supervisor_app(int domain, const char* app);
 void update_supervisor_status(int domain);
-
-/* MPK domains */
-void change_domain(int domain);
-void switch_stack(int domain, char* regular);
 
 /* Seccomp */
 void install_notify_filter(int domain);

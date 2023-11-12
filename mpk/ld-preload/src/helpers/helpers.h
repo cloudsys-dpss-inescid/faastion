@@ -10,6 +10,7 @@ struct Supervisor {
     sem_t filter;
     sem_t perms;
     sem_t set;
+    sem_t handler;
     enum Status status;
     int fd;
     char app[33];
@@ -23,4 +24,4 @@ void init_supervisors(struct Supervisor array[]);
 
 /* Preload */
 char* extract_basename(const char* filePath);
-void get_memory_regions(AppMap* map, char* id, const char* path);
+void get_memory_regions(AppMap* map, char* id, char* libraryName);

@@ -50,6 +50,8 @@
 /* File descriptors */
 struct Supervisor supervisors[NUM_DOMAINS];
 
+int dom = 1;
+
 /* Maps */
 AppMap appMap;
 ThreadMap threadMap;
@@ -164,6 +166,21 @@ signal_perms(int domain)
 }
 
 void
+wait_handler(int domain)
+{
+    int value;
+    if (sem_getvalue(&supervisors[domain].handler, &value) == 0)
+        if (value) sem_wait(&supervisors[domain].handler);
+    sem_wait(&supervisors[domain].handler);
+}
+
+void
+signal_handler(int domain)
+{
+    sem_post(&supervisors[domain].handler);
+}
+
+void
 update_supervisor_app(int domain, const char* app)
 {
     SEC_DBM("\t[S%d]: assigning application -> %s", domain, app);
@@ -177,21 +194,6 @@ update_supervisor_status(int domain)
 }
 
 /* MPK domains */
-void
-change_domain(int domain)
-{   
-	__wrpkrumem(ERIM_DOMAIN(domain));
-}
-
-void
-switch_stack(int domain, char* regular)
-{
-    if (!domain)
-        ERIM_SWITCH_BACK(regular);
-    else
-	    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);
-}
-
 static void 
 set_permissions(const char* id, int protectionFlag, int pkey)
 {
@@ -210,32 +212,26 @@ set_permissions(const char* id, int protectionFlag, int pkey)
 void *
 dlopen(const char * input, int flag)
 {
-    if (real_dlopen == NULL) {
-        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
-    }
+    SEC_DBM("\t[PRELOAD]: Loading lib %s...", input);
     
-    if (!input || strchr(input, ':') == NULL) {
+    if (real_dlopen == NULL)
+        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
+
+    if (!input || strchr(input, '_') == NULL) {
         return real_dlopen(input, flag);
     }
 
-    // Parse input
-    char pathname[256] = "";
-    char libname[256] = "lib";
-    char id[256] = "";
-    char filename[256] = "";
-    
     char * basename = extract_basename(input);
-    sscanf(basename, "%[^:]:%s", id, filename);
-    strcat(libname, filename);
+    char *underscore = strrchr(basename, '_');
 
-    size_t size = strlen(input) - strlen(basename);
-    strncpy(pathname, input, size);
-    strcat(pathname, libname);
+    size_t length = strlen(underscore + 1) - 3;
+    char * id = (char *)malloc(length + 1);
+    strncpy(id, underscore + 1, length);
 
-    void *handle = real_dlopen(pathname, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+    void *handle = real_dlopen(input, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
 
-    SEC_DBM("\t[PRELOAD]: storing %s addresses and sizes in map...", libname);
-    get_memory_regions(&appMap, id, pathname);
+    SEC_DBM("\t[PRELOAD]: storing %s addresses and sizes in map...", basename);
+    get_memory_regions(&appMap, id, basename);
 
     remove(input);
 
@@ -425,6 +421,8 @@ handle_notifications(int notifyFd, int domain)
 
     alloc_seccomp_notif_buffers(&req, &resp, &sizes, domain);
 
+    signal_handler(domain);
+
     /* Loop handling notifications */
     for (;;) {
 
@@ -482,8 +480,8 @@ handle_notifications(int notifyFd, int domain)
         }
         SEC_DBM("\t--------------------\n");
 
-        if (supervisors[domain].status && threadMap.buckets[domain]->nthreads == 1) {
-            remove_thread(&threadMap, domain);
+        if (supervisors[domain].status && threadMap.buckets[domain]->nthreads == 0) { // == 1 on Graal
+            //remove_thread(&threadMap, domain);
             break;
         }
     }
