@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+shadowJar() {
+    configurations = [project.configurations.compileClasspath]
+    from sourceSets.main.output
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'ImageManipulation',
+                'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+        )
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
