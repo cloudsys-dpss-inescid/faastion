@@ -162,11 +162,11 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
-            writer.write("\tint domain = find_app_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
+            writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
             writer.write("\t\tsleep(1);\n");
-            writer.write("\t\tdomain = find_empty_domain();\n");
+            writer.write("\t\tdomain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             writer.write("\t}\n\n");
             
             writer.write("\t/* Handle native library permissions */\n");
