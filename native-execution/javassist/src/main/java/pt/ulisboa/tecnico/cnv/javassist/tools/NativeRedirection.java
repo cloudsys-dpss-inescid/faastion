@@ -193,7 +193,7 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\tupdate_supervisor_status(domain);\n");
             }
             else {
-                writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
+                writer.write("\t" + returnJniType + " res = wrapper(domain, " + args + ");");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
