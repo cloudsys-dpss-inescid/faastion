@@ -43,7 +43,7 @@ public class NativeRedirection extends CodeDumper {
                     String methodSignature = method.getSignature();
                     String methodName = m.getMethodName();
                     String gateName = methodName + "CallGate";
-
+                    
                     if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
                         CtClass returnType = method.getReturnType();
                         String returnJniType = getJniType(returnType.getName());
@@ -144,6 +144,7 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include <" + System.getenv("ENV") + ".h>\n");
             writer.write("#include <unistd.h>\n");
             writer.write("#include <stdlib.h>\n");
+            writer.write("#include <time.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("// Erim includes\n");
@@ -158,6 +159,9 @@ public class NativeRedirection extends CodeDumper {
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
 
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("\tclock_t start_time, end_time;\n");
+            writer.write("\tdouble execution_time;\n");
+            writer.write("\tstart_time = clock();\n\n");
             writer.write("\tlock();\n\n");
 
             writer.write("\t/* Get available domain */\n");
@@ -179,6 +183,10 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\tSNI_DBM(\"[s]: permissions are all set, continuing...\");\n\n");
 
             writer.write("\tunlock();\n\n");
+
+            writer.write("\tend_time = clock();\n");
+            writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
+            writer.write("\tfprintf(stderr, \"Acquire domain Execution time: %.2f microseconds\\n\", execution_time);\n\n");
 
             writer.write("\t/* Switch to new stack */\n");
             writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
@@ -204,6 +212,10 @@ public class NativeRedirection extends CodeDumper {
             writer.write("}\n\n\n");
                 
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            writer.write("\tclock_t start_time, end_time;\n");
+            writer.write("\tdouble execution_time;\n");
+            writer.write("\tstart_time = clock();\n\n");
+    
             writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\tif (native_method == NULL) {\n");
             writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
@@ -219,6 +231,11 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\tsignal_filter(domain);\n\n");
 
             writer.write("\twait_handler(domain);\n");
+
+            writer.write("\tend_time = clock();\n");
+            writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
+            writer.write("\tfprintf(stderr, \"Apply filter Execution time: %.2f microseconds\\n\", execution_time);\n\n");
+
             writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
             writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
             if (returnJniType.equals("void")) {
