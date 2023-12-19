@@ -186,7 +186,7 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\tend_time = clock();\n");
             writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
-            writer.write("\tfprintf(stderr, \"Acquire domain Execution time: %.2f microseconds\\n\", execution_time);\n\n");
+            writer.write("\tfprintf(stdout, \"Acquire domain Execution time: %.2f microseconds\\n\", execution_time);\n\n");
 
             writer.write("\t/* Switch to new stack */\n");
             writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
@@ -218,7 +218,7 @@ public class NativeRedirection extends CodeDumper {
     
             writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\tif (native_method == NULL) {\n");
-            writer.write("\t\tfprintf(stderr, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+            writer.write("\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
             writer.write("\t\texit(EXIT_FAILURE);\n");
             writer.write("\t}\n\n");
 
@@ -234,7 +234,7 @@ public class NativeRedirection extends CodeDumper {
 
             writer.write("\tend_time = clock();\n");
             writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
-            writer.write("\tfprintf(stderr, \"Apply filter Execution time: %.2f microseconds\\n\", execution_time);\n\n");
+            writer.write("\tfprintf(stdout, \"Apply filter Execution time: %.2f microseconds\\n\", execution_time);\n\n");
 
             writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
             writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
