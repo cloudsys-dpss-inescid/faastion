@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
+//#include "utils/applock.h"
 #include "utils/appmap.h"
 #include "utils/threadmap.h"
 #include "helpers/helpers.h"
@@ -50,19 +51,42 @@
 /* File descriptors */
 struct Supervisor supervisors[NUM_DOMAINS];
 
-int dom = 1;
+/* Invocation synchronization Map */
+//AppLock appLock;
 
 /* Maps */
 AppMap appMap;
 ThreadMap threadMap;
 
-/* Lazy loading array */
-char* appIDs[NUM_DOMAINS];
+/* Eager/Lazy setting array */
+struct CacheApp cache[NUM_DOMAINS];
 
 pthread_mutex_t mutex;
 
 /* dlopen function pointer */
 static void * ( * real_dlopen)(const char * , int) = NULL;
+
+/* Library loading */
+void *
+dlopen(const char * input, int flag)
+{   
+    SEC_DBM("\t[PRELOAD]: LIB -> %s", input);
+    
+    if (real_dlopen == NULL) {
+        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
+    }
+
+    if (!input || strstr(input, "faastion/mpk/testing") == NULL) {
+        return real_dlopen(input, flag);
+    }
+    
+    void *handle = real_dlopen(input, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
+    
+    SEC_DBM("\t[PRELOAD]: storing %s addresses and sizes in map...", input);
+    get_memory_regions(&appMap, getenv("BENCHMARK_NAME"), input);
+
+    return handle;
+}
 
 /* seccomp system call */
 static int
@@ -84,39 +108,47 @@ unlock()
     pthread_mutex_unlock(&mutex);
 }
 
+int
+app_in_cache(const char* app, int domain) {
+    if (!strcmp(app, cache[domain].app)) {
+        cache[domain].value++;
+        return 1;
+    }
+    return 0;
+}
+
 /* Domain Management algorithm */
 int
-find_empty_domain()
-{
-    for (int domain = 1; domain < NUM_DOMAINS; domain++) {
-        if (threadMap.buckets[domain]->nthreads == 0) /* is domain empty */
-            return domain;
+find_domain(const char* app) {
+    int minIndex = 1;
+    int check = 0;
+    
+    if (app_in_cache(app, 1) && threadMap.buckets[1]->nthreads == 0) {
+        SEC_DBM("[App in cache]");
+        return 1;
     }
-    return -1; /* Empty Domain not found */
+    for (int i = 2; i < NUM_DOMAINS; ++i) {
+        if (app_in_cache(app, i) && threadMap.buckets[i]->nthreads == 0) {
+            SEC_DBM("[App in cache]");
+            return i;
+        }
+        // The lowest value corresponds to the LRU domain
+        if (threadMap.buckets[i]->nthreads == 0) {
+            check = 1;
+            if (cache[i].value < cache[minIndex].value) {
+                minIndex = i;
+            }
+        }
+    }
+    return check ? minIndex : -1;
 }
 
 /* Lazy Loading */
 void 
-insert_app_id(int domain, const char* id)
+insert_app_cache(int domain, const char* id)
 {
-    appIDs[domain] = strdup(id);
-}
-
-int
-find_app_domain(const char* id)
-{
-    for (int domain = 0; domain < NUM_DOMAINS; domain++) {
-        if (appIDs[domain] != NULL && !strcmp(id, appIDs[domain])) {
-            return domain;
-        }
-    }
-    return -1; /* App not found */
-}
-
-char *
-get_app_id(int domain)
-{
-    return (appIDs[domain] != NULL) ? appIDs[domain] : "";
+    strcpy(cache[domain].app, id);
+    cache[domain].value++;
 }
 
 /* Supervisors */
@@ -190,6 +222,7 @@ update_supervisor_app(int domain, const char* app)
 void
 update_supervisor_status(int domain)
 {
+    SEC_DBM("\t[S%d]: application finished.", domain);
     supervisors[domain].status = DONE;
 }
 
@@ -206,36 +239,6 @@ set_permissions(const char* id, int protectionFlag, int pkey)
             exit(EXIT_FAILURE);
         }
     }
-}
-
-/* Library loading */
-void *
-dlopen(const char * input, int flag)
-{
-    SEC_DBM("\t[PRELOAD]: Loading lib %s...", input);
-    
-    if (real_dlopen == NULL)
-        real_dlopen = (void *(*) (const char *, int)) dlsym(RTLD_NEXT, "dlopen");
-
-    if (!input || strchr(input, '_') == NULL) {
-        return real_dlopen(input, flag);
-    }
-
-    char * basename = extract_basename(input);
-    char *underscore = strrchr(basename, '_');
-
-    size_t length = strlen(underscore + 1) - 3;
-    char * id = (char *)malloc(length + 1);
-    strncpy(id, underscore + 1, length);
-
-    void *handle = real_dlopen(input, RTLD_NOW | RTLD_DEEPBIND | RTLD_GLOBAL);
-
-    SEC_DBM("\t[PRELOAD]: storing %s addresses and sizes in map...", basename);
-    get_memory_regions(&appMap, id, basename);
-
-    remove(input);
-
-    return handle;
 }
 
 /* Seccomp */
@@ -423,17 +426,42 @@ handle_notifications(int notifyFd, int domain)
 
     signal_handler(domain);
 
+    int             retval;
+    fd_set          rfds;
+    struct timeval  tv;
+
+    /* Watch stdin (supervisor's fd) to see when it has input. */
+
+    FD_ZERO(&rfds);
+    FD_SET(domain, &rfds);
+
+    /* Wait up to five seconds. */
+
+    tv.tv_sec = 0.1;
+    tv.tv_usec = 0;
+
     /* Loop handling notifications */
     for (;;) {
-
         /* Wait for next notification, returning info in '*req' */
 
         memset(req, 0, sizes.seccomp_notif);
-        if (ioctl(notifyFd, SECCOMP_IOCTL_NOTIF_RECV, req) == -1) {
-            if (errno == EINTR)
-                continue;
-            err(EXIT_FAILURE, "\t[S%d]: ioctl-SECCOMP_IOCTL_NOTIF_RECV", domain);
+
+        retval = select(1, &rfds, NULL, NULL, &tv);
+        if (retval == -1)
+            perror("select()");
+        else if (retval) {
+            if (ioctl(notifyFd, SECCOMP_IOCTL_NOTIF_RECV, req) == -1) {
+                if (errno == EINTR)
+                    continue;
+                err(EXIT_FAILURE, "\t[S%d]: ioctl-SECCOMP_IOCTL_NOTIF_RECV", domain);
+            }
         }
+        else if (supervisors[domain].status && threadMap.buckets[domain]->nthreads == 1) {
+            remove_thread(&threadMap, domain);
+            break;
+        }
+        else
+            continue;
 
         SEC_DBM("\t[S%d]: received notifaction id [%lld], from tid: %d, syscall nr: %d\n", 
                 domain, req->id, req->pid, req->data.nr);
@@ -479,11 +507,6 @@ handle_notifications(int notifyFd, int domain)
                 perror("ioctl-SECCOMP_IOCTL_NOTIF_SEND");
         }
         SEC_DBM("\t--------------------\n");
-
-        if (supervisors[domain].status && threadMap.buckets[domain]->nthreads == 0) { // == 1 on Graal
-            //remove_thread(&threadMap, domain);
-            break;
-        }
     }
 
     free(req);
@@ -510,15 +533,14 @@ supervisor(void *arg)
 #ifdef EAGER_LOAD
 	    set_permissions(supervisors[*domain].app, PROT_READ|PROT_WRITE|PROT_EXEC, *domain);
 #else
-        char* app = get_app_id(*domain);
+        char* app = cache[*domain].app;
         if (strcmp(app, supervisors[*domain].app)) {
             if (strcmp(app, ""))
                 set_permissions(app, PROT_NONE, *domain);
-            insert_app_id(*domain, supervisors[*domain].app);
+            insert_app_cache(*domain, supervisors[*domain].app);
             set_permissions(supervisors[*domain].app, PROT_READ|PROT_WRITE|PROT_EXEC, *domain);
         }
 #endif
-
         /* Populate domain */
         insert_thread(&threadMap, *domain);
 
@@ -540,12 +562,13 @@ supervisor(void *arg)
 
 static void 
 __attribute__((constructor)) init(void)
-{
+{   
+    //init_applock_map(&appLock, NUM_DOMAINS);
     init_app_map(&appMap);
     init_thread_map(&threadMap);
 
-    init_app_array(appIDs);
-    init_supervisors(supervisors);
+    init_cache_array(cache, NUM_DOMAINS);
+    init_supervisors(supervisors, NUM_DOMAINS);
 
     pthread_mutex_init(&mutex, NULL);
 
@@ -553,11 +576,11 @@ __attribute__((constructor)) init(void)
         exit(EXIT_FAILURE);
     }
 
-    pthread_t workers[NUM_DOMAINS-1];
+    pthread_t workers[NUM_DOMAINS];
 
-    for (int i = 1; i < NUM_DOMAINS; i++) {
+    for (int i = 0; i < NUM_DOMAINS; i++) {
         int *domain = (int *)malloc(sizeof(int));
         *domain = i;
-        pthread_create(&workers[i-1], NULL, supervisor, domain);
+        pthread_create(&workers[i], NULL, supervisor, domain);
     }
 }

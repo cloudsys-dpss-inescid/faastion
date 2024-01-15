@@ -19,7 +19,6 @@
 
 /* Lazy loading */
 char* get_app_id(int domain);
-int find_app_domain(const char* id);
 void insert_app_id(int domain, const char* id);
 
 /* Thread synchronization */
@@ -42,6 +41,6 @@ void update_supervisor_status(int domain);
 void install_notify_filter(int domain);
 
 /* Domain management */
-int find_empty_domain();
+int find_domain(const char* id);
 
 #endif

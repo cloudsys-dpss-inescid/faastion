@@ -151,7 +151,9 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include <erim.h>\n");
             writer.write("#include <common.h>\n\n");
 
+            //writer.write("typedef void (*NativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
 
+            //writer.write("static __thread NativeMethod native_method = NULL; // native method pointer\n\n");
             writer.write("static __thread char* regular = NULL; // thread regular stack\n");
             writer.write("static __thread int hasFilter = 0; // seccomp filter is applied\n\n");
             
@@ -173,14 +175,8 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t\tdomain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             writer.write("\t}\n\n");
             
-            writer.write("\t/* Handle native library permissions */\n");
-            writer.write("\tSNI_DBM(\"[s]: Handling permissions for domain %d...\", domain);\n");
-            writer.write("\tupdate_supervisor_app(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n");
-            writer.write("\tsignal_perms(domain);\n\n");
-
-            writer.write("\t/* Wait for all permissions to be set */\n");
-            writer.write("\twait_set(domain);\n");
-            writer.write("\tSNI_DBM(\"[s]: permissions are all set, continuing...\");\n\n");
+            writer.write("\tSNI_DBM(\"[s]: preparing environment for domain %d...\", domain);\n\n");
+            writer.write("\tprepare_environment(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n\n");
 
             writer.write("\tunlock();\n\n");
 
@@ -198,15 +194,16 @@ public class NativeRedirection extends CodeDumper {
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
                 writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\tupdate_supervisor_status(domain);\n");
+                writer.write("\tmark_supervisor_done(domain);\n");
+                writer.write("\treset_environment(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = wrapper(domain, " + args + ");");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
                 writer.write("\t/* Notify supervisor of the app's completion */\n");
-                writer.write("\tupdate_supervisor_status(domain);\n\n");
-
+                writer.write("\tmark_supervisor_done(domain);\n");
+                writer.write("\treset_environment(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n\n");
                 writer.write("\treturn res;\n");
             }
             writer.write("}\n\n\n");
@@ -215,12 +212,15 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\tclock_t start_time, end_time;\n");
             writer.write("\tdouble execution_time;\n");
             writer.write("\tstart_time = clock();\n\n");
-    
-            writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-            writer.write("\tif (native_method == NULL) {\n");
-            writer.write("\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
-            writer.write("\t\texit(EXIT_FAILURE);\n");
-            writer.write("\t}\n\n");
+            
+            //writer.write("\tif (native_method == NULL) {\n");
+            //writer.write("\t\tnative_method = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write("\t\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write("\t\tif (native_method == NULL) {\n");
+            writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+            writer.write("\t\t\texit(EXIT_FAILURE);\n");
+            writer.write("\t\t}\n");
+            //writer.write("\t}\n\n");
 
             writer.write("\t/* Install seccomp filter */\n");
             writer.write("\tSNI_DBM(\"[s]: installing filter...\");\n");
@@ -228,9 +228,7 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t\tinstall_notify_filter(domain);\n");
             writer.write("\t\thasFilter = 1;\n");
             writer.write("\t}\n");
-            writer.write("\tsignal_filter(domain);\n\n");
-
-            writer.write("\twait_handler(domain);\n");
+            writer.write("\tsignal_sem(domain);\n\n");
 
             writer.write("\tend_time = clock();\n");
             writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
