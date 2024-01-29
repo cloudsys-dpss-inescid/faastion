@@ -4,7 +4,9 @@ This application can be used to a generate a test file of arbitrary size and it 
 
 # Usage
 
-'make'
+```shell
+$ make
+```
 
 Running make inside the FileHash directory does the follow:
 
