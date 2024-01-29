@@ -1,3 +1,5 @@
+#Introduction
+
 Running make inside the FileHash directory does the follow:
 
 1) The file_generator.py is utilized in order to generate a test_file needed for hashing.
