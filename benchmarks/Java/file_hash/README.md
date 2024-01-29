@@ -1,4 +1,10 @@
-#Introduction
+# Introduction
+
+This application can be used to a generate a test file of arbitrary size and it can be then be utilized to generate a hashed file (using SHA-256).
+
+# Usage
+
+'make'
 
 Running make inside the FileHash directory does the follow:
 
