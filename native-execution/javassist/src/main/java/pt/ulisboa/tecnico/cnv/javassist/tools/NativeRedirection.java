@@ -114,7 +114,7 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\tfprintf(stderr, \"\\n\"); \\\n");
                 writer.write("\t} while(0)\n");
                 writer.write("#else // disable debug\n");
-                writer.write("#define SNI_DBG(...)\n");
+                writer.write("#define SNI_DBM(...)\n");
                 writer.write("#endif\n\n");
 
                 writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "\n");
@@ -161,11 +161,6 @@ public class NativeRedirection extends CodeDumper {
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
 
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            writer.write("\tclock_t start_time, end_time;\n");
-            writer.write("\tdouble execution_time;\n");
-            writer.write("\tstart_time = clock();\n\n");
-            writer.write("\tlock();\n\n");
-
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
             writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
@@ -177,13 +172,7 @@ public class NativeRedirection extends CodeDumper {
             
             writer.write("\tSNI_DBM(\"[s]: preparing environment for domain %d...\", domain);\n\n");
             writer.write("\tprepare_environment(domain, \"" + System.getenv("BENCHMARK_NAME") + "\");\n\n");
-
-            writer.write("\tunlock();\n\n");
-
-            writer.write("\tend_time = clock();\n");
-            writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
-            writer.write("\tfprintf(stdout, \"Acquire domain Execution time: %.2f microseconds\\n\", execution_time);\n\n");
-
+                        
             writer.write("\t/* Switch to new stack */\n");
             writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
             writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
@@ -209,10 +198,6 @@ public class NativeRedirection extends CodeDumper {
             writer.write("}\n\n\n");
                 
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            writer.write("\tclock_t start_time, end_time;\n");
-            writer.write("\tdouble execution_time;\n");
-            writer.write("\tstart_time = clock();\n\n");
-            
             //writer.write("\tif (native_method == NULL) {\n");
             //writer.write("\t\tnative_method = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\t\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
@@ -220,8 +205,9 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
             writer.write("\t\t\texit(EXIT_FAILURE);\n");
             writer.write("\t\t}\n");
-            //writer.write("\t}\n\n");
 
+            //writer.write("\t}\n\n");
+            
             writer.write("\t/* Install seccomp filter */\n");
             writer.write("\tSNI_DBM(\"[s]: installing filter...\");\n");
             writer.write("\tif (!hasFilter) {\n");
@@ -229,10 +215,6 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t\thasFilter = 1;\n");
             writer.write("\t}\n");
             writer.write("\tsignal_sem(domain);\n\n");
-
-            writer.write("\tend_time = clock();\n");
-            writer.write("\texecution_time = ((double)(end_time - start_time) / CLOCKS_PER_SEC) * 1000000.0;\n");
-            writer.write("\tfprintf(stdout, \"Apply filter Execution time: %.2f microseconds\\n\", execution_time);\n\n");
 
             writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
             writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
