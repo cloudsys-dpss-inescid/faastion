@@ -155,7 +155,6 @@ public class NativeRedirection extends CodeDumper {
 
             //writer.write("static __thread NativeMethod native_method = NULL; // native method pointer\n\n");
             writer.write("static __thread char* regular = NULL; // thread regular stack\n");
-            writer.write("static __thread int hasFilter = 0; // seccomp filter is applied\n");
             writer.write("static __thread int fd = 0; // seccomp filter fd\n\n");
             
             writer.write("/* Function declaration */\n");
@@ -164,11 +163,11 @@ public class NativeRedirection extends CodeDumper {
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
-            writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
+            writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
             writer.write("\twhile (domain == -1) {\n");
             writer.write("\t\t//FIXME: active waiting\n");
             writer.write("\t\tsleep(1);\n");
-            writer.write("\t\tdomain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\");\n");
+            writer.write("\t\tdomain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
             writer.write("\t}\n\n");
             
             writer.write("\t/* Switch to new stack */\n");
@@ -179,16 +178,15 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\twrapper(domain, " + args + ");\n");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
-                writer.write("\t/* Notify supervisor of the app's completion */\n");
                 writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\tmark_supervisor_done(domain);\n");
+                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
             }
             else {
                 writer.write("\t" + returnJniType + " res = wrapper(domain, " + args + ");");
                 writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
-
-                writer.write("\t/* Notify supervisor of the app's completion */\n");
-                writer.write("\tmark_supervisor_done(domain);\n");
+                
+                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
+                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
                 writer.write("\treturn res;\n");
             }
             writer.write("}\n\n\n");
@@ -203,15 +201,6 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t\t}\n\n");
 
             //writer.write("\t}\n\n");
-
-            writer.write("\t/* Install seccomp filter */\n");
-            writer.write("\tSNI_DBM(\"[s]: installing filter...\");\n");
-            writer.write("\tif (!hasFilter) {\n");
-            writer.write("\t\tfd = install_notify_filter(domain);\n");
-            writer.write("\t\thasFilter = 1;\n");
-            writer.write("\t}\n");
-            writer.write("\tchange_supervisor_fd(domain, fd);\n");
-            writer.write("\tsignal_filter(domain);\n\n");
 
             writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
             writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
