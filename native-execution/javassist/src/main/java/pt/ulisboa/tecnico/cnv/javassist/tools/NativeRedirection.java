@@ -122,7 +122,7 @@ public class NativeRedirection extends CodeDumper {
 
                 writer.write("#endif\n");  
             }
-        }
+        }  
     }
 
     public static void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className, String gateName) throws IOException {
@@ -137,7 +137,9 @@ public class NativeRedirection extends CodeDumper {
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
         String args = "env, obj" + (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
+        String native_args = "NULL,NULL"+ (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
         String mc = "native_method(" + args + ");\n";
+        String nmc = "native_method(" + native_args + ");\n";
 
         File file = new File(System.getenv("SNIPPETS_DIR"), methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
@@ -145,6 +147,9 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include <unistd.h>\n");
             writer.write("#include <stdlib.h>\n");
             writer.write("#include <time.h>\n");
+            writer.write("#include <spawn.h>\n");
+            writer.write("#include <string.h>\n");
+            writer.write("#include <stdio.h>\n");
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("// Erim includes\n");
@@ -164,31 +169,76 @@ public class NativeRedirection extends CodeDumper {
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
             writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
-            writer.write("\twhile (domain == -1) {\n");
-            writer.write("\t\t//FIXME: active waiting\n");
-            writer.write("\t\tsleep(1);\n");
-            writer.write("\t\tdomain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
-            writer.write("\t}\n\n");
-            
-            writer.write("\t/* Switch to new stack */\n");
-            writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
-            writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
+            writer.write("\tif (domain == -1) {\n");
+
+            writer.write("\t\tint ret;\n");
+			writer.write("\t\tpid_t child_pid;\n");
+			writer.write("\t\tint pipefd[2];\n");			
+			writer.write("\t\tchar buffer[1024];\n");
+			writer.write("\t\tmemset(buffer,'\\0',sizeof(buffer));\n");
+			writer.write("\n");
+			
+			writer.write("\t\tif(pipe(pipefd) == -1){\n");
+			writer.write("\t\t\tperror(\"pipe error\");\n");
+			writer.write("\t\t\texit(EXIT_FAILURE);\n");
+			writer.write("\t\t}\n");
+
+			writer.write("\t\tchar *argv[] = {\"a.out\", NULL};\n");
+			writer.write("\t\tchar **environ = {NULL};\n");
+
+			writer.write("\n");
+			
+			writer.write("\t\tposix_spawn_file_actions_t child_fd_actions;\n");
+			
+			writer.write("\t\tif((ret = posix_spawn_file_actions_init(&child_fd_actions)) != 0){\n");
+			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\t}\n");
+			
+			writer.write("\n");
+			
+			writer.write("\t\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[0])) != 0){\n");
+			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\t}\n");
+			writer.write("\n");
+			
+			writer.write("\t\tif((ret = posix_spawn_file_actions_adddup2(&child_fd_actions,pipefd[1], 1)) != 0){\n");
+			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\t}\n");
+			
+			writer.write("\n");
+
+			writer.write("\t\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[1])) != 0){\n");
+			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\t}\n");
+			writer.write("\n");
+
+			writer.write("\t\tif((ret = posix_spawn(&child_pid, \"a.out\", &child_fd_actions, NULL,argv, environ)) != 0){\n");
+			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\t\texit(ret);\n");
+			writer.write("\t\t}\n");
+			writer.write("\n");
+			writer.write("\t}\n\n");
+            writer.write("\telse{\n");
+            writer.write("\t\t/* Switch to new stack */\n");
+            writer.write("\t\tSNI_DBM(\"[s]: switching to new stack...\");\n");
+            writer.write("\t\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
 
             if (returnJniType.equals("void")) {
-                writer.write("\twrapper(domain, " + args + ");\n");
-                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\t\twrapper(domain, " + args + ");\n");
+                writer.write("\t\tERIM_SWITCH_BACK(regular);\n\n");
 
-                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
+                writer.write("\t\tSNI_DBM(\"[s]: application terminated!\");\n");
+                writer.write("\t\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
             }
             else {
-                writer.write("\t" + returnJniType + " res = wrapper(domain, " + args + ");");
-                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\t\t" + returnJniType + " res = wrapper(domain, " + args + ");");
+                writer.write("\t\tERIM_SWITCH_BACK(regular);\n\n");
                 
-                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
-                writer.write("\treturn res;\n");
+                writer.write("\t\tSNI_DBM(\"[s]: application terminated!\");\n");
+                writer.write("\t\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
+                writer.write("\t\treturn res;\n");
             }
+            writer.write("\t}\n");
             writer.write("}\n\n\n");
                 
             writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
@@ -210,11 +260,27 @@ public class NativeRedirection extends CodeDumper {
             }
             else {
                 writer.write("\t" + returnJniType + " res = " + mc);
+                writer.write("\t__wrpkru(0);\n");
+                
+				writer.write("\treturn res;\n");
+            }
+            writer.write("}\n\n\n");
+
+			writer.write("int main(){\n");
+            writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write("\tif (native_method == NULL) {\n");
+            writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+            writer.write("\t\t\texit(EXIT_FAILURE);\n");
+            writer.write("\t\t}\n\n");
+            if (returnJniType.equals("void")) {
+                writer.write("\t" + nmc);                
+            }
+            else {
+                writer.write("\t" + returnJniType + " res = " + nmc);
                 writer.write("\t__wrpkru(0);\n\n");
 
-                writer.write("\treturn res;\n");
             }
-            writer.write("}\n");
+			writer.write("}\n");
         }
     }
 
