@@ -212,7 +212,7 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\t}\n");
 			writer.write("\n");
 
-			writer.write("\t\tif((ret = posix_spawn(&child_pid, \"a.out\", &child_fd_actions, NULL,argv, environ)) != 0){\n");
+			writer.write("\t\tif((ret = posix_spawn(&child_pid, \""+ System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc" + "\", &child_fd_actions, NULL,argv, environ)) != 1){\n");
 			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
 			writer.write("\t\t\texit(ret);\n");
 			writer.write("\t\t}\n");
