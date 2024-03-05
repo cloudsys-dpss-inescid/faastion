@@ -1,0 +1,6 @@
+INIT erim with shmemSize 8192 flags a
+pkru: 55555550
+Domain 1: 0x57ffffffc000
+allocate shmem pool at 0x200000000000 size 8192
+Allocated shared memory at 0x200000000000 of size 8192
+a = 322
