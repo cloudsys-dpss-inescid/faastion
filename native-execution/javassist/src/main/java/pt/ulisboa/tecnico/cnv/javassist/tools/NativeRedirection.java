@@ -136,13 +136,16 @@ public class NativeRedirection extends CodeDumper {
             .collect(Collectors.joining(", ",  arguments.length > 0 ? ", " : "", ""));
 
         String nativeMethodName = "Java_" + className + "_" + methodName;
+        
         String args = "env, obj" + (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
-        String native_args = "NULL,NULL"+ (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
+        String native_args = "NULL, NULL"+ (arguments.length > 0 ? ", " : "") + String.join(", ", arguments);
+        
         String mc = "native_method(" + args + ");\n";
         String nmc = "native_method(" + native_args + ");\n";
 
         File file = new File(System.getenv("SNIPPETS_DIR"), methodName + ".c");
         try (FileWriter writer = new FileWriter(file)) {
+
             writer.write("#include <" + System.getenv("ENV") + ".h>\n");
             writer.write("#include <unistd.h>\n");
             writer.write("#include <stdlib.h>\n");
@@ -150,107 +153,79 @@ public class NativeRedirection extends CodeDumper {
             writer.write("#include <spawn.h>\n");
             writer.write("#include <string.h>\n");
             writer.write("#include <stdio.h>\n");
+            if (jniTypes.length > 0) {
+                writer.write("#include \"JNIWrapper.h\"\n");
+            }
             writer.write("#include \"" + className + ".h\"\n\n");
 
             writer.write("// Erim includes\n");
             writer.write("#include <erim.h>\n");
             writer.write("#include <common.h>\n\n");
 
-            //writer.write("typedef void (*NativeMethod)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ");\n\n");
+            /*
+            TODO: TRY TO MAKE THIS WORK!!
+            writer.write("static __thread " + returnJniType + " (JNICALL *native_method)(JNIEnv *env, jobject obj" + typeArgs + ") = NULL;\n");
+            */
 
-            //writer.write("static __thread NativeMethod native_method = NULL; // native method pointer\n\n");
             writer.write("static __thread char* regular = NULL; // thread regular stack\n");
             writer.write("static __thread int fd = 0; // seccomp filter fd\n\n");
-            
+
             writer.write("/* Function declaration */\n");
-            writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
+            writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ");\n");
+            writer.write("void lazy_proc_isolation();\n\n");
 
             writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName + "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
             writer.write("\t/* Get available domain */\n");
             writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
-            writer.write("\tint domain = find_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
+            writer.write("\tacquire_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
             writer.write("\tif (domain == -1) {\n");
+            writer.write("\t\tlazy_proc_isolation();\n");
+            writer.write("\t\treturn;\n");
+            writer.write("\t}\n\n");
 
-            writer.write("\t\tint ret;\n");
-			writer.write("\t\tpid_t child_pid;\n");
-			writer.write("\t\tint pipefd[2];\n");			
-			writer.write("\t\tchar buffer[1024];\n");
-			writer.write("\t\tmemset(buffer,'\\0',sizeof(buffer));\n");
-			writer.write("\n");
-			
-			writer.write("\t\tif(pipe(pipefd) == -1){\n");
-			writer.write("\t\t\tperror(\"pipe error\");\n");
-			writer.write("\t\t\texit(EXIT_FAILURE);\n");
-			writer.write("\t\t}\n");
-
-			writer.write("\t\tchar *argv[] = {\"a.out\", NULL};\n");
-			writer.write("\t\tchar **environ = {NULL};\n");
-
-			writer.write("\n");
-			
-			writer.write("\t\tposix_spawn_file_actions_t child_fd_actions;\n");
-			
-			writer.write("\t\tif((ret = posix_spawn_file_actions_init(&child_fd_actions)) != 0){\n");
-			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
-			writer.write("\t\t}\n");
-			
-			writer.write("\n");
-			
-			writer.write("\t\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[0])) != 0){\n");
-			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
-			writer.write("\t\t}\n");
-			writer.write("\n");
-			
-			writer.write("\t\tif((ret = posix_spawn_file_actions_adddup2(&child_fd_actions,pipefd[1], 1)) != 0){\n");
-			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
-			writer.write("\t\t}\n");
-			
-			writer.write("\n");
-
-			writer.write("\t\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[1])) != 0){\n");
-			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
-			writer.write("\t\t}\n");
-			writer.write("\n");
-
-			writer.write("\t\tif((ret = posix_spawn(&child_pid, \""+ System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc" + "\", &child_fd_actions, NULL,argv, environ)) != 1){\n");
-			writer.write("\t\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
-			writer.write("\t\t\texit(ret);\n");
-			writer.write("\t\t}\n");
-			writer.write("\n");
-			writer.write("\t}\n\n");
-            writer.write("\telse{\n");
-            writer.write("\t\t/* Switch to new stack */\n");
-            writer.write("\t\tSNI_DBM(\"[s]: switching to new stack...\");\n");
-            writer.write("\t\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
+            writer.write("\t/* Switch to new stack */\n");
+            writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
+            writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
 
             if (returnJniType.equals("void")) {
-                writer.write("\t\twrapper(domain, " + args + ");\n");
-                writer.write("\t\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\twrapper(" + args + ");\n");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
 
-                writer.write("\t\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\t\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
+                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
+                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
             }
             else {
-                writer.write("\t\t" + returnJniType + " res = wrapper(domain, " + args + ");");
-                writer.write("\t\tERIM_SWITCH_BACK(regular);\n\n");
+                writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
+                writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
                 
-                writer.write("\t\tSNI_DBM(\"[s]: application terminated!\");\n");
-                writer.write("\t\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", domain);\n");
-                writer.write("\t\treturn res;\n");
+                writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
+                writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
+                writer.write("\treturn res;\n");
             }
-            writer.write("\t}\n");
             writer.write("}\n\n\n");
                 
-            writer.write(returnJniType + " wrapper(int domain, JNIEnv *env, jobject obj" + typeArgs + ") {\n");
-            //writer.write("\tif (native_method == NULL) {\n");
-            //writer.write("\t\tnative_method = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
-            writer.write("\t\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
+            /*
+            TODO: TRY TO MAKE THIS WORK!!
+            writer.write("\tif (native_method == NULL) {\n");
+            writer.write("\t\tnative_method = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\t\tif (native_method == NULL) {\n");
             writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
             writer.write("\t\t\texit(EXIT_FAILURE);\n");
-            writer.write("\t\t}\n\n");
+            writer.write("\t\t}\n");
+            writer.write("\t}\n\n"); 
+            */
+            writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+            writer.write("\tif (native_method == NULL) {\n");
+            writer.write("\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
+            writer.write("\t\texit(EXIT_FAILURE);\n");
+            writer.write("\t}\n\n");
 
-            //writer.write("\t}\n\n");
+            if (jniTypes.length > 0) {
+                writer.write("\tif ((*env)->GetStringUTFChars != Faastion_GetStringUTFChars) {\n");
+                writer.write("\t\tinit_jni_wrapper(env);\n");
+                writer.write("\t}\n\n");
+            }
 
             writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
             writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
@@ -266,7 +241,46 @@ public class NativeRedirection extends CodeDumper {
             }
             writer.write("}\n\n\n");
 
-			writer.write("int main(){\n");
+            writer.write("void lazy_proc_isolation() {\n");
+            writer.write("\tint ret;\n");
+			writer.write("\tpid_t child_pid;\n");
+			writer.write("\tint pipefd[2];\n");			
+			writer.write("\tchar buffer[1024];\n");
+			writer.write("\tmemset(buffer,'\\0',sizeof(buffer));\n\n");
+			
+			writer.write("\tif(pipe(pipefd) == -1){\n");
+			writer.write("\t\tperror(\"pipe error\");\n");
+			writer.write("\t\texit(EXIT_FAILURE);\n");
+			writer.write("\t}\n");
+
+			writer.write("\tchar *argv[] = {\"a.out\", NULL};\n");
+			writer.write("\tchar **environ = {NULL};\n\n");
+
+			writer.write("\tposix_spawn_file_actions_t child_fd_actions;\n");			
+			writer.write("\tif((ret = posix_spawn_file_actions_init(&child_fd_actions)) != 0){\n");
+			writer.write("\t\tfprintf(stderr,\"posix_spawn_file_actions_init failed %d\",ret);\n");
+			writer.write("\t}\n\n");
+			
+			writer.write("\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[0])) != 0){\n");
+			writer.write("\t\tfprintf(stderr,\"posix_spawn_file_actions_addclose failed %d\",ret);\n");
+			writer.write("\t}\n\n");
+			
+			writer.write("\tif((ret = posix_spawn_file_actions_adddup2(&child_fd_actions,pipefd[1], 1)) != 0){\n");
+			writer.write("\t\tfprintf(stderr,\"posix_spawn_file_actions_adddup2 failed %d\",ret);\n");
+			writer.write("\t}\n\n");
+			
+			writer.write("\tif((ret = posix_spawn_file_actions_addclose(&child_fd_actions,pipefd[1])) != 0){\n");
+			writer.write("\t\tfprintf(stderr,\"posix_spawn_file_actions_addclose failed %d\",ret);\n");
+			writer.write("\t}\n\n");
+
+			writer.write("\tif((ret = posix_spawn(&child_pid, \""+ System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc" + "\", &child_fd_actions, NULL,argv, environ)) != 1){\n");
+			writer.write("\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
+			writer.write("\t\texit(ret);\n");
+			writer.write("\t}\n");
+			writer.write("}\n\n\n");
+            
+            /*
+			writer.write("int main() {\n");
             writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
             writer.write("\tif (native_method == NULL) {\n");
             writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
@@ -281,6 +295,7 @@ public class NativeRedirection extends CodeDumper {
 
             }
 			writer.write("}\n");
+            */
         }
     }
 
