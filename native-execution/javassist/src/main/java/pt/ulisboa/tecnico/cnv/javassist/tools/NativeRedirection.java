@@ -253,7 +253,7 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\texit(EXIT_FAILURE);\n");
 			writer.write("\t}\n");
 
-			writer.write("\tchar *argv[] = {\"a.out\", NULL};\n");
+			writer.write("\tchar *argv[] = {\"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc" + "\", NULL};\n");
 			writer.write("\tchar **environ = {NULL};\n\n");
 
 			writer.write("\tposix_spawn_file_actions_t child_fd_actions;\n");			
@@ -273,15 +273,21 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\tfprintf(stderr,\"posix_spawn_file_actions_addclose failed %d\",ret);\n");
 			writer.write("\t}\n\n");
 
-			writer.write("\tif((ret = posix_spawn(&child_pid, \""+ System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc" + "\", &child_fd_actions, NULL,argv, environ)) != 1){\n");
+			writer.write("\tif((ret = posix_spawn(&child_pid, argv[0], &child_fd_actions, NULL,argv, environ)) != 0){\n");
 			writer.write("\t\tfprintf(stderr,\"posix_spawn failed %d\",ret);\n");
 			writer.write("\t\texit(ret);\n");
 			writer.write("\t}\n");
 			writer.write("}\n\n\n");
             
-            /*
+            
 			writer.write("int main() {\n");
-            writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(RTLD_DEFAULT, \"" + nativeMethodName + "\");\n");
+			writer.write("\tvoid *open_lib;\n");
+			writer.write("\topen_lib = dlopen(\"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/lib" + System.getenv("BENCHMARK_NAME") + "-jni.so\", RTLD_LAZY);\n");
+			writer.write("\tif (!open_lib) {\n");
+			writer.write("\t\tfprintf(stderr, \"Error: %s\", dlerror());\n");
+			writer.write("\t\treturn 1;\n");
+			writer.write("\t}\n");
+            writer.write("\tvoid (*native_method)(JNIEnv*, jobject" + (jniTypes.length > 0 ? ", " : "") + String.join(", ", jniTypes) + ") = dlsym(open_lib, \"" + nativeMethodName + "\");\n");
             writer.write("\tif (native_method == NULL) {\n");
             writer.write("\t\t\tfprintf(stdout, \"Failed to find the symbol: " + nativeMethodName + "\\n\");\n");
             writer.write("\t\t\texit(EXIT_FAILURE);\n");
@@ -294,8 +300,9 @@ public class NativeRedirection extends CodeDumper {
                 writer.write("\t__wrpkru(0);\n\n");
 
             }
+			writer.write("\tdlclose(open_lib);\n");
 			writer.write("}\n");
-            */
+            
         }
     }
 
