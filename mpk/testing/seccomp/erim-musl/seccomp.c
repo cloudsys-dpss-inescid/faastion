@@ -95,18 +95,7 @@ installNotifyFilter(void)
     struct sock_filter filter[] = {
         X86_64_CHECK_ARCH,
 
-        /* pkey_*(2) triggers KILL signal */
-
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_pkey_mprotect, 0, 1),
-        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL),
-
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_pkey_alloc, 0, 1),
-        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL),
-
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_pkey_free, 0, 1),
-        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL),
-
-        /* mmap(2), clone3(2) and exit(2) trigger notifications to user-space supervisor */
+        /* mmap(2), clone(2) and exit(2) trigger notifications to user-space supervisor */
 
         BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_mmap, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_USER_NOTIF),
@@ -145,8 +134,7 @@ wrapper(int * notifyFd)
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
         err(EXIT_FAILURE, "dlopen");
-
-    }  
+    }
 
     void * (*doMmap)() = (void * (*)())dlsym(handle, "doMmap");
     if (!doMmap) {
@@ -155,7 +143,7 @@ wrapper(int * notifyFd)
         err(EXIT_FAILURE, "dlsym");
     }
     
-    protectMemoryRegions("libmmap.so", 1);
+    protectMemoryRegions("libmmap.so", 2);
 
     /* Install seccomp filter(s) */
 
@@ -166,9 +154,9 @@ wrapper(int * notifyFd)
     
     /* musl lib mmap(2) syscall */
 
-    __wrpkru(ERIM_DOMAIN(1));
+    __wrpkru(ERIM_DOMAIN(2));
     void * ret = doMmap();
-    __wrpkru(ERIM_DOMAIN(0));
+    __wrpkru(0);
 
     dlclose(handle);
 
@@ -183,7 +171,7 @@ target(void *arg)
 {      
     int* notifyFd = (int*)arg; // Cast the argument back to an integer pointer
 
-    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(1), regular);
+    ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(2), regular);
     void * value = wrapper(notifyFd);
     ERIM_SWITCH_BACK(regular);
 
@@ -267,7 +255,7 @@ handleMmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
                 strerror(errno));
     }
     else {
-        if (pkey_mprotect(mapped_mem, req->data.args[1], req->data.args[2], 1) == -1) {
+        if (pkey_mprotect(mapped_mem, req->data.args[1], req->data.args[2], 2) == -1) {
             resp->error = 1;            /* random value different than 0 */
             perror("pkey_mprotect");
             return;
@@ -284,8 +272,9 @@ handleMmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 static void 
 handleClone(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 {
-    SECC_DBM("\t---clone3 syscall---");
+    SECC_DBM("\t----clone syscall----");
     resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+
 }
 
 static void 
@@ -294,7 +283,6 @@ handleExit(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
     SECC_DBM("\t----exit syscall----");
     resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
 }
-
 
 /* Handle notifications that arrive via the SECCOMP_RET_USER_NOTIF file
     descriptor, 'notifyFd'. */
@@ -349,7 +337,6 @@ handleNotifications(int notifyFd)
             case __NR_exit:
                 nthreads--;
                 handleExit(req, resp);
-                break;
             default:
                 break;
         }
@@ -397,22 +384,19 @@ supervisor(void *arg)
 int
 main()
 {
-    if(erim_init(8192, ERIM_FLAG_ISOLATE_UNTRUSTED | ERIM_FLAG_SWAP_STACK, 2)) {
+    if(erim_init(8192, ERIM_FLAG_ISOLATE_UNTRUSTED | ERIM_FLAG_SWAP_STACK, 16)) {
         exit(EXIT_FAILURE);
     }
 
     pthread_t worker[2];
 
-    /* Create child threads */
+    /* Create supervisor */
+    pthread_create(&worker[1], NULL, supervisor, &notifyFd);
     
+    /* Create child thread */
     pthread_create(&worker[0], NULL, target, &notifyFd); 
 
-    /* Supervise children */
-
-    pthread_create(&worker[1], NULL, supervisor, &notifyFd);
-
-    /* Wait for supervisors */
-
+    /* Wait for supervisor */
     pthread_join(worker[1], NULL);
 
     exit(EXIT_SUCCESS);

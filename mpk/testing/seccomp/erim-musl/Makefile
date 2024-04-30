@@ -16,7 +16,7 @@ erim:
 	$(MAKE) -C $(ERIM_SRC_DIR) clean && $(MAKE) -C $(ERIM_SRC_DIR)
 
 libmmap.so: mmap.c
-	musl-gcc -static -g -shared -fPIC -o $@ $<
+	musl-gcc -g3 -static -shared -fPIC -o $@ $<
 
 test: seccomp.c
 	$(CC) $(CFLAGS) -DSECC_DBG -o $@ $< $(LDLIBS)
