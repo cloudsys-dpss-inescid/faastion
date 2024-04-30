@@ -54,7 +54,7 @@ static void print_proc_maps(char* logpath)
 
     char line[256];
     while (fgets(line, sizeof(line), mapsFile)) {
-        fprintf(logfile, line);
+        fprintf(logfile, "%s", line);
     }
 
     fclose(logfile);
@@ -76,14 +76,27 @@ protectMemoryRegions(const char * library, int pkey)
             continue;
         }
 
-	fprintf(stderr, "HERE! %s\n", line);
-        unsigned long startAddress, endAddress;
-        sscanf(line, "%lx-%lx", &startAddress, &endAddress);
+        unsigned long start, finish, offset, inode;
+        char r, w, x, p;
+        char dev[16];
+        char mpath[256];
 
-        void * address = (void*)startAddress;
-        size_t size = endAddress - startAddress;
+        // Resetting vars.
+        dev[0] = '\0';
+        mpath[0] = '\0';
 
-        pkey_mprotect(address, size, PROT_READ|PROT_WRITE|PROT_EXEC, pkey);
+        sscanf(line, "%lx-%lx %c%c%c%c %lx %15s %lu %255s",
+            &start, &finish, &r, &w, &x, &p, &offset, dev, &inode, mpath);
+
+        int prot_flags = 0;
+        if (r == 'r') prot_flags |= PROT_READ;
+        if (w == 'w') prot_flags |= PROT_WRITE;
+        if (x == 'x') prot_flags |= PROT_EXEC;
+
+        void * address = (void*)start;
+        size_t size = finish - start;        
+
+        pkey_mprotect(address, size, prot_flags, pkey);
     }
 
     fclose(mapsFile);
@@ -147,7 +160,7 @@ installNotifyFilter(void)
 }
 
 static void * 
-wrapper(int * notifyFd) 
+wrapper(int * notifyFd)
 {
     print_proc_maps("before_dlopen");
     void *handle = dlopen("./libmmap.so", RTLD_NOW | RTLD_DEEPBIND);
