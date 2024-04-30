@@ -43,9 +43,27 @@ seccomp(unsigned int operation, unsigned int flags, void *args)
     return syscall(SYS_seccomp, operation, flags, args);
 }
 
+static void print_proc_maps(char* logpath)
+{
+    FILE* logfile = fopen(logpath, "w");
+    FILE* mapsFile = fopen("/proc/self/maps", "r");
+    if (!mapsFile) {
+        fprintf(stderr, "Failed to open /proc/self/maps\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), mapsFile)) {
+        fprintf(logfile, line);
+    }
+
+    fclose(logfile);
+    fclose(mapsFile);
+}
 static void 
 protectMemoryRegions(const char * library, int pkey) 
 {
+    print_proc_maps("after_dlopen");
     FILE* mapsFile = fopen("/proc/self/maps", "r");
     if (!mapsFile) {
         fprintf(stderr, "Failed to open /proc/self/maps\n");
@@ -58,6 +76,7 @@ protectMemoryRegions(const char * library, int pkey)
             continue;
         }
 
+	fprintf(stderr, "HERE! %s\n", line);
         unsigned long startAddress, endAddress;
         sscanf(line, "%lx-%lx", &startAddress, &endAddress);
 
@@ -130,13 +149,14 @@ installNotifyFilter(void)
 static void * 
 wrapper(int * notifyFd) 
 {
+    print_proc_maps("before_dlopen");
     void *handle = dlopen("./libmmap.so", RTLD_NOW | RTLD_DEEPBIND);
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
         err(EXIT_FAILURE, "dlopen");
     }
 
-    void * (*doMmap)() = (void * (*)())dlsym(handle, "doMmap");
+    void (*doMmap)() = (void (*)())dlsym(handle, "doMmap");
     if (!doMmap) {
         fprintf(stderr, "dlsym error: %s\n", dlerror());
         dlclose(handle);
@@ -144,6 +164,7 @@ wrapper(int * notifyFd)
     }
     
     protectMemoryRegions("libmmap.so", 2);
+    print_proc_maps("after_protect");
 
     /* Install seccomp filter(s) */
 
@@ -155,12 +176,12 @@ wrapper(int * notifyFd)
     /* musl lib mmap(2) syscall */
 
     __wrpkru(ERIM_DOMAIN(2));
-    void * ret = doMmap();
+    doMmap();
     __wrpkru(0);
 
     dlclose(handle);
 
-    return ret;
+    return NULL;
 }
 
 /* Create a child thread--the "target"--that makes system calls
