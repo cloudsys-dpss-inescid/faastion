@@ -60,10 +60,30 @@ static void print_proc_maps(char* logpath)
     fclose(logfile);
     fclose(mapsFile);
 }
+
+static void print_proc_smaps(char* logpath)
+{
+    FILE* logfile = fopen(logpath, "w");
+    FILE* mapsFile = fopen("/proc/self/smaps", "r");
+    if (!mapsFile) {
+        fprintf(stderr, "Failed to open /proc/self/smaps\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), mapsFile)) {
+        fprintf(logfile, "%s", line);
+    }
+
+    fclose(logfile);
+    fclose(mapsFile);
+}
+
 static void 
-protectMemoryRegions(const char * library, int pkey) 
+protect_memory_regions(const char * library, int pkey) 
 {
     print_proc_maps("after_dlopen");
+    print_proc_smaps("after_dlopen_smaps");
     FILE* mapsFile = fopen("/proc/self/maps", "r");
     if (!mapsFile) {
         fprintf(stderr, "Failed to open /proc/self/maps\n");
@@ -76,17 +96,11 @@ protectMemoryRegions(const char * library, int pkey)
             continue;
         }
 
-        unsigned long start, finish, offset, inode;
-        char r, w, x, p;
-        char dev[16];
-        char mpath[256];
+        unsigned long start, finish;
+        char r, w, x;
 
-        // Resetting vars.
-        dev[0] = '\0';
-        mpath[0] = '\0';
-
-        sscanf(line, "%lx-%lx %c%c%c%c %lx %15s %lu %255s",
-            &start, &finish, &r, &w, &x, &p, &offset, dev, &inode, mpath);
+        sscanf(line, "%lx-%lx %c%c%c",
+            &start, &finish, &r, &w, &x);
 
         int prot_flags = 0;
         if (r == 'r') prot_flags |= PROT_READ;
@@ -122,7 +136,7 @@ protectMemoryRegions(const char * library, int pkey)
     user-space notifications can be fetched. */
 
 static int
-installNotifyFilter(void)
+install_notify_filter(void)
 {    
     struct sock_filter filter[] = {
         X86_64_CHECK_ARCH,
@@ -169,32 +183,33 @@ wrapper(int * notifyFd)
         err(EXIT_FAILURE, "dlopen");
     }
 
-    void (*doMmap)() = (void (*)())dlsym(handle, "doMmap");
+    void * (*doMmap)() = (void * (*)())dlsym(handle, "doMmap");
     if (!doMmap) {
         fprintf(stderr, "dlsym error: %s\n", dlerror());
         dlclose(handle);
         err(EXIT_FAILURE, "dlsym");
     }
     
-    protectMemoryRegions("libmmap.so", 2);
+    protect_memory_regions("libmmap.so", 2);
     print_proc_maps("after_protect");
+    print_proc_smaps("after_protect_smaps");
 
     /* Install seccomp filter(s) */
 
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0))
         err(EXIT_FAILURE, "prctl");
 
-    *notifyFd = installNotifyFilter();
+    *notifyFd = install_notify_filter();
     
     /* musl lib mmap(2) syscall */
 
     __wrpkru(ERIM_DOMAIN(2));
-    doMmap();
+    void * ret = doMmap();
     __wrpkru(0);
 
     dlclose(handle);
 
-    return NULL;
+    return ret;
 }
 
 /* Create a child thread--the "target"--that makes system calls
@@ -225,7 +240,7 @@ target(void *arg)
     terminates and is reused by another process. */
 
 static bool
-cookieIsValid(int notifyFd, uint64_t id)
+cookie_is_valid(int notifyFd, uint64_t id)
 {
     return ioctl(notifyFd, SECCOMP_IOCTL_NOTIF_ID_VALID, &id) == 0;
 }
@@ -235,7 +250,7 @@ cookieIsValid(int notifyFd, uint64_t id)
     buffers returned via 'req' and 'resp'. */
 
 static void
-allocSeccompNotifBuffers(struct seccomp_notif **req,
+alloc_seccomp_notif_buffers(struct seccomp_notif **req,
                         struct seccomp_notif_resp **resp,
                         struct seccomp_notif_sizes *sizes)
 {
@@ -272,7 +287,7 @@ allocSeccompNotifBuffers(struct seccomp_notif **req,
 }
 
 static void
-handleMmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp) 
+handle_mmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp) 
 {
     SECC_DBM("\t----mmap syscall----");
 
@@ -304,7 +319,7 @@ handleMmap(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 }
 
 static void 
-handleClone(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
+handle_clone3(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 {
     SECC_DBM("\t----clone syscall----");
     resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
@@ -312,7 +327,7 @@ handleClone(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 }
 
 static void 
-handleExit(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
+handle_exit(struct seccomp_notif *req, struct seccomp_notif_resp *resp)
 {
     SECC_DBM("\t----exit syscall----");
     resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
@@ -328,7 +343,7 @@ handleNotifications(int notifyFd)
     struct seccomp_notif_resp   *resp;
     struct seccomp_notif_sizes  sizes;
 
-    allocSeccompNotifBuffers(&req, &resp, &sizes);
+    alloc_seccomp_notif_buffers(&req, &resp, &sizes);
 
     int nthreads = 1;
 
@@ -348,7 +363,7 @@ handleNotifications(int notifyFd)
         printf("\t[S]: received notifaction id [%lld], from tid: %d, syscall nr: %d\n", 
                 req->id, req->pid, req->data.nr);
 
-        if (!cookieIsValid(notifyFd, req->id)) {
+        if (!cookie_is_valid(notifyFd, req->id)) {
             perror("ioctl(SECCOMP_IOCTL_NOTIF_ID_VALID)");
             continue;
         }
@@ -362,15 +377,15 @@ handleNotifications(int notifyFd)
         // Handle specific syscalls
         switch(req->data.nr) {
             case __NR_mmap:
-                handleMmap(req, resp);
+                handle_mmap(req, resp);
                 break;
             case __NR_clone3:
                 nthreads++;
-                handleClone(req, resp);
+                handle_clone3(req, resp);
                 break;
             case __NR_exit:
                 nthreads--;
-                handleExit(req, resp);
+                handle_exit(req, resp);
             default:
                 break;
         }
