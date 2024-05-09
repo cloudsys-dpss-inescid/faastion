@@ -13,16 +13,14 @@ function build_jni_libraries {
 }
 
 function run_jni {
-
         LIB_DIR="build/libs"
         CLS_DIR="build/classes/java/main"
         java -cp $CLS_DIR -Djava.library.path=$LIB_DIR ImageManipulation
-
 }
 
 ./gradlew clean shadowJar assemble
 
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
 export LD_LIBRARY_PATH=$(DIR)/build/libs:$LD_LIBRARY_PATH
 export INPUT_IMAGE=$(DIR)/src/main/java/Scooter.jpeg
 export entrypoint="ImageManipulation"
