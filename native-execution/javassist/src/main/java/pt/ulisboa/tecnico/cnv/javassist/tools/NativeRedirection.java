@@ -179,8 +179,6 @@ writer.write("static __thread " + returnJniType + " (JNICALL *native_method)(JNI
 	    writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
 	    writer.write("\tacquire_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
 	    writer.write("\tif(domain == -1) {\n");
-	    writer.write("\t\tlazy_proc_isolation();\n");
-	    writer.write("\t\treturn;\n");
 	    writer.write("\t\tchar fifo_path[30];\n");  
 	    writer.write("\t\tint idx = atomic_fetch_add(&shared_variable, 1);\n");  
 	    writer.write("\t\tsnprintf(fifo_path, sizeof(fifo_path), \"/tmp/fifo/fifo_%d\", procIDs[idx % NUM_PROCESSES]);\n");
