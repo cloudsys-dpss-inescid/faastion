@@ -303,6 +303,13 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 			map = __mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
 			if (map == MAP_FAILED) goto fail;
 		}
+/*
+		if (__pkey_mprotect(map, size, PROT_READ|PROT_WRITE, 3)
+			&& errno != ENOSYS) {
+			__munmap(map, size);
+			goto fail;
+		}
+*/
 		tsd = map + size - __pthread_tsd_size;
 		if (!stack) {
 			stack = tsd - libc.tls_size;
@@ -393,5 +400,261 @@ fail:
 	return EAGAIN;
 }
 
+#define ARCH_SET_FS   0x1002
+#define ARCH_GET_FS   0x1003
+#define DOMAINS 16 // Domain IDs from 0 to 15.
+// Domain to PKRU conversion table.
+#define DOMAIN_TO_PKRU(domain) (\
+    (domain == 0) ? 0x0 : \
+    (domain == 1) ? 0x55555551 : \
+    (domain == 2) ? 0x55555545 : \
+    (domain == 3) ? 0x55555515 : \
+    (domain == 4) ? 0x55555455 : \
+    (domain == 5) ? 0x55555155 : \
+    (domain == 6) ? 0x55554555 : \
+    (domain == 7) ? 0x55551555 : \
+    (domain == 8) ? 0x55545555 : \
+    (domain == 9) ? 0x55515555 : \
+    (domain == 10) ? 0x55455555 : \
+    (domain == 11) ? 0x55155555 : \
+    (domain == 12) ? 0x54555555 : \
+    (domain == 13) ? 0x51555555 : \
+    (domain == 14) ? 0x45555555 : \
+    (domain == 15) ? 0x15555555 : \
+    -1 \
+)
+// Thread spaces are composed of three parts: Stack, TLS, TCB (check pthread_create.c in musl libc).
+static void* thread_spaces;
+// Saves orig stack pointers to restore after leaving the sandbox.
+static void* orig_stackptr[DOMAINS];
+//Saves the original pthread pointers to restore after leaving the sandbox.
+static void* orig_pthread[DOMAINS];
+#define THREAD_SPACE_SIZE 1048576 // 1 MB
+#define STACK_SIZE        524288  // 512 KB
+#define THREAD_SPACE(domain) ((void*) (((size_t)thread_spaces) + domain * THREAD_SPACE_SIZE))
+#define STACK(domain)        ((void*) (((size_t)thread_spaces) + domain * THREAD_SPACE_SIZE + STACK_SIZE))
+
+#define read_stackptr(ptr) \
+  do { \
+    __asm__ volatile("movq %%rsp, %0" : "+m" (ptr)); \
+  } while(0)
+
+#define write_stackptr(ptr)					\
+  do {									\
+    __asm__ volatile("movq %0, %%rsp\n" : "=m" (ptr));	\
+  } while(0)
+
+#define switch_stack(newstackloc, oldstackloc)					\
+  do {									\
+    read_stackptr(oldstackloc);					\
+    char * newstack = (char*) newstackloc;       \
+    write_stackptr(newstack);	\
+  } while(0)
+
+#define __wrpkru(PKRU_ARG)			    \
+  do {									\
+    __asm__ volatile ("xor %%ecx, %%ecx\n\txor %%edx, %%edx\n\tmov %0,%%eax\n\t.byte 0x0f,0x01,0xef\n\t" \
+	      : : "n" (PKRU_ARG)					\
+	      :"eax", "ecx", "edx");			\
+  } while (0)
+
+#define __wrpkrumem(PKRU_ARG)			    \
+  do {									\
+    __asm__ volatile ("xor %%ecx, %%ecx\n\txor %%edx, %%edx\n\tmov %0,%%eax\n\t.byte 0x0f,0x01,0xef\n\t" \
+	      : : "m" (PKRU_ARG)					\
+	      :"eax", "ecx", "edx");			\
+  } while (0)
+
+int __pthread_sandbox_init(void)
+{
+	thread_spaces = __mmap(0, DOMAINS * THREAD_SPACE_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+    if (thread_spaces == MAP_FAILED) {
+        return -1;
+    }
+    for (int i = 1; i < DOMAINS; i++) {
+        if(syscall(SYS_pkey_alloc, 0, 0) < 0) {
+            return -1;
+        }
+        if (pkey_mprotect(THREAD_SPACE(i), THREAD_SPACE_SIZE, PROT_READ|PROT_WRITE, i)) {
+            return -1;
+	    }
+    }
+	return 0;
+}
+
+// Note: inspired by pthread_create.
+int __pthread_sandbox_enter(int domain)
+{
+	size_t size;
+	struct pthread *self, *new;
+	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit;
+	sigset_t set;
+
+	self = __pthread_self();
+	__acquire_ptc();
+
+	size = ROUND(__default_stacksize + libc.tls_size + __pthread_tsd_size);
+	map = THREAD_SPACE(domain);
+
+	tsd = map + size - __pthread_tsd_size;
+	stack = tsd - libc.tls_size;
+	stack_limit = map;
+
+	new = __copy_tls(tsd - libc.tls_size);
+	new->map_base = map;
+	new->map_size = size;
+	new->stack = stack;
+	new->stack_size = stack - stack_limit;
+	new->guard_size = 0;
+	new->self = new;
+	new->tsd = (void *)tsd;
+	new->locale = &libc.global_locale;
+	new->robust_list.head = &new->robust_list.head;
+	new->canary = self->canary;
+	new->sysinfo = self->sysinfo;
+
+	/* Application signals (but not the synccall signal) must be
+	 * blocked before the thread list lock can be taken, to ensure
+	 * that the lock is AS-safe. */
+	__block_app_sigs(&set);
+	__tl_lock();
+	if (!libc.threads_minus_1++) libc.need_locks = 1;
+	new->next = self->next;
+	new->prev = self;
+	new->next->prev = new;
+	new->prev->next = new;
+	__tl_unlock();
+	__restore_sigs(&set);
+	__release_ptc();
+
+	orig_pthread[domain] = self;
+	if (__syscall(SYS_arch_prctl, ARCH_SET_FS, new)) {
+		return -1;
+    }
+
+	return 0;
+fail:
+	__release_ptc();
+	return EAGAIN;
+}
+
+int __pthread_sandbox_leave(int domain)
+{
+	pthread_t self = __pthread_self();
+	sigset_t set;
+
+	self->canceldisable = 1;
+	self->cancelasync = 0;
+
+	while (self->cancelbuf) {
+		void (*f)(void *) = self->cancelbuf->__f;
+		void *x = self->cancelbuf->__x;
+		self->cancelbuf = self->cancelbuf->__next;
+		f(x);
+	}
+
+	__pthread_tsd_run_dtors();
+
+	__block_app_sigs(&set);
+
+	/* This atomic potentially competes with a concurrent pthread_detach
+	 * call; the loser is responsible for freeing thread resources. */
+	int state = a_cas(&self->detach_state, DT_JOINABLE, DT_EXITING);
+
+	/* Access to target the exiting thread with syscalls that use
+	 * its kernel tid is controlled by killlock. For detached threads,
+	 * any use past this point would have undefined behavior, but for
+	 * joinable threads it's a valid usage that must be handled.
+	 * Signals must be blocked since pthread_kill must be AS-safe. */
+	LOCK(self->killlock);
+
+	/* The thread list lock must be AS-safe, and thus depends on
+	 * application signals being blocked above. */
+	__tl_lock();
+
+	/* If this is the only thread in the list, don't proceed with
+	 * termination of the thread, but restore the previous lock and
+	 * signal state to prepare for exit to call atexit handlers. */
+	if (self->next == self) {
+		__tl_unlock();
+		UNLOCK(self->killlock);
+		self->detach_state = state;
+		__restore_sigs(&set);
+		return 0;
+	}
+
+	/* After the kernel thread exits, its tid may be reused. Clear it
+	 * to prevent inadvertent use and inform functions that would use
+	 * it that it's no longer available. At this point the killlock
+	 * may be released, since functions that use it will consistently
+	 * see the thread as having exited. Release it now so that no
+	 * remaining locks (except thread list) are held if we end up
+	 * resetting need_locks below. */
+	self->tid = 0;
+	UNLOCK(self->killlock);
+
+	/* Process robust list in userspace to handle non-pshared mutexes
+	 * and the detached thread case where the robust list head will
+	 * be invalid when the kernel would process it. */
+	__vm_lock();
+	volatile void *volatile *rp;
+	while ((rp=self->robust_list.head) && rp != &self->robust_list.head) {
+		pthread_mutex_t *m = (void *)((char *)rp
+			- offsetof(pthread_mutex_t, _m_next));
+		int waiters = m->_m_waiters;
+		int priv = (m->_m_type & 128) ^ 128;
+		self->robust_list.pending = rp;
+		self->robust_list.head = *rp;
+		int cont = a_swap(&m->_m_lock, 0x40000000);
+		self->robust_list.pending = 0;
+		if (cont < 0 || waiters)
+			__wake(&m->_m_lock, 1, priv);
+	}
+	__vm_unlock();
+
+	__do_orphaned_stdio_locks();
+	__dl_thread_cleanup();
+
+	/* Last, unlink thread from the list. This change will not be visible
+	 * until the lock is released, which only happens after SYS_exit
+	 * has been called, via the exit futex address pointing at the lock.
+	 * This needs to happen after any possible calls to LOCK() that might
+	 * skip locking if process appears single-threaded. */
+	if (!--libc.threads_minus_1) libc.need_locks = -1;
+	self->next->prev = self->prev;
+	self->prev->next = self->next;
+	self->prev = self->next = self;
+
+	if (__syscall(SYS_arch_prctl, ARCH_SET_FS, orig_pthread[domain])) {
+		return -1;
+    }
+	return 0;
+}
+
+void __trampoline(int domain, void** ret, void *(*fun)(void *), void* arg)
+{
+    __wrpkrumem(DOMAIN_TO_PKRU(domain));
+    void* local_ret = fun(arg);
+    __wrpkru(0x0);
+	*ret = local_ret;
+    return ret;
+}
+
+int __pthread_sandbox_call(int domain, void** ret, void *(*fun)(void *), void *restrict arg)
+{
+	__pthread_sandbox_enter(domain);
+	// Note: we should copy arguments into the new stack. This works for now
+	// because the compiler politely keeps arguments in registers.
+    switch_stack(STACK(domain), orig_stackptr[domain]);
+    __trampoline(domain, ret, fun, arg);
+    write_stackptr(orig_stackptr[domain]);
+    __pthread_sandbox_leave(domain);
+	return 0;
+}
+
 weak_alias(__pthread_exit, pthread_exit);
 weak_alias(__pthread_create, pthread_create);
+weak_alias(__pthread_sandbox_init, pthread_sandbox_init);
+weak_alias(__pthread_sandbox_enter, pthread_sandbox_enter);
+weak_alias(__pthread_sandbox_leave, pthread_sandbox_leave);
+weak_alias(__pthread_sandbox_call, pthread_sandbox_call);

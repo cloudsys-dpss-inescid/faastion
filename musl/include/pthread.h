@@ -78,6 +78,10 @@ extern "C" {
 
 
 int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict, void *(*)(void *), void *__restrict);
+int pthread_sandbox_init(void);
+int pthread_sandbox_enter(int);
+int pthread_sandbox_leave(int);
+int pthread_sandbox_call(int, void**, void *(*)(void *), void *__restrict);
 int pthread_detach(pthread_t);
 _Noreturn void pthread_exit(void *);
 int pthread_join(pthread_t, void **);
