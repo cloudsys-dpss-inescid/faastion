@@ -1,0 +1,3 @@
+layout src
+set logging file gdb-output.log
+set logging enabled on
