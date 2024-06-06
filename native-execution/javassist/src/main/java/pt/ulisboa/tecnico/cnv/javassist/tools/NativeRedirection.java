@@ -178,32 +178,19 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("static __thread int fd = 0; // seccomp filter fd\n\n");
 
 			writer.write("/* Function declaration */\n");
-			writer.write("void lazy_proc_isolation(void);");
-			writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ");\n");
+			writer.write("int warm_execution(void);\n");
+			writer.write("void cold_execution(void);\n");
+			writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ");\n\n");
 			writer.write("JNIEXPORT " + returnJniType + " JNICALL Java_" + className + "_" + gateName
 					+ "(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
 			writer.write("\t/* Get available domain */\n");
 			writer.write("\tSNI_DBM(\"[s]: Getting available domain...\");\n");
 			writer.write("\tacquire_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
 			writer.write("\tif(domain == -1) {\n");
-			writer.write("\t\tchar fifo_path[30];\n");
-			writer.write("\t\tint idx = atomic_fetch_add(&shared_variable, 1);\n");
-			writer.write(
-					"\t\tsnprintf(fifo_path, sizeof(fifo_path), \"/tmp/fifo/fifo_%d\", procIDs[idx % NUM_PROCESSES]);\n");
-			writer.write("\t\tint fd = open(fifo_path, O_WRONLY);\n");
-			writer.write("\t\tif(fd == -1){\n");
-			writer.write("\t\t\tperror(\"Error Opening FIFO\");\n");
-			writer.write("\t\t\texit(EXIT_FAILURE);\n");
-			writer.write("\t\t};\n");
-			writer.write("\t\tchar buffer[BUFFER_SIZE];\n");
-			writer.write("\t\tchar string1[] = \"lib" + System.getenv("BENCHMARK_NAME") + "-jni.so\";\n");
-			writer.write("\t\tchar string2[] = \"" + nativeMethodName + "\";\n");
-			writer.write("\t\tsnprintf(buffer, sizeof(buffer),\"%s,%s\",string1, string2);\n");
-			writer.write("\t\twrite(fd, buffer, strlen(buffer));\n");
-			writer.write("\t\tclose(fd);\n");
-			writer.write("\t\treturn;\n");
-			writer.write("\t}\n\n");
-
+			writer.write("\t\tint result = warm_execution();\n");
+			writer.write("\t\tif(result != 0) {}\n");
+			writer.write("\t\t\tcold_execution();");
+			writer.write("\t}else{\n");
 			writer.write("\t/* Switch to new stack */\n");
 			writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
 			writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
@@ -222,6 +209,7 @@ public class NativeRedirection extends CodeDumper {
 				writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
 				writer.write("\treturn res;\n");
 			}
+			writer.write("\t}");
 			writer.write("}\n\n\n");
 
 			writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
@@ -251,7 +239,8 @@ public class NativeRedirection extends CodeDumper {
 			}
 
 			writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
-			writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
+			// writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
+			writer.write("\t__wrpkru(0);\n");
 			if (returnJniType.equals("void")) {
 				writer.write("\t" + mc);
 				writer.write("\t__wrpkru(0);\n");
@@ -262,7 +251,50 @@ public class NativeRedirection extends CodeDumper {
 				writer.write("\treturn res;\n");
 			}
 			writer.write("}\n\n\n");
-			writer.write("void lazy_proc_isolation() {\n");
+
+			writer.write("int warm_execution() {\n");
+			writer.write("\t\tint i;\n");
+			writer.write("\t\tatomic_int expected;\n\n");
+			writer.write("\t\tfor (i = 0; i < NUM_PROCESSES; i++){\n");
+			writer.write("\t\t\texpected = atomic_load(&procIDs[i]);\n");
+			writer.write("\t\t\tif (expected != 0 && __atomic_compare_exchange_n(&procIDs[i], &expected, 0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)){\n");
+			writer.write("\t\tfprintf(stderr,\"executing the new value\\n\");");
+			writer.write("\t\t\t\tchar fifo_path[30];\n");
+			writer.write("\t\t\t\tsnprintf(fifo_path, sizeof(fifo_path), \"/tmp/fifo/fifo_%d\", expected);\n");
+			writer.write("\t\t\t\tint fd = open(fifo_path, O_WRONLY);\n");
+			writer.write("\t\t\t\tif (fd == -1){\n");
+			writer.write("\t\t\t\t\tperror(\"Error Opening FIFO111\");\n");
+			writer.write("\t\t\t\t\texit(EXIT_FAILURE);\n");
+			writer.write("\t\t\t\t};\n");
+			writer.write("\t\t\t\tchar buffer[BUFFER_SIZE];\n");
+			writer.write("\t\t\t\tchar *argv = \"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName
+					+ "-proc" + "\";\n");
+			writer.write("\t\t\t\tsnprintf(buffer, sizeof(buffer), \"%s\", argv);\n");
+			writer.write("\t\t\t\twrite(fd, buffer, strlen(buffer));\n");
+			writer.write("\t\t\t\tclose(fd);\n");
+			writer.write("\t\t\t\tint fd2;\n");
+			writer.write("\t\t\t\tchar fifo_path_2[30], buffer2[BUFFER_SIZE];\n");
+			writer.write("\t\t\t\tsnprintf(fifo_path_2, sizeof(fifo_path_2), \"/tmp/ret/ret_%d\", expected);\n");
+			writer.write("\t\t\t\tfd2 = open(fifo_path_2, O_RDONLY);\n");
+			writer.write("\t\t\t\tif (fd2 == -1){\n");
+			writer.write("\t\t\t\t\tperror(\"Error Opening FIFO22222\");\n");
+			writer.write("\t\t\t\t\texit(EXIT_FAILURE);\n");
+			writer.write("\t\t\t\t};\n");
+			writer.write("\t\t\t\tssize_t bytes_read = read(fd2, buffer2, BUFFER_SIZE);\n");
+			writer.write("\t\t\t\tif (bytes_read == -1){\n");
+			writer.write("\t\t\t\t\tperror(\"Error reading from FIFO1212\");\n");
+			writer.write("\t\t\t\t\texit(EXIT_FAILURE);\n");
+			writer.write("\t\t\t\t};\n");
+			writer.write("\t\t\t\tclose(fd2);\n");
+			writer.write("\t\t\t\tbuffer2[bytes_read] = '\\0';\n");
+			writer.write("\t\t\t\treturn 0;\n");
+			writer.write("\t\t\t}else{\n");
+			writer.write("\t\t\t\tcontinue;\n");
+			writer.write("\t\t\t}\n");
+			writer.write("\t\t}\n");
+			writer.write("\treturn 1;\n");
+			writer.write("}\n\n\n");
+			writer.write("void cold_execution() {\n");
 			writer.write("\tint ret;\n");
 			writer.write("\tpid_t child_pid;\n");
 			writer.write("\tint pipefd[2];\n");
