@@ -188,8 +188,9 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\tacquire_domain(\"" + System.getenv("BENCHMARK_NAME") + "\", &fd);\n");
 			writer.write("\tif(domain == -1) {\n");
 			writer.write("\t\tint result = warm_execution();\n");
-			writer.write("\t\tif(result != 0) {}\n");
-			writer.write("\t\t\tcold_execution();");
+			writer.write("\t\tif(result != 0) {\n");
+			writer.write("\t\t\tcold_execution();\n");
+			writer.write("\t\t}\n");
 			writer.write("\t}else{\n");
 			writer.write("\t/* Switch to new stack */\n");
 			writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
@@ -209,7 +210,7 @@ public class NativeRedirection extends CodeDumper {
 				writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
 				writer.write("\treturn res;\n");
 			}
-			writer.write("\t}");
+			writer.write("\t}\n");
 			writer.write("}\n\n\n");
 
 			writer.write(returnJniType + " wrapper(JNIEnv *env, jobject obj" + typeArgs + ") {\n");
@@ -258,8 +259,7 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\tfor (i = 0; i < NUM_PROCESSES; i++){\n");
 			writer.write("\t\t\texpected = atomic_load(&procIDs[i]);\n");
 			writer.write("\t\t\tif (expected != 0 && __atomic_compare_exchange_n(&procIDs[i], &expected, 0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)){\n");
-			writer.write("\t\tfprintf(stderr,\"executing the new value\\n\");");
-			writer.write("\t\t\t\tchar fifo_path[30];\n");
+			writer.write("\t\t\t\tchar fifo_path[50];\n");
 			writer.write("\t\t\t\tsnprintf(fifo_path, sizeof(fifo_path), \"/tmp/fifo/fifo_%d\", expected);\n");
 			writer.write("\t\t\t\tint fd = open(fifo_path, O_WRONLY);\n");
 			writer.write("\t\t\t\tif (fd == -1){\n");
