@@ -1,0 +1,12 @@
+100000 100000
+1392053
+Added process 1392053 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1392053's current affinity list: 0-7
+pid 1392053's new affinity list: 0
+Pinned process 1392053 to core 0.
+100000 100000
+1392293
+Added process 1392293 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1392293's current affinity list: 0-7
+pid 1392293's new affinity list: 0
+Pinned process 1392293 to core 0.

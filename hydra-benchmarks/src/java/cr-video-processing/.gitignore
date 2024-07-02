@@ -1,0 +1,17 @@
+init.json
+Thumbs.db
+.DS_Store
+.gradle
+build/
+bin/
+target/
+out/
+.idea
+*.iml
+*.ipr
+*.iws
+.project
+.settings
+.classpath
+.factorypath
+

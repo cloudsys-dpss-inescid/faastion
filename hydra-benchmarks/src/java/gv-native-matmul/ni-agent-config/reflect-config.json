@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.jni.MatrixMultiplication",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
+}
+]

@@ -1,0 +1,23 @@
+time="2023-04-08T10:03:48-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-08T10:03:48-04:00" level=info msg="VMM logging disabled."
+time="2023-04-08T10:03:48-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-08T10:03:48-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc00048e084 MemSizeMib:0xc00048e078 VcpuCount:0xc00048e070}"
+time="2023-04-08T10:03:48-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-08T10:03:48-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-08T10:03:48-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-08T10:03:48-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:9B:6A) at index 1"
+2023-04-08T10:03:48.138350245 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-08T10:03:48-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012293] dmi: Firmware registration failed.
+[    0.040771] zswap: default zpool zbud not available
+[    0.041014] zswap: pool creation failed
+Graalvisor boot time: 169 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function thumbnail registered with context sandboxing in 842 ms
+[thread 41] New context sandbox 139974693355520 in 35 us
+[thread 44] Creating context org.graalvm.polyglot.Context@487e428c
+[thread 43] New context sandbox 139974693355520 in 9 us
+[thread 57] Creating context org.graalvm.polyglot.Context@4256f413
+time="2023-04-08T10:04:05-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-08T10:04:05-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

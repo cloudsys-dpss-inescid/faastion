@@ -1,0 +1,4 @@
+[
+  { "name": "com.demo_polyglot.DemoPolyglot", "allPublicFields": true },
+  { "name": "com.demo_polyglot.DemoPolyglot", "allPublicMethods": true }
+]

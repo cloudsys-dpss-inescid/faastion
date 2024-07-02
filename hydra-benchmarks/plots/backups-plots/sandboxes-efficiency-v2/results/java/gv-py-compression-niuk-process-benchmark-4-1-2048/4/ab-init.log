@@ -1,0 +1,46 @@
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 172.18.0.2 (be patient).....done
+
+
+Server Software:        
+Server Hostname:        172.18.0.2
+Server Port:            8080
+
+Document Path:          /
+Document Length:        86 bytes
+
+Concurrency Level:      4
+Time taken for tests:   21.201 seconds
+Complete requests:      20
+Failed requests:        16
+   (Connect: 0, Receive: 0, Length: 16, Exceptions: 0)
+Total transferred:      3610 bytes
+Total body sent:        4780
+HTML transferred:       1710 bytes
+Requests per second:    0.94 [#/sec] (mean)
+Time per request:       4240.216 [ms] (mean)
+Time per request:       1060.054 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.17 [Kbytes/sec] received
+                        0.22 kb/s sent
+                        0.39 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       0
+Processing:   413 3333 5939.3    804   17368
+Waiting:      413 3333 5939.3    804   17368
+Total:        413 3333 5939.3    804   17369
+
+Percentage of the requests served within a certain time (ms)
+  50%    804
+  66%   1056
+  75%   1113
+  80%   3833
+  90%  17259
+  95%  17369
+  98%  17369
+  99%  17369
+ 100%  17369 (longest request)

@@ -1,0 +1,10 @@
+100000 100000
+999354
+Added process 999354 to cgroup experiments with a quota of 100000 out of 100000.
+pid 999354's current affinity list: 0-7
+pid 999354's new affinity list: 0
+Pinned process 999354 to core 0.
+1
+Disabled turbo boost.
+0
+Enabled turbo boost.

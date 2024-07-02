@@ -1,0 +1,5 @@
+[
+{ "name":"com.bfs.BFS", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
+{ "name":"com.bfs.BFS", "allPublicMethods": true }
+
+]

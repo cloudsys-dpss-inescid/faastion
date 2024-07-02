@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.hello_world.HelloWorld",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]}
+
+]

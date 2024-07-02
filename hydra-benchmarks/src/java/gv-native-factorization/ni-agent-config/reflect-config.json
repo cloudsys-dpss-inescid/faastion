@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.jni.Factorization",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
+}
+]

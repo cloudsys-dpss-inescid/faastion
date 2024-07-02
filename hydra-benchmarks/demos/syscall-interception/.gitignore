@@ -1,0 +1,5 @@
+.vscode
+*.log
+*.jpg
+*.out
+build/

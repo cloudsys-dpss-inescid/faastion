@@ -1,0 +1,5 @@
+[
+{ "name":"com.dynamichtml.DynamicHTML", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
+{ "name":"com.dynamichtml.DynamicHTML", "allPublicMethods": true }
+
+]

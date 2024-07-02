@@ -1,0 +1,6 @@
+{
+  "main": "main",
+  "dependencies": {
+    "sharp": "^0.30.7"
+  }
+}

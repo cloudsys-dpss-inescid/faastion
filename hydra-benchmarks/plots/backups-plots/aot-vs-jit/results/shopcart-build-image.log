@@ -1,0 +1,76 @@
+========================================================================================================================
+GraalVM Native Image: Generating 'shopcart-wrk-0-3-7-mixed-medium-default-ce' (executable)...
+========================================================================================================================
+Warning: Method ch.qos.logback.core.encoder.Encoder.valueOf(String) not found.
+Warning: Method ch.qos.logback.core.spi.ContextAware.valueOf(String) not found.
+Warning: Could not resolve class com.aayushatharva.brotli4j.Brotli4jLoader for reflection configuration. Reason: java.lang.ClassNotFoundException: com.aayushatharva.brotli4j.Brotli4jLoader.
+Warning: Could not resolve class io.methvin.watchservice.MacOSXListeningWatchService for reflection configuration. Reason: java.lang.ClassNotFoundException: io.methvin.watchservice.MacOSXListeningWatchService.
+Warning: Could not register method io.micronaut.inject.provider.JavaxProviderBeanDefinition.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: javax/inject/Provider.
+Warning: Could not resolve class io.reactivex.Completable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.Completable.
+Warning: Could not resolve class io.reactivex.Maybe for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.Maybe.
+Warning: Could not resolve class io.reactivex.Observable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.Observable.
+Warning: Could not resolve class io.reactivex.Single for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.Single.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Completable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Completable.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Flowable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Flowable.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Maybe for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Maybe.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Observable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Observable.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Single for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Single.
+Warning: Could not resolve class kotlinx.coroutines.flow.Flow for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.coroutines.flow.Flow.
+Warning: Could not resolve class sun.misc.VM for reflection configuration. Reason: java.lang.ClassNotFoundException: sun.misc.VM.
+Warning: Method sun.security.provider.NativePRNG.<init>(SecureRandomParameters) not found.
+[1/8] Initializing...                                                                                    (6.0s @ 0.20GB)
+ Java version: 17.0.7+7, vendor version: GraalVM CE 17.0.7-dev+7.1
+ Graal compiler: optimization level: 2, target machine: x86-64-v3
+ C compiler: gcc (linux, x86_64, 9.4.0)
+ Garbage collector: Serial GC (max heap size: 80% of RAM)
+ 4 user-specific feature(s)
+ - io.micronaut.buffer.netty.NettyFeature
+ - io.micronaut.core.graal.ServiceLoaderFeature
+ - io.micronaut.http.netty.graal.HttpNettyFeature
+ - io.micronaut.jackson.JacksonDatabindFeature
+[2/8] Performing analysis...  [******]                                                                  (29.3s @ 2.42GB)
+  15,144 (90.10%) of 16,808 types reachable
+  22,336 (58.58%) of 38,132 fields reachable
+  75,589 (61.95%) of 122,019 methods reachable
+   5,021 types,   382 fields, and 4,247 methods registered for reflection
+      64 types,    76 fields, and    55 methods registered for JNI access
+       4 native libraries: dl, pthread, rt, z
+# Printing analysis results stats to: /home/serhii/work/graalvm/graal/vm/mxbuild/native-image-benchmarks/shopcart-wrk-0-3-7-mixed-medium-default-ce/reports/analysis_stats_shopcart-wrk-0-3-7-mixed-medium-default-ce_20230626_133129.json
+[3/8] Building universe...                                                                               (6.2s @ 1.59GB)
+[4/8] Parsing methods...      [*]                                                                        (1.9s @ 2.84GB)
+[5/8] Inlining methods...     [***]                                                                      (1.2s @ 2.78GB)
+[6/8] Compiling methods...    [****]                                                                    (19.6s @ 3.82GB)
+[7/8] Layouting methods...    [**]                                                                       (5.0s @ 2.24GB)
+[8/8] Creating image...       [****]                                                                    (15.9s @ 1.50GB)
+  32.60MB (27.86%) for code area:    50,341 compilation units
+  32.53MB (27.80%) for image heap:  360,086 objects and 317 resources
+  47.44MB (40.54%) for debug info generated in 4.9s
+   4.44MB ( 3.80%) for other data
+ 117.01MB in total
+------------------------------------------------------------------------------------------------------------------------
+Top 10 origins of code area:                                Top 10 object types in image heap:
+  12.69MB shopcart-0.3.7.jar                                   9.08MB byte[] for code metadata
+  12.61MB java.base                                            4.19MB java.lang.Class
+   2.90MB java.xml                                             3.14MB java.lang.String
+   1.45MB svm.jar (Native Image)                               2.94MB byte[] for java.lang.String
+ 499.89kB jdk.proxy4                                           2.65MB byte[] for general heap data
+ 445.53kB java.management                                      1.27MB com.oracle.svm.core.hub.DynamicHubCompanion
+ 349.22kB java.rmi                                           884.37kB byte[] for reflection metadata
+ 334.95kB jdk.crypto.ec                                      708.08kB java.lang.String[]
+ 203.00kB jdk.zipfs                                          552.54kB c.o.svm.core.hub.DynamicHub$ReflectionMetadata
+ 178.75kB java.naming                                        547.83kB java.util.HashMap$Node
+ 646.69kB for 18 more packages                                 6.34MB for 3382 more object types
+------------------------------------------------------------------------------------------------------------------------
+Recommendations:
+ HEAP: Set max heap for improved and more predictable memory usage.
+ CPU:  Enable more CPU features with '-march=native' for improved performance.
+------------------------------------------------------------------------------------------------------------------------
+                        6.7s (7.6% of total time) in 67 GCs | Peak RSS: 6.31GB | CPU load: 9.67
+------------------------------------------------------------------------------------------------------------------------
+Produced artifacts:
+ /home/serhii/work/graalvm/graal/vm/mxbuild/native-image-benchmarks/shopcart-wrk-0-3-7-mixed-medium-default-ce/reports/image_build_statistics.json (build_info)
+ /home/serhii/work/graalvm/graal/vm/mxbuild/native-image-benchmarks/shopcart-wrk-0-3-7-mixed-medium-default-ce/shopcart-wrk-0-3-7-mixed-medium-default-ce (executable)
+ /home/serhii/work/graalvm/graal/vm/mxbuild/native-image-benchmarks/shopcart-wrk-0-3-7-mixed-medium-default-ce/shopcart-wrk-0-3-7-mixed-medium-default-ce.debug (debug_info)
+ /home/serhii/work/graalvm/graal/vm/mxbuild/native-image-benchmarks/shopcart-wrk-0-3-7-mixed-medium-default-ce/sources (debug_info)
+========================================================================================================================
+Finished generating 'shopcart-wrk-0-3-7-mixed-medium-default-ce' in 1m 27s.

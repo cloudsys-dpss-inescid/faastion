@@ -1,0 +1,30 @@
+100000 100000
+1014962
+Added process 1014962 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1014962's current affinity list: 0-7
+pid 1014962's new affinity list: 0
+Pinned process 1014962 to core 0.
+1
+Disabled turbo boost.
+0
+Enabled turbo boost.
+100000 100000
+1015260
+Added process 1015260 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1015260's current affinity list: 0-7
+pid 1015260's new affinity list: 0
+Pinned process 1015260 to core 0.
+1
+Disabled turbo boost.
+0
+Enabled turbo boost.
+100000 100000
+1015597
+Added process 1015597 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1015597's current affinity list: 0-7
+pid 1015597's new affinity list: 0
+Pinned process 1015597 to core 0.
+1
+Disabled turbo boost.
+0
+Enabled turbo boost.

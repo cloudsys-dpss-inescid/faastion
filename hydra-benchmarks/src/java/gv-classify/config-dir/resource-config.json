@@ -1,0 +1,15 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\Qorg/tensorflow/native/linux-x86_64/libtensorflow_framework.so\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/tensorflow/native/linux-x86_64/libtensorflow_jni.so\\E"
+    }
+  ]},
+  "bundles":[{
+      "name":"sun.awt.resources.awt",
+      "classNames":["sun.awt.resources.awt"]
+    }]
+}

@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+group 'com.bfs'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+shadowJar() {
+    configurations = [project.configurations.compileClasspath]
+    from sourceSets.main.output
+}
+
+dependencies {
+    implementation files(System.getenv('ARGO_HOME') + '/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar')
+}
+
+processResources{
+    from(zipTree(System.getenv('ARGO_HOME') + '/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar')){
+        include("com.oracle.svm.graalvisor.headers/")
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.bfs.BFS',
+                'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+        )
+    }
+}

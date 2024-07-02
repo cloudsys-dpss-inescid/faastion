@@ -1,0 +1,27 @@
+time="2023-04-08T09:47:09-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-08T09:47:09-04:00" level=info msg="VMM logging disabled."
+time="2023-04-08T09:47:09-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-08T09:47:09-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc000684074 MemSizeMib:0xc000684068 VcpuCount:0xc000684060}"
+time="2023-04-08T09:47:09-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-08T09:47:09-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-08T09:47:09-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-08T09:47:09-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:27:B1) at index 1"
+2023-04-08T09:47:09.064275502 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-08T09:47:09-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012000] dmi: Firmware registration failed.
+[    0.040965] zswap: default zpool zbud not available
+[    0.041209] zswap: pool creation failed
+Graalvisor boot time: 194 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function filehashing registered with isolate sandboxing in 35 ms
+[thread 41] New isolate sandbox 139762194186240 in 725 us
+[thread 51] New isolate sandbox 139727532457984 in 470 us
+[thread 52] New isolate sandbox 139693163282432 in 488 us
+[thread 53] New isolate sandbox 139658794106880 in 650 us
+[thread 50] New isolate sandbox 139624424931328 in 423 us
+[thread 54] New isolate sandbox 139590055755776 in 604 us
+[thread 55] New isolate sandbox 139555686580224 in 430 us
+[thread 49] New isolate sandbox 139521317404672 in 527 us
+time="2023-04-08T09:47:17-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-08T09:47:17-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

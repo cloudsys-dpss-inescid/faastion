@@ -1,0 +1,44 @@
+time="2023-03-27T16:30:31-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-03-27T16:30:31-04:00" level=info msg="VMM logging disabled."
+time="2023-03-27T16:30:31-04:00" level=info msg="VMM metrics disabled."
+time="2023-03-27T16:30:31-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc0004d97f4 MemSizeMib:0xc0004d97e8 VcpuCount:0xc0004d97e0}"
+time="2023-03-27T16:30:31-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-03-27T16:30:31-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-03-27T16:30:31-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-03-27T16:30:31-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:4C:48) at index 1"
+2023-03-27T16:30:31.951529908 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-03-27T16:30:31-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012000] dmi: Firmware registration failed.
+[    0.036257] zswap: default zpool zbud not available
+[    0.036504] zswap: pool creation failed
+Graalvisor boot time: 172 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Waiting for 192.168.31.28:8080
+Function videoprocessing registered with context sandboxing in 717 ms
+[thread 41] New context sandbox 140169644605440 in 34 us
+[thread 40] Creating context org.graalvm.polyglot.Context@3b179c83
+[thread 44] New context sandbox 140169644605440 in 9 us
+[thread 55] Creating context org.graalvm.polyglot.Context@6b574d1e
+[thread 45] New context sandbox 140169644605440 in 3969 us
+[thread 63] Creating context org.graalvm.polyglot.Context@1cdba42e
+[thread 46] New context sandbox 140169644605440 in 7079 us
+[thread 71] Creating context org.graalvm.polyglot.Context@180ed2b5
+Invocation of ffmpeg failed!
+Out:  ffmpeg version 5.0.1-static https://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2022 the FFmpeg developers
+  built with gcc 8 (Debian 8.3.0-6)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-debug --disable-ffplay --disable-indev=sndio --disable-outdev=sndio --cc=gcc --enable-fontconfig --enable-frei0r --enable-gnutls --enable-gmp --enable-libgme --enable-gray --enable-libaom --enable-libfribidi --enable-libass --enable-libvmaf --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-librubberband --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libvorbis --enable-libopus --enable-libtheora --enable-libvidstab --enable-libvo-amrwbenc --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libdav1d --enable-libxvid --enable-libzvbi --enable-libzimg
+  libavutil      57. 17.100 / 57. 17.100
+  libavcodec     59. 18.100 / 59. 18.100
+  libavformat    59. 16.100 / 59. 16.100
+  libavdevice    59.  4.100 / 59.  4.100
+  libavfilter     8. 24.100 /  8. 24.100
+  libswscale      6.  4.100 /  6.  4.100
+  libswresample   4.  3.100 /  4.  3.100
+  libpostproc    56.  3.100 / 56.  3.100
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x6784ac0] Format mov,mp4,m4a,3gp,3g2,mj2 detected only with low score of 1, misdetection possible!
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x6784ac0] moov atom not found
+video.mp4: Invalid data found when processing input
+
+time="2023-03-27T16:31:13-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-03-27T16:31:13-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

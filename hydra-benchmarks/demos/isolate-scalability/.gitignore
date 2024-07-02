@@ -1,0 +1,11 @@
+results/
+target/
+.classpath
+.project
+.settings/
+*.swp
+*.dat
+*.png
+build/
+.vscode
+/.gradle/

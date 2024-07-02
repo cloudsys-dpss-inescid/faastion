@@ -1,0 +1,3 @@
+release-*
+hello-rootfs.ext4
+hello-vmlinux.bin

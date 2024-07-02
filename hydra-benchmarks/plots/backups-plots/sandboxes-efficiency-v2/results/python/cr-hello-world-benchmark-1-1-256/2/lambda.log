@@ -1,0 +1,6 @@
+2023/04/08 12:29:59.047916 Creating containerd client
+2023/04/08 12:29:59.048322 Created containerd client
+2023/04/08 12:30:01.027932 Successfully pulled docker.io/openwhisk/action-python-v3.9:latest image with devmapper
+2023/04/08 12:30:01.372576 Successfully created task: benchvm-container for the container
+2023/04/08 12:30:01.381020 Successfully started the container task
+2023/04/08 12:30:07.795696 task exited with status: 2

@@ -1,0 +1,8 @@
+[
+  { "name": "com.demo_ni_comms.DemoComms", "allPublicFields": true },
+  { "name": "com.demo_ni_comms.DemoComms", "allPublicMethods": true },
+  { "name": "com.demo_ni_comms.DemoClient", "allPublicFields": true },
+  { "name": "com.demo_ni_comms.DemoClient", "allPublicMethods": true },
+  { "name": "com.demo_ni_comms.DemoServer", "allPublicFields": true },
+  { "name": "com.demo_ni_comms.DemoServer", "allPublicMethods": true }
+]

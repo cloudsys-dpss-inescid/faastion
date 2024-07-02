@@ -1,0 +1,35 @@
+time="2023-04-08T12:18:15-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-08T12:18:15-04:00" level=info msg="VMM logging disabled."
+time="2023-04-08T12:18:15-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-08T12:18:15-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc000024474 MemSizeMib:0xc000024438 VcpuCount:0xc000024430}"
+time="2023-04-08T12:18:15-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-08T12:18:15-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-08T12:18:15-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-08T12:18:15-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:B5:C5) at index 1"
+2023-04-08T12:18:15.149952606 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-08T12:18:15-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012031] dmi: Firmware registration failed.
+[    0.040349] zswap: default zpool zbud not available
+[    0.040612] zswap: pool creation failed
+Graalvisor boot time: 164 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function uploader registered with context sandboxing in 299 ms
+[thread 41] New context sandbox 140184095031296 in 21 us
+[thread 36] Creating context org.graalvm.polyglot.Context@48790de3
+[thread 49] New context sandbox 140184095031296 in 11 us
+[thread 41] Creating context org.graalvm.polyglot.Context@69688152
+[thread 52] New context sandbox 140184095031296 in 10 us
+[thread 42] Creating context org.graalvm.polyglot.Context@41910372
+[thread 53] New context sandbox 140184095031296 in 9 us
+[thread 43] Creating context org.graalvm.polyglot.Context@17d1ccb3
+[thread 54] New context sandbox 140184095031296 in 53 us
+[thread 44] Creating context org.graalvm.polyglot.Context@577921af
+[thread 50] New context sandbox 140184095031296 in 10 us
+[thread 45] Creating context org.graalvm.polyglot.Context@5b1d7cbe
+[thread 51] New context sandbox 140184095031296 in 24 us
+[thread 46] Creating context org.graalvm.polyglot.Context@48c3d9c9
+[thread 55] New context sandbox 140184095031296 in 9 us
+[thread 47] Creating context org.graalvm.polyglot.Context@587801a3
+time="2023-04-08T12:18:18-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-08T12:18:18-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

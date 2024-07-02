@@ -1,0 +1,25 @@
+mkdir: cannot create directory ‘/sys/fs/cgroup/experiments’: File exists
+100000 100000
+1380223
+Added process 1380223 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1380223's current affinity list: 0-7
+pid 1380223's new affinity list: 0
+Pinned process 1380223 to core 0.
+100000 100000
+1380401
+Added process 1380401 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1380401's current affinity list: 0-7
+pid 1380401's new affinity list: 0
+Pinned process 1380401 to core 0.
+100000 100000
+1380600
+Added process 1380600 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1380600's current affinity list: 0-7
+pid 1380600's new affinity list: 0
+Pinned process 1380600 to core 0.
+100000 100000
+1380753
+Added process 1380753 to cgroup experiments with a quota of 100000 out of 100000.
+pid 1380753's current affinity list: 0-7
+pid 1380753's new affinity list: 0
+Pinned process 1380753 to core 0.

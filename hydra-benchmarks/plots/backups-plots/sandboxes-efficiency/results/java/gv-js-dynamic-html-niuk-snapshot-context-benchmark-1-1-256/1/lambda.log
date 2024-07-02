@@ -1,0 +1,9 @@
+Restoring niuk...
+2023-04-02T18:16:26.726146949 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+HTTP/1.1 204 
+Server: Firecracker API
+Connection: keep-alive
+
+Restoring niuk... done!
+[thread 44] New context sandbox 140393540747264 in 30 us
+[thread 43] Creating context org.graalvm.polyglot.Context@6fe9323c

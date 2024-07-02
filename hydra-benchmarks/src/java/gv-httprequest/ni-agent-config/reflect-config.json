@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.httprequest.HttpRequest",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]}
+
+]

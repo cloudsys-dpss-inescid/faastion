@@ -1,0 +1,78 @@
+time="2023-04-08T10:14:53-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-08T10:14:53-04:00" level=info msg="VMM logging disabled."
+time="2023-04-08T10:14:53-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-08T10:14:53-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc0003e55ac MemSizeMib:0xc0003e55a0 VcpuCount:0xc0003e5588}"
+time="2023-04-08T10:14:53-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-08T10:14:53-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-08T10:14:53-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-08T10:14:53-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:A8:A6) at index 1"
+2023-04-08T10:14:53.042311545 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-08T10:14:53-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012137] dmi: Firmware registration failed.
+[    0.040983] zswap: default zpool zbud not available
+[    0.041226] zswap: pool creation failed
+Graalvisor boot time: 165 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function thumbnail registered with process sandboxing in 379 ms
+[thread 1] Creating context org.graalvm.polyglot.Context@1b6e1017
+Apr 08, 2023 2:14:54 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:14:54 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:14:54 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:14:54 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+[thread 41] New process sandbox 467 in 341 us
+[thread 1] Creating context org.graalvm.polyglot.Context@cb5875b
+Apr 08, 2023 2:14:59 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:14:59 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:14:59 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:14:59 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+[thread 44] New process sandbox 475 in 1709 us
+[thread 1] Creating context org.graalvm.polyglot.Context@f1d33c7
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+[thread 49] New process sandbox 489 in 457 us
+[thread 48] New process sandbox 490 in 627 us
+[thread 50] New process sandbox 491 in 444 us
+[thread 1] Creating context org.graalvm.polyglot.Context@43aa5c70
+[thread 1] Creating context org.graalvm.polyglot.Context@13edf107
+[thread 1] Creating context org.graalvm.polyglot.Context@2ef68500
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Apr 08, 2023 2:15:29 PM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+time="2023-04-08T10:15:39-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-08T10:15:39-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

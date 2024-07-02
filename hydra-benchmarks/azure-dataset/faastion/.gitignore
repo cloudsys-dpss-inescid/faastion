@@ -1,0 +1,5 @@
+traces
+logs
+build
+webserver/*
+!webserver/webserver.sh

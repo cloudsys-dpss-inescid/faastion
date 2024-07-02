@@ -1,0 +1,10 @@
+Restoring niuk...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     02023-04-02T16:10:44.628238986 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+100   190    0     0  100   190      0  95000 --:--:-- --:--:-- --:--:-- 95000
+HTTP/1.1 204 
+Server: Firecracker API
+Connection: keep-alive
+
+Restoring niuk... done!

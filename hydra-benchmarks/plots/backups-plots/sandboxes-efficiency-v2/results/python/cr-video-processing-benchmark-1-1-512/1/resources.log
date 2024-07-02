@@ -1,0 +1,6 @@
+25000 100000
+1530264
+Added process 1530264 to cgroup experiments with a quota of 25000 out of 100000.
+pid 1530264's current affinity list: 0-7
+pid 1530264's new affinity list: 0
+Pinned process 1530264 to core 0.

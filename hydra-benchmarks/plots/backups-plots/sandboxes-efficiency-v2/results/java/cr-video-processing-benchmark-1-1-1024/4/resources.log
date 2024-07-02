@@ -1,0 +1,24 @@
+50000 100000
+1600255
+Added process 1600255 to cgroup experiments with a quota of 50000 out of 100000.
+pid 1600255's current affinity list: 0-7
+pid 1600255's new affinity list: 0
+Pinned process 1600255 to core 0.
+50000 100000
+1634017
+Added process 1634017 to cgroup experiments with a quota of 50000 out of 100000.
+pid 1634017's current affinity list: 0-7
+pid 1634017's new affinity list: 0
+Pinned process 1634017 to core 0.
+50000 100000
+1667516
+Added process 1667516 to cgroup experiments with a quota of 50000 out of 100000.
+pid 1667516's current affinity list: 0-7
+pid 1667516's new affinity list: 0
+Pinned process 1667516 to core 0.
+50000 100000
+1701192
+Added process 1701192 to cgroup experiments with a quota of 50000 out of 100000.
+pid 1701192's current affinity list: 0-7
+pid 1701192's new affinity list: 0
+Pinned process 1701192 to core 0.

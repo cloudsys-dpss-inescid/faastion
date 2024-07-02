@@ -1,0 +1,6 @@
+2023/04/08 12:36:55.763752 Creating containerd client
+2023/04/08 12:36:55.764158 Created containerd client
+2023/04/08 12:36:57.767108 Successfully pulled docker.io/openwhisk/action-nodejs-v12:latest image with devmapper
+2023/04/08 12:36:58.046457 Successfully created task: benchvm-container for the container
+2023/04/08 12:36:58.062390 Successfully started the container task
+2023/04/08 12:37:11.101209 task exited with status: 143

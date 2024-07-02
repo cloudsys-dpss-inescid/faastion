@@ -1,0 +1,27 @@
+time="2023-04-08T09:54:11-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-08T09:54:11-04:00" level=info msg="VMM logging disabled."
+time="2023-04-08T09:54:11-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-08T09:54:11-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc0004d81a4 MemSizeMib:0xc0004d8198 VcpuCount:0xc0004d8190}"
+time="2023-04-08T09:54:11-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-08T09:54:11-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-08T09:54:11-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-08T09:54:11-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:94:05) at index 1"
+2023-04-08T09:54:11.687693150 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-08T09:54:11-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012000] dmi: Firmware registration failed.
+[    0.036308] zswap: default zpool zbud not available
+[    0.036553] zswap: pool creation failed
+Graalvisor boot time: 161 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function httprequest registered with process sandboxing in 33 ms
+[thread 41] New process sandbox 461 in 251 us
+[thread 50] New process sandbox 477 in 265 us
+[thread 51] New process sandbox 479 in 303 us
+[thread 52] New process sandbox 480 in 527 us
+[thread 53] New process sandbox 481 in 281 us
+[thread 54] New process sandbox 482 in 276 us
+[thread 55] New process sandbox 485 in 500 us
+[thread 56] New process sandbox 496 in 316 us
+time="2023-04-08T09:54:19-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-08T09:54:19-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

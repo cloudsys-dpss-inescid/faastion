@@ -1,0 +1,6 @@
+2023/04/08 12:56:59.154029 Creating containerd client
+2023/04/08 12:56:59.154371 Created containerd client
+2023/04/08 12:57:01.131520 Successfully pulled docker.io/openwhisk/java8action:latest image with devmapper
+2023/04/08 12:57:01.421177 Successfully created task: benchvm-container for the container
+2023/04/08 12:57:01.428445 Successfully started the container task
+2023/04/08 12:57:21.499227 task exited with status: 143

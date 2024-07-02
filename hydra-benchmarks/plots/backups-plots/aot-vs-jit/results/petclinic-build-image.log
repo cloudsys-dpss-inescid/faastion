@@ -1,0 +1,1024 @@
+
+Native Image Bundles: Loaded Bundle from /home/serhii/.mx/cache/PETCLINIC_3.0.0_cacbedf0456a769ae5bd022480b1ceeb8f157684b79f682b70c27fd715a4523cd80e030f127c7a9cff8c6b256a83677d2285e6197b82ecd53f99a5231dfd76e9/petclinic-3.0.0.extracted/spring-petclinic-3.0.0-SNAPSHOT.nib
+Native Image Bundles: Bundle created at 'Monday, May 8, 2023 at 2:49:31 PM Central European Summer Time'
+Native Image Bundles: Using version: '20.0.1+9' != '17.0.7+7' (vendor 'Oracle Corporation' != 'GraalVM Community') on platform: 'linux-amd64'
+Warning: Native Image Bundles are an experimental feature.
+========================================================================================================================
+GraalVM Native Image: Generating 'petclinic-wrk-3-0-0-mixed-medium-default-ce' (executable)...
+========================================================================================================================
+Warning: Method org.springframework.core.io.Resource[].<init>(String) not found.
+Warning: Method org.springframework.core.io.Resource[].from(String) not found.
+Warning: Method org.springframework.core.io.Resource[].of(String) not found.
+Warning: Method org.springframework.core.io.Resource[].valueOf(String) not found.
+Warning: Method boolean.<init>(Boolean) not found.
+Warning: Method boolean.from(Boolean) not found.
+Warning: Method boolean.of(Boolean) not found.
+Warning: Method boolean.valueOf(Boolean) not found.
+Warning: Could not resolve class brave.Tracer for reflection configuration. Reason: java.lang.ClassNotFoundException: brave.Tracer.
+Warning: Method char.<init>(Character) not found.
+Warning: Method char.from(Character) not found.
+Warning: Method char.of(Character) not found.
+Warning: Method char.valueOf(Character) not found.
+Warning: Could not resolve class co.elastic.clients.elasticsearch.ElasticsearchClient for reflection configuration. Reason: java.lang.ClassNotFoundException: co.elastic.clients.elasticsearch.ElasticsearchClient.
+Warning: Could not resolve class co.elastic.clients.transport.ElasticsearchTransport for reflection configuration. Reason: java.lang.ClassNotFoundException: co.elastic.clients.transport.ElasticsearchTransport.
+Warning: Could not resolve class com.couchbase.client.java.Bucket for reflection configuration. Reason: java.lang.ClassNotFoundException: com.couchbase.client.java.Bucket.
+Warning: Could not resolve class com.couchbase.client.java.Cluster for reflection configuration. Reason: java.lang.ClassNotFoundException: com.couchbase.client.java.Cluster.
+Warning: Could not resolve class com.datastax.oss.driver.api.core.CqlSession for reflection configuration. Reason: java.lang.ClassNotFoundException: com.datastax.oss.driver.api.core.CqlSession.
+Warning: Method com.fasterxml.jackson.databind.ObjectMapper.close() not found.
+Warning: Method com.fasterxml.jackson.databind.ObjectMapper.shutdown() not found.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.cbor$CBORFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.cbor$CBORFactory.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.cbor.CBORFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.cbor.CBORFactory.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.smile$SmileFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.smile$SmileFactory.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.smile.SmileFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.smile.SmileFactory.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.xml$XmlMapper for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.xml$XmlMapper.
+Warning: Could not resolve class com.fasterxml.jackson.dataformat.xml.XmlMapper for reflection configuration. Reason: java.lang.ClassNotFoundException: com.fasterxml.jackson.dataformat.xml.XmlMapper.
+Warning: Method com.fasterxml.jackson.module.paramnames.ParameterNamesModule.close() not found.
+Warning: Method com.fasterxml.jackson.module.paramnames.ParameterNamesModule.shutdown() not found.
+Warning: Could not resolve class com.github.mxab.thymeleaf.extras.dataattribute.dialect.DataAttributeDialect for reflection configuration. Reason: java.lang.ClassNotFoundException: com.github.mxab.thymeleaf.extras.dataattribute.dialect.DataAttributeDialect.
+Warning: Could not resolve class com.google.common.base$Optional for reflection configuration. Reason: java.lang.ClassNotFoundException: com.google.common.base$Optional.
+Warning: Could not resolve class com.google.common.base.Optional for reflection configuration. Reason: java.lang.ClassNotFoundException: com.google.common.base.Optional.
+Warning: Could not resolve class com.google.gson$Gson for reflection configuration. Reason: java.lang.ClassNotFoundException: com.google.gson$Gson.
+Warning: Could not resolve class com.google.gson.Gson for reflection configuration. Reason: java.lang.ClassNotFoundException: com.google.gson.Gson.
+Warning: Could not resolve class com.hazelcast.core.Hazelcast for reflection configuration. Reason: java.lang.ClassNotFoundException: com.hazelcast.core.Hazelcast.
+Warning: Could not resolve class com.hazelcast.core.HazelcastInstance for reflection configuration. Reason: java.lang.ClassNotFoundException: com.hazelcast.core.HazelcastInstance.
+Warning: Could not resolve class com.hazelcast.spring.cache.HazelcastCache for reflection configuration. Reason: java.lang.ClassNotFoundException: com.hazelcast.spring.cache.HazelcastCache.
+Warning: Could not resolve class com.ibm.icu.text.Collator for reflection configuration. Reason: java.lang.ClassNotFoundException: com.ibm.icu.text.Collator.
+Warning: Could not resolve class com.ibm.lang.management.OperatingSystemMXBean for reflection configuration. Reason: java.lang.ClassNotFoundException: com.ibm.lang.management.OperatingSystemMXBean.
+Warning: Could not resolve class com.jayway.jsonpath$DocumentContext for reflection configuration. Reason: java.lang.ClassNotFoundException: com.jayway.jsonpath$DocumentContext.
+Warning: Could not resolve class com.jayway.jsonpath.DocumentContext for reflection configuration. Reason: java.lang.ClassNotFoundException: com.jayway.jsonpath.DocumentContext.
+Warning: Could not resolve class com.mongodb.MongoClientSettings for reflection configuration. Reason: java.lang.ClassNotFoundException: com.mongodb.MongoClientSettings.
+Warning: Could not resolve class com.mongodb.client.MongoClient for reflection configuration. Reason: java.lang.ClassNotFoundException: com.mongodb.client.MongoClient.
+Warning: Could not resolve class com.mongodb.reactivestreams.client.MongoClient for reflection configuration. Reason: java.lang.ClassNotFoundException: com.mongodb.reactivestreams.client.MongoClient.
+Warning: Could not resolve class com.querydsl.core.types$Predicate for reflection configuration. Reason: java.lang.ClassNotFoundException: com.querydsl.core.types$Predicate.
+Warning: Could not resolve class com.querydsl.core.types.Predicate for reflection configuration. Reason: java.lang.ClassNotFoundException: com.querydsl.core.types.Predicate.
+Warning: Could not resolve class com.rabbitmq.client.Channel for reflection configuration. Reason: java.lang.ClassNotFoundException: com.rabbitmq.client.Channel.
+Warning: Could not resolve class com.rabbitmq.client.ConnectionFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.rabbitmq.client.ConnectionFactory.
+Warning: Could not resolve class com.rometools.rome.feed$WireFeed for reflection configuration. Reason: java.lang.ClassNotFoundException: com.rometools.rome.feed$WireFeed.
+Warning: Could not resolve class com.rometools.rome.feed.WireFeed for reflection configuration. Reason: java.lang.ClassNotFoundException: com.rometools.rome.feed.WireFeed.
+Warning: Could not resolve class com.samskivert.mustache$Template for reflection configuration. Reason: java.lang.ClassNotFoundException: com.samskivert.mustache$Template.
+Warning: Could not resolve class com.samskivert.mustache.Mustache for reflection configuration. Reason: java.lang.ClassNotFoundException: com.samskivert.mustache.Mustache.
+Warning: Could not resolve class com.samskivert.mustache.Template for reflection configuration. Reason: java.lang.ClassNotFoundException: com.samskivert.mustache.Template.
+Warning: Could not resolve class com.sendgrid.SendGrid for reflection configuration. Reason: java.lang.ClassNotFoundException: com.sendgrid.SendGrid.
+Warning: Could not resolve class com.unboundid.ldap.listener.InMemoryDirectoryServer for reflection configuration. Reason: java.lang.ClassNotFoundException: com.unboundid.ldap.listener.InMemoryDirectoryServer.
+Warning: Could not resolve class com.wavefront.sdk.common.WavefrontSender for reflection configuration. Reason: java.lang.ClassNotFoundException: com.wavefront.sdk.common.WavefrontSender.
+Warning: Could not resolve class com.wavefront.sdk.common.application.ApplicationTags for reflection configuration. Reason: java.lang.ClassNotFoundException: com.wavefront.sdk.common.application.ApplicationTags.
+Warning: Could not resolve class freemarker.template$Configuration for reflection configuration. Reason: java.lang.ClassNotFoundException: freemarker.template$Configuration.
+Warning: Could not resolve class freemarker.template.Configuration for reflection configuration. Reason: java.lang.ClassNotFoundException: freemarker.template.Configuration.
+Warning: Could not resolve class graphql.GraphQL for reflection configuration. Reason: java.lang.ClassNotFoundException: graphql.GraphQL.
+Warning: Could not resolve class groovy.lang$MetaClass for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang$MetaClass.
+Warning: Could not resolve class groovy.lang.MetaClass for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang.MetaClass.
+Warning: Could not resolve class groovy.text$TemplateEngine for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.text$TemplateEngine.
+Warning: Could not resolve class groovy.text.TemplateEngine for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.text.TemplateEngine.
+Warning: Could not resolve class groovy.text.markup.MarkupTemplateEngine for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.text.markup.MarkupTemplateEngine.
+Warning: Could not resolve class io.lettuce.core.metrics.MicrometerCommandLatencyRecorder for reflection configuration. Reason: java.lang.ClassNotFoundException: io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.
+Warning: Could not resolve class io.micrometer.appoptics.AppOpticsMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.appoptics.AppOpticsMeterRegistry.
+Warning: Could not resolve class io.micrometer.atlas.AtlasMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.atlas.AtlasMeterRegistry.
+Warning: Could not resolve class io.micrometer.context$ContextSnapshot for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.context$ContextSnapshot.
+Warning: Could not resolve class io.micrometer.context.ContextSnapshot for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.context.ContextSnapshot.
+Warning: Method io.micrometer.core.instrument.Clock$1.close() not found.
+Warning: Method io.micrometer.core.instrument.Clock$1.shutdown() not found.
+Warning: Could not resolve class io.micrometer.core.instrument.binder.jersey.server.MetricsApplicationEventListener for reflection configuration. Reason: java.lang.NoClassDefFoundError: org/glassfish/jersey/server/monitoring/ApplicationEventListener.
+Warning: Method io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmCompilationMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.FileDescriptorMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.FileDescriptorMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.ProcessorMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.ProcessorMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.UptimeMetrics.close() not found.
+Warning: Method io.micrometer.core.instrument.binder.system.UptimeMetrics.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.accept() not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.accept(Predicate) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.acceptNameStartsWith(String) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.close() not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.commonTags(Iterable) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.deny() not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.deny(Predicate) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.denyNameStartsWith(String) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.denyUnless(Predicate) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.ignoreTags(String[]) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.maxExpected(String, double) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.maxExpected(String, long) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.maxExpected(String, Duration) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.maximumAllowableMetrics(int) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.maximumAllowableTags(String, String, int, MeterFilter) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.minExpected(String, double) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.minExpected(String, long) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.minExpected(String, Duration) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.renameTag(String, String, String) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.replaceTagValues(String, Function, String[]) not found.
+Warning: Method io.micrometer.core.instrument.config.MeterFilter$9.shutdown() not found.
+Warning: Method io.micrometer.core.instrument.observation.DefaultMeterObservationHandler.close() not found.
+Warning: Method io.micrometer.core.instrument.observation.DefaultMeterObservationHandler.shutdown() not found.
+Warning: Could not resolve class io.micrometer.datadog.DatadogMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.datadog.DatadogMeterRegistry.
+Warning: Could not resolve class io.micrometer.dynatrace.DynatraceMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.dynatrace.DynatraceMeterRegistry.
+Warning: Could not resolve class io.micrometer.elastic.ElasticMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.elastic.ElasticMeterRegistry.
+Warning: Could not resolve class io.micrometer.ganglia.GangliaMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.ganglia.GangliaMeterRegistry.
+Warning: Could not resolve class io.micrometer.graphite.GraphiteMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.graphite.GraphiteMeterRegistry.
+Warning: Could not resolve class io.micrometer.humio.HumioMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.humio.HumioMeterRegistry.
+Warning: Could not resolve class io.micrometer.influx.InfluxMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.influx.InfluxMeterRegistry.
+Warning: Could not resolve class io.micrometer.jmx.JmxMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.jmx.JmxMeterRegistry.
+Warning: Could not resolve class io.micrometer.kairos.KairosMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.kairos.KairosMeterRegistry.
+Warning: Could not resolve class io.micrometer.newrelic.NewRelicMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.newrelic.NewRelicMeterRegistry.
+Warning: Method io.micrometer.observation.SimpleObservationRegistry.close() not found.
+Warning: Method io.micrometer.observation.SimpleObservationRegistry.create() not found.
+Warning: Method io.micrometer.observation.SimpleObservationRegistry.shutdown() not found.
+Warning: Could not resolve class io.micrometer.prometheus.PrometheusMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.prometheus.PrometheusMeterRegistry.
+Warning: Could not resolve class io.micrometer.registry.otlp.OtlpMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.registry.otlp.OtlpMeterRegistry.
+Warning: Could not resolve class io.micrometer.signalfx.SignalFxMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.signalfx.SignalFxMeterRegistry.
+Warning: Could not resolve class io.micrometer.stackdriver.StackdriverMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.stackdriver.StackdriverMeterRegistry.
+Warning: Could not resolve class io.micrometer.statsd.StatsdMeterRegistry for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.statsd.StatsdMeterRegistry.
+Warning: Could not resolve class io.micrometer.tracing.Tracer for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.tracing.Tracer.
+Warning: Could not resolve class io.micrometer.tracing.otel.bridge.OtelTracer for reflection configuration. Reason: java.lang.ClassNotFoundException: io.micrometer.tracing.otel.bridge.OtelTracer.
+Warning: Could not resolve class io.netty.buffer.PooledByteBufAllocator for reflection configuration. Reason: java.lang.ClassNotFoundException: io.netty.buffer.PooledByteBufAllocator.
+Warning: Could not resolve class io.netty.util.NettyRuntime for reflection configuration. Reason: java.lang.ClassNotFoundException: io.netty.util.NettyRuntime.
+Warning: Could not resolve class io.r2dbc.pool.ConnectionPool for reflection configuration. Reason: java.lang.ClassNotFoundException: io.r2dbc.pool.ConnectionPool.
+Warning: Could not resolve class io.r2dbc.spi.ConnectionFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: io.r2dbc.spi.ConnectionFactory.
+Warning: Could not resolve class io.reactivex.rxjava3.core$Flowable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core$Flowable.
+Warning: Could not resolve class io.reactivex.rxjava3.core.Flowable for reflection configuration. Reason: java.lang.ClassNotFoundException: io.reactivex.rxjava3.core.Flowable.
+Warning: Could not resolve class io.rsocket.RSocket for reflection configuration. Reason: java.lang.ClassNotFoundException: io.rsocket.RSocket.
+Warning: Could not resolve class io.rsocket.core.RSocketServer for reflection configuration. Reason: java.lang.ClassNotFoundException: io.rsocket.core.RSocketServer.
+Warning: Could not resolve class io.smallrye.mutiny$Multi for reflection configuration. Reason: java.lang.ClassNotFoundException: io.smallrye.mutiny$Multi.
+Warning: Could not resolve class io.smallrye.mutiny.Multi for reflection configuration. Reason: java.lang.ClassNotFoundException: io.smallrye.mutiny.Multi.
+Warning: Could not resolve class io.undertow.Undertow for reflection configuration. Reason: java.lang.ClassNotFoundException: io.undertow.Undertow.
+Warning: Could not resolve class io.undertow.websockets.jsr.Bootstrap for reflection configuration. Reason: java.lang.ClassNotFoundException: io.undertow.websockets.jsr.Bootstrap.
+Warning: Could not resolve class io.vavr.control$Option for reflection configuration. Reason: java.lang.ClassNotFoundException: io.vavr.control$Option.
+Warning: Could not resolve class io.vavr.control$Try for reflection configuration. Reason: java.lang.ClassNotFoundException: io.vavr.control$Try.
+Warning: Could not resolve class io.vavr.control.Option for reflection configuration. Reason: java.lang.ClassNotFoundException: io.vavr.control.Option.
+Warning: Could not resolve class io.vavr.control.Try for reflection configuration. Reason: java.lang.ClassNotFoundException: io.vavr.control.Try.
+Warning: Could not resolve class jakarta.ejb$EJB for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.ejb$EJB.
+Warning: Could not resolve class jakarta.ejb$TransactionAttribute for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.ejb$TransactionAttribute.
+Warning: Could not resolve class jakarta.ejb.EJB for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.ejb.EJB.
+Warning: Could not resolve class jakarta.ejb.TransactionAttribute for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.ejb.TransactionAttribute.
+Warning: Could not resolve class jakarta.faces.context$FacesContext for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.faces.context$FacesContext.
+Warning: Could not resolve class jakarta.faces.context.FacesContext for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.faces.context.FacesContext.
+Warning: Could not resolve class jakarta.jms.ConnectionFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.jms.ConnectionFactory.
+Warning: Could not resolve class jakarta.jms.Message for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.jms.Message.
+Warning: Could not resolve class jakarta.json.bind$Jsonb for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.json.bind$Jsonb.
+Warning: Could not resolve class jakarta.json.bind.Jsonb for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.json.bind.Jsonb.
+Warning: Could not resolve class jakarta.mail.internet.MimeMessage for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.mail.internet.MimeMessage.
+Warning: Method jakarta.persistence.Column.value() not found.
+Warning: Method jakarta.persistence.Entity.value() not found.
+Warning: Could not register method jakarta.persistence.EntityManager.<init>() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy135.
+Warning: Could not register method jakarta.persistence.EntityManager.from() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy135.
+Warning: Could not register method jakarta.persistence.EntityManager.of() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy135.
+Warning: Could not register method jakarta.persistence.EntityManager.valueOf() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy135.
+Warning: Could not register method jakarta.persistence.EntityManagerFactory.<init>() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy129.
+Warning: Could not register method jakarta.persistence.EntityManagerFactory.from() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy129.
+Warning: Could not register method jakarta.persistence.EntityManagerFactory.of() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy129.
+Warning: Could not register method jakarta.persistence.EntityManagerFactory.valueOf() for reflection. Reason: java.lang.ClassNotFoundException: jdk.proxy2.$Proxy129.
+Warning: Method jakarta.persistence.GeneratedValue.value() not found.
+Warning: Method jakarta.persistence.Id.value() not found.
+Warning: Method jakarta.persistence.JoinColumn.value() not found.
+Warning: Method jakarta.persistence.JoinTable.value() not found.
+Warning: Method jakarta.persistence.ManyToMany.value() not found.
+Warning: Method jakarta.persistence.ManyToOne.value() not found.
+Warning: Method jakarta.persistence.MappedSuperclass.value() not found.
+Warning: Method jakarta.persistence.OneToMany.value() not found.
+Warning: Method jakarta.persistence.Table.value() not found.
+Warning: Method jakarta.servlet.MultipartConfigElement.close() not found.
+Warning: Method jakarta.servlet.MultipartConfigElement.shutdown() not found.
+Warning: Could not resolve class jakarta.servlet.jsp.jstl.core$Config for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.servlet.jsp.jstl.core$Config.
+Warning: Could not resolve class jakarta.servlet.jsp.jstl.core.Config for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.servlet.jsp.jstl.core.Config.
+Warning: Method jakarta.validation.constraints.Digits.value() not found.
+Warning: Method jakarta.validation.constraints.NotEmpty.value() not found.
+Warning: Method jakarta.xml.bind.annotation.XmlElement.value() not found.
+Warning: Could not resolve class jakarta.xml.ws.WebServiceRef for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.xml.ws.WebServiceRef.
+Warning: Method java.io.Serializable.getAddress() not found.
+Warning: Method java.io.Serializable.getBirthDate() not found.
+Warning: Method java.io.Serializable.getCity() not found.
+Warning: Method java.io.Serializable.getDate() not found.
+Warning: Method java.io.Serializable.getDescription() not found.
+Warning: Method java.io.Serializable.getFirstName() not found.
+Warning: Method java.io.Serializable.getId() not found.
+Warning: Method java.io.Serializable.getLastName() not found.
+Warning: Method java.io.Serializable.getName() not found.
+Warning: Method java.io.Serializable.getPets() not found.
+Warning: Method java.io.Serializable.getTelephone() not found.
+Warning: Method java.io.Serializable.getType() not found.
+Warning: Method java.io.Serializable.getVisits() not found.
+Warning: Method java.lang.Boolean.toboolean() not found.
+Warning: Method java.lang.Character.tochar() not found.
+Warning: Method java.lang.Class.<init>(String) not found.
+Warning: Method java.lang.Class.from(String) not found.
+Warning: Method java.lang.Class.of(String) not found.
+Warning: Method java.lang.Class.valueOf(String) not found.
+Warning: Field java.lang.String.TYPE not found.
+Warning: Could not resolve class java.lang.WrongThreadException for reflection configuration. Reason: java.lang.ClassNotFoundException: java.lang.WrongThreadException.
+Warning: Method java.time.LocalDate.toTemporal() not found.
+Warning: Method java.time.temporal.Temporal.<init>(LocalDate) not found.
+Warning: Method java.time.temporal.Temporal.from(LocalDate) not found.
+Warning: Method java.time.temporal.Temporal.of(LocalDate) not found.
+Warning: Method java.time.temporal.Temporal.valueOf(LocalDate) not found.
+Warning: Could not resolve class javafx.beans.value.ObservableValue for reflection configuration. Reason: java.lang.ClassNotFoundException: javafx.beans.value.ObservableValue.
+Warning: Could not resolve class javax.annotation$Nonnull for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.annotation$Nonnull.
+Warning: Could not resolve class javax.annotation$PostConstruct for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.annotation$PostConstruct.
+Warning: Could not resolve class javax.annotation.Nonnull for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.annotation.Nonnull.
+Warning: Could not resolve class javax.annotation.PostConstruct for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.annotation.PostConstruct.
+Warning: Could not resolve class javax.inject$Inject for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.inject$Inject.
+Warning: Could not resolve class javax.inject.Inject for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.inject.Inject.
+Warning: Method javax.management.StandardEmitterMBean.cacheMBeanInfo(MBeanInfo) not found.
+Warning: Method javax.management.StandardEmitterMBean.getCachedMBeanInfo() not found.
+Warning: Method javax.management.StandardEmitterMBean.getMBeanInfo() not found.
+Warning: Could not resolve class javax.money$MonetaryAmount for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.money$MonetaryAmount.
+Warning: Could not resolve class javax.money.MonetaryAmount for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.money.MonetaryAmount.
+Warning: Method jdk.internal.loader.ClassLoaders$AppClassLoader.clearCache() not found.
+Warning: Method jdk.internal.loader.ClassLoaders$PlatformClassLoader.clearCache() not found.
+Warning: Method jdk.management.jfr.FlightRecorderMXBeanImpl.cacheMBeanInfo(MBeanInfo) not found.
+Warning: Method jdk.management.jfr.FlightRecorderMXBeanImpl.getCachedMBeanInfo() not found.
+Warning: Method jdk.management.jfr.FlightRecorderMXBeanImpl.getMBeanInfo() not found.
+Warning: Method jdk.management.jfr.FlightRecorderMXBeanImpl.getNotificationInfo() not found.
+Warning: Could not resolve class kotlin$Metadata for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin$Metadata.
+Warning: Could not resolve class kotlin.Metadata for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin.Metadata.
+Warning: Could not resolve class kotlin.coroutines$Continuation for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin.coroutines$Continuation.
+Warning: Could not resolve class kotlin.coroutines.Continuation for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin.coroutines.Continuation.
+Warning: Could not resolve class kotlin.reflect.full$KClasses for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin.reflect.full$KClasses.
+Warning: Could not resolve class kotlin.reflect.full.KClasses for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlin.reflect.full.KClasses.
+Warning: Could not resolve class kotlinx.coroutines.reactor$MonoKt for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.coroutines.reactor$MonoKt.
+Warning: Could not resolve class kotlinx.coroutines.reactor.MonoKt for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.coroutines.reactor.MonoKt.
+Warning: Could not resolve class kotlinx.serialization.cbor$Cbor for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.cbor$Cbor.
+Warning: Could not resolve class kotlinx.serialization.cbor.Cbor for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.cbor.Cbor.
+Warning: Could not resolve class kotlinx.serialization.json$Json for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.json$Json.
+Warning: Could not resolve class kotlinx.serialization.json.Json for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.json.Json.
+Warning: Could not resolve class kotlinx.serialization.protobuf$ProtoBuf for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.protobuf$ProtoBuf.
+Warning: Could not resolve class kotlinx.serialization.protobuf.ProtoBuf for reflection configuration. Reason: java.lang.ClassNotFoundException: kotlinx.serialization.protobuf.ProtoBuf.
+Warning: Could not resolve class liquibase.change.DatabaseChange for reflection configuration. Reason: java.lang.ClassNotFoundException: liquibase.change.DatabaseChange.
+Warning: Could not resolve class liquibase.integration.spring.SpringLiquibase for reflection configuration. Reason: java.lang.ClassNotFoundException: liquibase.integration.spring.SpringLiquibase.
+Warning: Could not resolve class net.bytebuddy.utility.Invoker$Dispatcher for reflection configuration. Reason: java.lang.ClassNotFoundException: net.bytebuddy.utility.Invoker$Dispatcher.
+Warning: Could not resolve class net.sf.jsqlparser.parser.JSqlParser for reflection configuration. Reason: java.lang.ClassNotFoundException: net.sf.jsqlparser.parser.JSqlParser.
+Warning: Could not resolve class nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect for reflection configuration. Reason: java.lang.ClassNotFoundException: nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect.
+Warning: Could not resolve class oracle.jdbc.OracleConnection for reflection configuration. Reason: java.lang.ClassNotFoundException: oracle.jdbc.OracleConnection.
+Warning: Could not resolve class oracle.ucp.jdbc.PoolDataSource for reflection configuration. Reason: java.lang.ClassNotFoundException: oracle.ucp.jdbc.PoolDataSource.
+Warning: Could not resolve class oracle.ucp.jdbc.PoolDataSourceImpl for reflection configuration. Reason: java.lang.ClassNotFoundException: oracle.ucp.jdbc.PoolDataSourceImpl.
+Warning: Could not resolve class org.apache.commons.dbcp2.BasicDataSource for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.commons.dbcp2.BasicDataSource.
+Warning: Could not resolve class org.apache.jasper.compiler$JspConfig for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.jasper.compiler$JspConfig.
+Warning: Could not resolve class org.apache.jasper.compiler.JspConfig for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.jasper.compiler.JspConfig.
+Warning: Could not resolve class org.apache.jasper.servlet$JspServlet for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.jasper.servlet$JspServlet.
+Warning: Could not resolve class org.apache.jasper.servlet.JspServlet for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.jasper.servlet.JspServlet.
+Warning: Could not resolve class org.apache.logging.log4j.core.LoggerContext for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.LoggerContext.
+Warning: Could not resolve class org.apache.logging.log4j.core.impl$Log4jContextFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.impl$Log4jContextFactory.
+Warning: Could not resolve class org.apache.logging.log4j.core.impl.Log4jContextFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.impl.Log4jContextFactory.
+Warning: Could not resolve class org.apache.tomcat.jdbc.pool.DataSource for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.tomcat.jdbc.pool.DataSource.
+Warning: Could not resolve class org.apache.tomcat.jdbc.pool.DataSourceProxy for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.tomcat.jdbc.pool.DataSourceProxy.
+Warning: Could not resolve class org.cache2k.Cache2kBuilder for reflection configuration. Reason: java.lang.ClassNotFoundException: org.cache2k.Cache2kBuilder.
+Warning: Could not resolve class org.cache2k.extra.micrometer.Cache2kCacheMetrics for reflection configuration. Reason: java.lang.ClassNotFoundException: org.cache2k.extra.micrometer.Cache2kCacheMetrics.
+Warning: Could not resolve class org.cache2k.extra.spring.SpringCache2kCache for reflection configuration. Reason: java.lang.ClassNotFoundException: org.cache2k.extra.spring.SpringCache2kCache.
+Warning: Could not resolve class org.eclipse.collections.api.list$ImmutableList for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.collections.api.list$ImmutableList.
+Warning: Could not resolve class org.eclipse.collections.api.list.ImmutableList for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.collections.api.list.ImmutableList.
+Warning: Could not resolve class org.eclipse.core.runtime$FileLocator for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.core.runtime$FileLocator.
+Warning: Could not resolve class org.eclipse.core.runtime.FileLocator for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.core.runtime.FileLocator.
+Warning: Could not resolve class org.eclipse.jetty.server.Server for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.jetty.server.Server.
+Warning: Could not resolve class org.eclipse.jetty.util.Loader for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.jetty.util.Loader.
+Warning: Could not resolve class org.eclipse.jetty.webapp.WebAppContext for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.jetty.webapp.WebAppContext.
+Warning: Could not resolve class org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer.
+Warning: Could not resolve class org.eclipse.persistence.internal.jpa.deployment$JavaSECMPInitializerAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.persistence.internal.jpa.deployment$JavaSECMPInitializerAgent.
+Warning: Could not resolve class org.eclipse.persistence.internal.jpa.deployment.JavaSECMPInitializerAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: org.eclipse.persistence.internal.jpa.deployment.JavaSECMPInitializerAgent.
+Warning: Could not resolve class org.elasticsearch.client.RestClient for reflection configuration. Reason: java.lang.ClassNotFoundException: org.elasticsearch.client.RestClient.
+Warning: Could not resolve class org.elasticsearch.client.RestClientBuilder for reflection configuration. Reason: java.lang.ClassNotFoundException: org.elasticsearch.client.RestClientBuilder.
+Warning: Could not resolve class org.flywaydb.core.Flyway for reflection configuration. Reason: java.lang.ClassNotFoundException: org.flywaydb.core.Flyway.
+Warning: Could not resolve class org.glassfish.jersey.server.ResourceConfig for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.jersey.server.ResourceConfig.
+Warning: Could not resolve class org.glassfish.jersey.server.spring.SpringComponentProvider for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.jersey.server.spring.SpringComponentProvider.
+Warning: Method org.hibernate.boot.archive.scan.internal.DisabledScanner.<init>(ArchiveDescriptorFactory) not found.
+Warning: Could not resolve class org.hibernate.bytecode.enhance.spi.interceptor.BytecodeInterceptorLogging_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.bytecode.enhance.spi.interceptor.BytecodeInterceptorLogging_$logger_en.
+Warning: Could not resolve class org.hibernate.bytecode.enhance.spi.interceptor.BytecodeInterceptorLogging_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.bytecode.enhance.spi.interceptor.BytecodeInterceptorLogging_$logger_en_US.
+Warning: Could not resolve class org.hibernate.internal.CoreMessageLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.internal.CoreMessageLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.internal.CoreMessageLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.internal.CoreMessageLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.internal.EntityManagerMessageLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.internal.EntityManagerMessageLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.internal.EntityManagerMessageLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.internal.EntityManagerMessageLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.metamodel.mapping.MappingModelCreationLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.metamodel.mapping.MappingModelCreationLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.metamodel.mapping.MappingModelCreationLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.metamodel.mapping.MappingModelCreationLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.query.QueryLogging_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.query.QueryLogging_$logger_en.
+Warning: Could not resolve class org.hibernate.query.QueryLogging_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.query.QueryLogging_$logger_en_US.
+Warning: Could not resolve class org.hibernate.query.hql.HqlLogging_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.query.hql.HqlLogging_$logger_en.
+Warning: Could not resolve class org.hibernate.query.hql.HqlLogging_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.query.hql.HqlLogging_$logger_en_US.
+Warning: Could not resolve class org.hibernate.sql.ast.tree.SqlAstTreeLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.ast.tree.SqlAstTreeLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.sql.ast.tree.SqlAstTreeLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.ast.tree.SqlAstTreeLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.sql.exec.SqlExecLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.exec.SqlExecLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.sql.exec.SqlExecLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.exec.SqlExecLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.sql.results.LoadingLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.results.LoadingLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.sql.results.LoadingLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.results.LoadingLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.sql.results.ResultsLogger_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.results.ResultsLogger_$logger_en.
+Warning: Could not resolve class org.hibernate.sql.results.ResultsLogger_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.sql.results.ResultsLogger_$logger_en_US.
+Warning: Could not resolve class org.hibernate.stat.HibernateMetrics for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.stat.HibernateMetrics.
+Warning: Could not resolve class org.hibernate.validator.internal.util.logging.Log_$logger_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.validator.internal.util.logging.Log_$logger_en.
+Warning: Could not resolve class org.hibernate.validator.internal.util.logging.Log_$logger_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.validator.internal.util.logging.Log_$logger_en_US.
+Warning: Could not resolve class org.hibernate.validator.internal.util.logging.Messages_$bundle_en for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.validator.internal.util.logging.Messages_$bundle_en.
+Warning: Could not resolve class org.hibernate.validator.internal.util.logging.Messages_$bundle_en_US for reflection configuration. Reason: java.lang.ClassNotFoundException: org.hibernate.validator.internal.util.logging.Messages_$bundle_en_US.
+Warning: Could not resolve class org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager.
+Warning: Could not resolve class org.influxdb.InfluxDB for reflection configuration. Reason: java.lang.ClassNotFoundException: org.influxdb.InfluxDB.
+Warning: Could not resolve class org.jmolecules.ddd.annotation$Identity for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jmolecules.ddd.annotation$Identity.
+Warning: Could not resolve class org.jmolecules.ddd.annotation.Identity for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jmolecules.ddd.annotation.Identity.
+Warning: Could not resolve class org.jmolecules.ddd.types$Association for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jmolecules.ddd.types$Association.
+Warning: Could not resolve class org.jmolecules.ddd.types.Association for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jmolecules.ddd.types.Association.
+Warning: Could not resolve class org.joda.time.ReadableInstant for reflection configuration. Reason: java.lang.ClassNotFoundException: org.joda.time.ReadableInstant.
+Warning: Could not resolve class org.jooq.DSLContext for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jooq.DSLContext.
+Warning: Could not resolve class org.neo4j.driver.Driver for reflection configuration. Reason: java.lang.ClassNotFoundException: org.neo4j.driver.Driver.
+Warning: Could not resolve class org.quartz.Scheduler for reflection configuration. Reason: java.lang.ClassNotFoundException: org.quartz.Scheduler.
+Warning: Could not resolve class org.reactivestreams$Publisher for reflection configuration. Reason: java.lang.ClassNotFoundException: org.reactivestreams$Publisher.
+Warning: Could not resolve class org.reactivestreams.Publisher for reflection configuration. Reason: java.lang.ClassNotFoundException: org.reactivestreams.Publisher.
+Warning: Could not resolve class org.springframework.amqp.rabbit.core.RabbitTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.amqp.rabbit.core.RabbitTemplate.
+Warning: Could not resolve class org.springframework.batch.core.launch.JobLauncher for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.batch.core.launch.JobLauncher.
+Warning: Field org.springframework.boot.SpringApplication.this$0 not found.
+Warning: Method org.springframework.boot.SpringApplication.<init>() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.condition.ConditionsReportEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.condition.ConditionsReportEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.expose.IncludeExcludeEndpointFilter.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.expose.IncludeExcludeEndpointFilter.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.web.MappingWebEndpointPathMapper.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.web.MappingWebEndpointPathMapper.getRootPath(List, EndpointId) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.web.MappingWebEndpointPathMapper.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.web.servlet.WebMvcEndpointManagementContextConfiguration$EndpointObjectMapperWebMvcConfigurer.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.endpoint.web.servlet.WebMvcEndpointManagementContextConfiguration$EndpointObjectMapperWebMvcConfigurer.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.AutoConfiguredHealthContributorRegistry.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.AutoConfiguredHealthContributorRegistry.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.AutoConfiguredHealthEndpointGroups.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.AutoConfiguredHealthEndpointGroups.of(HealthEndpointGroup, Map) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.AutoConfiguredHealthEndpointGroups.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.HealthEndpointConfiguration$HealthEndpointGroupsBeanPostProcessor.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.health.HealthEndpointConfiguration$HealthEndpointGroupsBeanPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryPostProcessor.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.accept() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.accept(Predicate) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.acceptNameStartsWith(String) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.commonTags(Iterable) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.deny() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.deny(Predicate) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.denyNameStartsWith(String) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.denyUnless(Predicate) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.ignoreTags(String[]) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.maxExpected(String, double) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.maxExpected(String, long) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.maxExpected(String, Duration) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.maximumAllowableMetrics(int) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.maximumAllowableTags(String, String, int, MeterFilter) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.minExpected(String, double) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.minExpected(String, long) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.minExpected(String, Duration) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.renameTag(String, String, String) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.replaceTagValues(String, Function, String[]) not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.PropertiesMeterFilter.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.data.MetricsRepositoryMethodInvocationListenerBeanPostProcessor.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.data.MetricsRepositoryMethodInvocationListenerBeanPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimplePropertiesConfigAdapter.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.export.simple.SimplePropertiesConfigAdapter.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration$DataSourcePoolMetadataMetricsConfiguration$DataSourcePoolMetadataMeterBinder.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration$DataSourcePoolMetadataMetricsConfiguration$DataSourcePoolMetadataMeterBinder.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration$HikariDataSourceMetricsConfiguration$HikariDataSourceMeterBinder.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration$HikariDataSourceMetricsConfiguration$HikariDataSourceMeterBinder.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.observation.ObservationHandlerGrouping.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.observation.ObservationHandlerGrouping.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.observation.ObservationRegistryPostProcessor.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.observation.ObservationRegistryPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.web.ManagementContextFactory.close() not found.
+Warning: Method org.springframework.boot.actuate.autoconfigure.web.ManagementContextFactory.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.beans.BeansEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.beans.BeansEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.cache.CachesEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.cache.CachesEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.cache.CachesEndpointWebExtension.close() not found.
+Warning: Method org.springframework.boot.actuate.cache.CachesEndpointWebExtension.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpointWebExtension.close() not found.
+Warning: Method org.springframework.boot.actuate.context.properties.ConfigurationPropertiesReportEndpointWebExtension.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServiceParameterValueMapper.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServiceParameterValueMapper.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.invoker.cache.CachingOperationInvokerAdvisor.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.invoker.cache.CachingOperationInvokerAdvisor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.ServletEndpointRegistrar.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.ServletEndpointRegistrar.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.ControllerEndpointDiscoverer.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.ControllerEndpointDiscoverer.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.ServletEndpointDiscoverer.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.ServletEndpointDiscoverer.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.AdditionalHealthEndpointPathsWebMvcHandlerMapping.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.AdditionalHealthEndpointPathsWebMvcHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.ControllerEndpointHandlerMapping.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.ControllerEndpointHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping.close() not found.
+Warning: Method org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.env.EnvironmentEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.env.EnvironmentEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.env.EnvironmentEndpointWebExtension.close() not found.
+Warning: Method org.springframework.boot.actuate.env.EnvironmentEndpointWebExtension.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.health.HealthEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.health.HealthEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.health.HealthEndpointWebExtension.close() not found.
+Warning: Method org.springframework.boot.actuate.health.HealthEndpointWebExtension.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.health.PingHealthIndicator.close() not found.
+Warning: Method org.springframework.boot.actuate.health.PingHealthIndicator.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.health.SimpleHttpCodeStatusMapper.close() not found.
+Warning: Method org.springframework.boot.actuate.health.SimpleHttpCodeStatusMapper.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.health.SimpleStatusAggregator.close() not found.
+Warning: Method org.springframework.boot.actuate.health.SimpleStatusAggregator.getDefault() not found.
+Warning: Method org.springframework.boot.actuate.health.SimpleStatusAggregator.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.info.BuildInfoContributor.close() not found.
+Warning: Method org.springframework.boot.actuate.info.BuildInfoContributor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.info.GitInfoContributor.close() not found.
+Warning: Method org.springframework.boot.actuate.info.GitInfoContributor.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.info.InfoEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.info.InfoEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator.close() not found.
+Warning: Method org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.logging.LoggersEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.logging.LoggersEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.management.HeapDumpWebEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.management.HeapDumpWebEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.management.ThreadDumpEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.management.ThreadDumpEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.MetricsEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.MetricsEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.CacheMetricsRegistrar.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.CacheMetricsRegistrar.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.CaffeineCacheMeterBinderProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.CaffeineCacheMeterBinderProvider.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.JCacheCacheMeterBinderProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.cache.JCacheCacheMeterBinderProvider.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.data.DefaultRepositoryTagsProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.data.DefaultRepositoryTagsProvider.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.data.MetricsRepositoryMethodInvocationListener.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.data.MetricsRepositoryMethodInvocationListener.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.startup.StartupTimeMetricsListener.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.startup.StartupTimeMetricsListener.forPayload(Consumer) not found.
+Warning: Method org.springframework.boot.actuate.metrics.startup.StartupTimeMetricsListener.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.system.DiskSpaceMetricsBinder.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.system.DiskSpaceMetricsBinder.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.web.client.ObservationRestTemplateCustomizer.close() not found.
+Warning: Method org.springframework.boot.actuate.metrics.web.client.ObservationRestTemplateCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.metrics.web.tomcat.TomcatMetricsBinder.forPayload(Consumer) not found.
+Warning: Method org.springframework.boot.actuate.scheduling.ScheduledTasksEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.scheduling.ScheduledTasksEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.system.DiskSpaceHealthIndicator.close() not found.
+Warning: Method org.springframework.boot.actuate.system.DiskSpaceHealthIndicator.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.MappingsEndpoint.close() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.MappingsEndpoint.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.DispatcherServletsMappingDescriptionProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.DispatcherServletsMappingDescriptionProvider.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.FiltersMappingDescriptionProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.FiltersMappingDescriptionProvider.shutdown() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.ServletsMappingDescriptionProvider.close() not found.
+Warning: Method org.springframework.boot.actuate.web.mappings.servlet.ServletsMappingDescriptionProvider.shutdown() not found.
+Warning: Method org.springframework.boot.ansi.AnsiOutput$Enabled.<init>() not found.
+Warning: Method org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration$CacheManagerValidator.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration$CacheManagerValidator.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.cache.CacheManagerCustomizers.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.cache.CacheManagerCustomizers.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.cache.CacheType.<init>() not found.
+Warning: Method org.springframework.boot.autoconfigure.context.MessageSourceProperties.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.context.MessageSourceProperties.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.http.HttpMessageConverters.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.http.HttpMessageConverters.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration$Jackson2ObjectMapperBuilderCustomizerConfiguration$StandardJackson2ObjectMapperBuilderCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration$Jackson2ObjectMapperBuilderCustomizerConfiguration$StandardJackson2ObjectMapperBuilderCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration$1.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration$1.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.sql.init.SqlDataSourceScriptDatabaseInitializer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.sql.init.SqlDataSourceScriptDatabaseInitializer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.embedded.TomcatWebServerFactoryCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.embedded.TomcatWebServerFactoryCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.format.WebConversionService.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.format.WebConversionService.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.DispatcherServletRegistrationBean.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.DispatcherServletRegistrationBean.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration$LocaleCharsetMappingsCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration$LocaleCharsetMappingsCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.TomcatServletWebServerFactoryCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.TomcatServletWebServerFactoryCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.WelcomePageHandlerMapping.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.WelcomePageHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.DefaultErrorViewResolver.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.DefaultErrorViewResolver.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration$ErrorPageCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration$ErrorPageCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration$PreserveErrorControllerTargetClassPostProcessor.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration$PreserveErrorControllerTargetClassPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.autoconfigure.websocket.servlet.TomcatWebSocketServletWebServerCustomizer.close() not found.
+Warning: Method org.springframework.boot.autoconfigure.websocket.servlet.TomcatWebSocketServletWebServerCustomizer.shutdown() not found.
+Warning: Method org.springframework.boot.availability.ApplicationAvailabilityBean.close() not found.
+Warning: Method org.springframework.boot.availability.ApplicationAvailabilityBean.forPayload(Consumer) not found.
+Warning: Method org.springframework.boot.availability.ApplicationAvailabilityBean.shutdown() not found.
+Warning: Method org.springframework.boot.context.config.ConfigDataNotFoundAction.<init>() not found.
+Warning: Field org.springframework.boot.context.config.ConfigDataProperties.this$0 not found.
+Warning: Method org.springframework.boot.context.config.ConfigDataProperties.<init>() not found.
+Warning: Method org.springframework.boot.info.BuildProperties.close() not found.
+Warning: Method org.springframework.boot.info.BuildProperties.shutdown() not found.
+Warning: Method org.springframework.boot.info.GitProperties.close() not found.
+Warning: Method org.springframework.boot.info.GitProperties.shutdown() not found.
+Warning: Method org.springframework.boot.jackson.JsonComponentModule.close() not found.
+Warning: Method org.springframework.boot.jackson.JsonComponentModule.shutdown() not found.
+Warning: Method org.springframework.boot.jackson.JsonMixinModule.close() not found.
+Warning: Method org.springframework.boot.jackson.JsonMixinModule.shutdown() not found.
+Warning: Method org.springframework.boot.jackson.JsonMixinModuleEntries.close() not found.
+Warning: Method org.springframework.boot.jackson.JsonMixinModuleEntries.shutdown() not found.
+Warning: Could not resolve class org.springframework.boot.loader.LaunchedURLClassLoader for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.loader.LaunchedURLClassLoader.
+Warning: Could not resolve class org.springframework.boot.logging.java.JavaLoggingSystem.Factory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.logging.java.JavaLoggingSystem.Factory.
+Warning: Could not resolve class org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.Factory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.logging.log4j2.Log4J2LoggingSystem.Factory.
+Warning: Could not resolve class org.springframework.boot.logging.logback.LogbackLoggingSystem.Factory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.logging.logback.LogbackLoggingSystem.Factory.
+Warning: Method org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder.close() not found.
+Warning: Method org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder.shutdown() not found.
+Warning: Method org.springframework.boot.task.TaskExecutorBuilder.close() not found.
+Warning: Method org.springframework.boot.task.TaskExecutorBuilder.shutdown() not found.
+Warning: Method org.springframework.boot.task.TaskSchedulerBuilder.close() not found.
+Warning: Method org.springframework.boot.task.TaskSchedulerBuilder.shutdown() not found.
+Warning: Method org.springframework.boot.type.classreading.ConcurrentReferenceCachingMetadataReaderFactory.toMetadataReaderFactory() not found.
+Warning: Method org.springframework.boot.validation.beanvalidation.FilteredMethodValidationPostProcessor.close() not found.
+Warning: Method org.springframework.boot.validation.beanvalidation.FilteredMethodValidationPostProcessor.shutdown() not found.
+Warning: Method org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.close() not found.
+Warning: Method org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.shutdown() not found.
+Warning: Method org.springframework.boot.web.servlet.FilterRegistrationBean.close() not found.
+Warning: Method org.springframework.boot.web.servlet.FilterRegistrationBean.shutdown() not found.
+Warning: Method org.springframework.boot.web.servlet.error.DefaultErrorAttributes.close() not found.
+Warning: Method org.springframework.boot.web.servlet.error.DefaultErrorAttributes.shutdown() not found.
+Warning: Method org.springframework.cache.annotation.AnnotationCacheOperationSource.close() not found.
+Warning: Method org.springframework.cache.annotation.AnnotationCacheOperationSource.shutdown() not found.
+Warning: Method org.springframework.cache.caffeine.CaffeineCacheManager.close() not found.
+Warning: Method org.springframework.cache.caffeine.CaffeineCacheManager.shutdown() not found.
+Warning: Method org.springframework.cache.interceptor.BeanFactoryCacheOperationSourceAdvisor.close() not found.
+Warning: Method org.springframework.cache.interceptor.BeanFactoryCacheOperationSourceAdvisor.shutdown() not found.
+Warning: Method org.springframework.cache.interceptor.CacheInterceptor.close() not found.
+Warning: Method org.springframework.cache.interceptor.CacheInterceptor.shutdown() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.BeanFactoryJCacheOperationSourceAdvisor.close() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.BeanFactoryJCacheOperationSourceAdvisor.shutdown() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.DefaultJCacheOperationSource.close() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.DefaultJCacheOperationSource.shutdown() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.JCacheInterceptor.close() not found.
+Warning: Method org.springframework.cache.jcache.interceptor.JCacheInterceptor.shutdown() not found.
+Warning: Method org.springframework.context.support.DefaultLifecycleProcessor.close() not found.
+Warning: Method org.springframework.context.support.DefaultLifecycleProcessor.shutdown() not found.
+Warning: Method org.springframework.context.support.PropertySourcesPlaceholderConfigurer.close() not found.
+Warning: Method org.springframework.context.support.PropertySourcesPlaceholderConfigurer.shutdown() not found.
+Warning: Method org.springframework.context.support.ResourceBundleMessageSource.close() not found.
+Warning: Method org.springframework.context.support.ResourceBundleMessageSource.shutdown() not found.
+Warning: Method org.springframework.core.io.Resource.<init>(String) not found.
+Warning: Method org.springframework.core.io.Resource.from(String) not found.
+Warning: Method org.springframework.core.io.Resource.of(String) not found.
+Warning: Method org.springframework.core.io.Resource.valueOf(String) not found.
+Warning: Method org.springframework.core.type.classreading.MetadataReaderFactory.<init>(ConcurrentReferenceCachingMetadataReaderFactory) not found.
+Warning: Method org.springframework.core.type.classreading.MetadataReaderFactory.from(ConcurrentReferenceCachingMetadataReaderFactory) not found.
+Warning: Method org.springframework.core.type.classreading.MetadataReaderFactory.of(ConcurrentReferenceCachingMetadataReaderFactory) not found.
+Warning: Method org.springframework.core.type.classreading.MetadataReaderFactory.valueOf(ConcurrentReferenceCachingMetadataReaderFactory) not found.
+Warning: Method org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor.close() not found.
+Warning: Method org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor.shutdown() not found.
+Warning: Could not resolve class org.springframework.data.cassandra.ReactiveSession for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.cassandra.ReactiveSession.
+Warning: Could not resolve class org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate.
+Warning: Could not resolve class org.springframework.data.elasticsearch.client.elc.ReactiveElasticsearchClient for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.elasticsearch.client.elc.ReactiveElasticsearchClient.
+Warning: Could not resolve class org.springframework.data.elasticsearch.repository.ElasticsearchRepository for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.elasticsearch.repository.ElasticsearchRepository.
+Warning: Could not resolve class org.springframework.data.envers.repository.config$EnableEnversRepositories for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.envers.repository.config$EnableEnversRepositories.
+Warning: Could not resolve class org.springframework.data.envers.repository.config.EnableEnversRepositories for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.envers.repository.config.EnableEnversRepositories.
+Warning: Method org.springframework.data.geo.GeoModule.close() not found.
+Warning: Method org.springframework.data.geo.GeoModule.shutdown() not found.
+Warning: Could not resolve class org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration.
+Warning: Method org.springframework.data.jpa.mapping.JpaMetamodelMappingContext.toMappingContext() not found.
+Warning: Method org.springframework.data.jpa.repository.support.SimpleJpaRepository.findById(Integer) not found.
+Warning: Method org.springframework.data.jpa.repository.support.SimpleJpaRepository.findPetTypes() not found.
+Warning: Method org.springframework.data.jpa.repository.support.SimpleJpaRepository.save(Owner) not found.
+Warning: Could not resolve class org.springframework.data.ldap.repository.LdapRepository for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.ldap.repository.LdapRepository.
+Warning: Method org.springframework.data.mapping.context.MappingContext.<init>(JpaMetamodelMappingContext) not found.
+Warning: Method org.springframework.data.mapping.context.MappingContext.from(JpaMetamodelMappingContext) not found.
+Warning: Method org.springframework.data.mapping.context.MappingContext.of(JpaMetamodelMappingContext) not found.
+Warning: Method org.springframework.data.mapping.context.MappingContext.valueOf(JpaMetamodelMappingContext) not found.
+Warning: Could not resolve class org.springframework.data.mongodb.core.MongoTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.mongodb.core.MongoTemplate.
+Warning: Could not resolve class org.springframework.data.r2dbc.core.R2dbcEntityTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.r2dbc.core.R2dbcEntityTemplate.
+Warning: Could not resolve class org.springframework.data.redis.cache.RedisCache for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.redis.cache.RedisCache.
+Warning: Could not resolve class org.springframework.data.redis.connection.RedisConnectionFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.redis.connection.RedisConnectionFactory.
+Warning: Could not resolve class org.springframework.data.redis.core.RedisOperations for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.redis.core.RedisOperations.
+Warning: Could not resolve class org.springframework.data.redis.repository.configuration.EnableRedisRepositories for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.redis.repository.configuration.EnableRedisRepositories.
+Warning: Method org.springframework.data.repository.config.RepositoryConfiguration.<init>(RepositoryConfigurationAdapter) not found.
+Warning: Method org.springframework.data.repository.config.RepositoryConfiguration.from(RepositoryConfigurationAdapter) not found.
+Warning: Method org.springframework.data.repository.config.RepositoryConfiguration.of(RepositoryConfigurationAdapter) not found.
+Warning: Method org.springframework.data.repository.config.RepositoryConfiguration.valueOf(RepositoryConfigurationAdapter) not found.
+Warning: Method org.springframework.data.repository.config.RepositoryConfigurationAdapter.toRepositoryConfiguration() not found.
+Warning: Method org.springframework.data.repository.core.NamedQueries.<init>(PropertiesBasedNamedQueries) not found.
+Warning: Method org.springframework.data.repository.core.NamedQueries.from(PropertiesBasedNamedQueries) not found.
+Warning: Method org.springframework.data.repository.core.NamedQueries.of(PropertiesBasedNamedQueries) not found.
+Warning: Method org.springframework.data.repository.core.NamedQueries.valueOf(PropertiesBasedNamedQueries) not found.
+Warning: Method org.springframework.data.repository.core.support.PropertiesBasedNamedQueries.toNamedQueries() not found.
+Warning: Method org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.of(Iterable) not found.
+Warning: Method org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.of(Supplier) not found.
+Warning: Method org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.of(Object[]) not found.
+Warning: Method org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.toStreamable() not found.
+Warning: Method org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.toStreamable(Collector) not found.
+Warning: Could not resolve class org.springframework.data.rest.webmvc.alps.AlpsJsonHttpMessageConverter for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.rest.webmvc.alps.AlpsJsonHttpMessageConverter.
+Warning: Could not resolve class org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguration for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguration.
+Warning: Could not resolve class org.springframework.data.util.CustomCollections.EclipseCollections for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.util.CustomCollections.EclipseCollections.
+Warning: Could not resolve class org.springframework.data.util.CustomCollections.VavrCollections for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.data.util.CustomCollections.VavrCollections.
+Warning: Method org.springframework.data.web.PageableHandlerMethodArgumentResolver.close() not found.
+Warning: Method org.springframework.data.web.PageableHandlerMethodArgumentResolver.shutdown() not found.
+Warning: Method org.springframework.data.web.SortHandlerMethodArgumentResolver.close() not found.
+Warning: Method org.springframework.data.web.SortHandlerMethodArgumentResolver.shutdown() not found.
+Warning: Method org.springframework.data.web.config.ProjectingArgumentResolverRegistrar$ProjectingArgumentResolverBeanPostProcessor.close() not found.
+Warning: Method org.springframework.data.web.config.ProjectingArgumentResolverRegistrar$ProjectingArgumentResolverBeanPostProcessor.shutdown() not found.
+Warning: Method org.springframework.format.annotation.DateTimeFormat.value() not found.
+Warning: Could not resolve class org.springframework.hateoas$Link for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.hateoas$Link.
+Warning: Could not resolve class org.springframework.hateoas.EntityModel for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.hateoas.EntityModel.
+Warning: Could not resolve class org.springframework.hateoas.Link for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.hateoas.Link.
+Warning: Could not resolve class org.springframework.hateoas.server.mvc.TypeConstrainedMappingJackson2HttpMessageConverter for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.hateoas.server.mvc.TypeConstrainedMappingJackson2HttpMessageConverter.
+Warning: Method org.springframework.http.converter.StringHttpMessageConverter.close() not found.
+Warning: Method org.springframework.http.converter.StringHttpMessageConverter.shutdown() not found.
+Warning: Method org.springframework.http.converter.json.MappingJackson2HttpMessageConverter.close() not found.
+Warning: Method org.springframework.http.converter.json.MappingJackson2HttpMessageConverter.shutdown() not found.
+Warning: Could not resolve class org.springframework.instrument$InstrumentationSavingAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.instrument$InstrumentationSavingAgent.
+Warning: Could not resolve class org.springframework.instrument.InstrumentationSavingAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.instrument.InstrumentationSavingAgent.
+Warning: Could not resolve class org.springframework.integration.config.EnableIntegration for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.integration.config.EnableIntegration.
+Warning: Could not resolve class org.springframework.integration.graph.IntegrationGraphServer for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.integration.graph.IntegrationGraphServer.
+Warning: Method org.springframework.jdbc.core.JdbcTemplate.close() not found.
+Warning: Method org.springframework.jdbc.core.JdbcTemplate.shutdown() not found.
+Warning: Method org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate.close() not found.
+Warning: Method org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate.shutdown() not found.
+Warning: Could not resolve class org.springframework.jms.core.JmsTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.jms.core.JmsTemplate.
+Warning: Could not resolve class org.springframework.kafka.core.KafkaTemplate for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.kafka.core.KafkaTemplate.
+Warning: Could not resolve class org.springframework.kafka.core.ProducerFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.kafka.core.ProducerFactory.
+Warning: Could not resolve class org.springframework.ldap.core.ContextSource for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.ldap.core.ContextSource.
+Warning: Could not resolve class org.springframework.ldap.core.LdapOperations for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.ldap.core.LdapOperations.
+Warning: Method org.springframework.orm.jpa.JpaTransactionManager.close() not found.
+Warning: Method org.springframework.orm.jpa.JpaTransactionManager.shutdown() not found.
+Warning: Method org.springframework.orm.jpa.persistenceunit.SimplePersistenceManagedTypes.close() not found.
+Warning: Method org.springframework.orm.jpa.persistenceunit.SimplePersistenceManagedTypes.of(List, List) not found.
+Warning: Method org.springframework.orm.jpa.persistenceunit.SimplePersistenceManagedTypes.of(String[]) not found.
+Warning: Method org.springframework.orm.jpa.persistenceunit.SimplePersistenceManagedTypes.shutdown() not found.
+Warning: Method org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor.close() not found.
+Warning: Method org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor.shutdown() not found.
+Warning: Method org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter.close() not found.
+Warning: Method org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter.shutdown() not found.
+Warning: Could not resolve class org.springframework.oxm.Marshaller for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.oxm.Marshaller.
+Warning: Could not resolve class org.springframework.r2dbc.connection.R2dbcTransactionManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.r2dbc.connection.R2dbcTransactionManager.
+Warning: Could not resolve class org.springframework.r2dbc.connection.init.DatabasePopulator for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.r2dbc.connection.init.DatabasePopulator.
+Warning: Method org.springframework.samples.petclinic.PetClinicApplication.setBeanFactory(BeanFactory) not found.
+Warning: Could not resolve class org.springframework.samples.petclinic.model.BaseEntity_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.model.BaseEntity_.
+Warning: Could not resolve class org.springframework.samples.petclinic.model.NamedEntity_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.model.NamedEntity_.
+Warning: Could not resolve class org.springframework.samples.petclinic.model.Person_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.model.Person_.
+Warning: Method org.springframework.samples.petclinic.owner.Owner.getFirstName() not found.
+Warning: Method org.springframework.samples.petclinic.owner.Owner.getLastName() not found.
+Warning: Method org.springframework.samples.petclinic.owner.Owner.isFirstName() not found.
+Warning: Method org.springframework.samples.petclinic.owner.Owner.isLastName() not found.
+Warning: Could not resolve class org.springframework.samples.petclinic.owner.Owner_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.owner.Owner_.
+Warning: Could not resolve class org.springframework.samples.petclinic.owner.PetType_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.owner.PetType_.
+Warning: Could not resolve class org.springframework.samples.petclinic.owner.Pet_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.owner.Pet_.
+Warning: Could not resolve class org.springframework.samples.petclinic.owner.Visit_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.owner.Visit_.
+Warning: Could not resolve class org.springframework.samples.petclinic.vet.Specialty_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.vet.Specialty_.
+Warning: Could not resolve class org.springframework.samples.petclinic.vet.Vet_ for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.samples.petclinic.vet.Vet_.
+Warning: Could not resolve class org.springframework.security.authentication.AuthenticationManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.authentication.AuthenticationManager.
+Warning: Could not resolve class org.springframework.security.authentication.DefaultAuthenticationEventPublisher for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.authentication.DefaultAuthenticationEventPublisher.
+Warning: Could not resolve class org.springframework.security.authentication.ReactiveAuthenticationManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.authentication.ReactiveAuthenticationManager.
+Warning: Could not resolve class org.springframework.security.config.annotation.web.builders.HttpSecurity for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.config.annotation.web.builders.HttpSecurity.
+Warning: Could not resolve class org.springframework.security.config.annotation.web.configuration.EnableWebSecurity for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.config.annotation.web.configuration.EnableWebSecurity.
+Warning: Could not resolve class org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity.
+Warning: Could not resolve class org.springframework.security.config.http.SessionCreationPolicy for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.config.http.SessionCreationPolicy.
+Warning: Could not resolve class org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken.
+Warning: Could not resolve class org.springframework.security.rsocket.core.SecuritySocketAcceptorInterceptor for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.rsocket.core.SecuritySocketAcceptorInterceptor.
+Warning: Could not resolve class org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository.
+Warning: Could not resolve class org.springframework.security.web.SecurityFilterChain for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.web.SecurityFilterChain.
+Warning: Could not resolve class org.springframework.security.web.server.csrf.CsrfToken for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.web.server.csrf.CsrfToken.
+Warning: Could not resolve class org.springframework.security.web.util.matcher.RequestMatcher for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.security.web.util.matcher.RequestMatcher.
+Warning: Could not resolve class org.springframework.session.FindByIndexNameSessionRepository for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.session.FindByIndexNameSessionRepository.
+Warning: Could not resolve class org.springframework.session.Session for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.session.Session.
+Warning: Method org.springframework.transaction.annotation.AnnotationTransactionAttributeSource.close() not found.
+Warning: Method org.springframework.transaction.annotation.AnnotationTransactionAttributeSource.shutdown() not found.
+Warning: Method org.springframework.transaction.event.TransactionalEventListenerFactory.close() not found.
+Warning: Method org.springframework.transaction.event.TransactionalEventListenerFactory.shutdown() not found.
+Warning: Method org.springframework.transaction.interceptor.BeanFactoryTransactionAttributeSourceAdvisor.close() not found.
+Warning: Method org.springframework.transaction.interceptor.BeanFactoryTransactionAttributeSourceAdvisor.shutdown() not found.
+Warning: Method org.springframework.transaction.interceptor.TransactionInterceptor.close() not found.
+Warning: Method org.springframework.transaction.interceptor.TransactionInterceptor.shutdown() not found.
+Warning: Method org.springframework.transaction.support.TransactionTemplate.close() not found.
+Warning: Method org.springframework.transaction.support.TransactionTemplate.shutdown() not found.
+Warning: Method org.springframework.transaction.support.TransactionTemplate.withDefaults() not found.
+Warning: Method org.springframework.transaction.support.TransactionTemplate.withoutTransaction() not found.
+Warning: Method org.springframework.util.AntPathMatcher.close() not found.
+Warning: Method org.springframework.util.AntPathMatcher.shutdown() not found.
+Warning: Method org.springframework.web.accept.ContentNegotiationManager.close() not found.
+Warning: Method org.springframework.web.accept.ContentNegotiationManager.shutdown() not found.
+Warning: Method org.springframework.web.method.support.CompositeUriComponentsContributor.close() not found.
+Warning: Method org.springframework.web.method.support.CompositeUriComponentsContributor.shutdown() not found.
+Warning: Method org.springframework.web.multipart.support.StandardServletMultipartResolver.close() not found.
+Warning: Method org.springframework.web.multipart.support.StandardServletMultipartResolver.shutdown() not found.
+Warning: Could not resolve class org.springframework.web.reactive$DispatcherHandler for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive$DispatcherHandler.
+Warning: Could not resolve class org.springframework.web.reactive.DispatcherHandler for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.DispatcherHandler.
+Warning: Could not resolve class org.springframework.web.reactive.HandlerResult for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.HandlerResult.
+Warning: Could not resolve class org.springframework.web.reactive.config$EnableWebFlux for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.config$EnableWebFlux.
+Warning: Could not resolve class org.springframework.web.reactive.config.EnableWebFlux for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.config.EnableWebFlux.
+Warning: Could not resolve class org.springframework.web.reactive.config.WebFluxConfigurer for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.config.WebFluxConfigurer.
+Warning: Could not resolve class org.springframework.web.reactive.function.client.WebClient for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.function.client.WebClient.
+Warning: Could not resolve class org.springframework.web.reactive.result.view.View for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.reactive.result.view.View.
+Warning: Method org.springframework.web.servlet.DispatcherServlet.close() not found.
+Warning: Method org.springframework.web.servlet.DispatcherServlet.shutdown() not found.
+Warning: Method org.springframework.web.servlet.function.support.HandlerFunctionAdapter.close() not found.
+Warning: Method org.springframework.web.servlet.function.support.HandlerFunctionAdapter.shutdown() not found.
+Warning: Method org.springframework.web.servlet.function.support.RouterFunctionMapping.close() not found.
+Warning: Method org.springframework.web.servlet.function.support.RouterFunctionMapping.shutdown() not found.
+Warning: Method org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping.close() not found.
+Warning: Method org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.web.servlet.handler.HandlerExceptionResolverComposite.close() not found.
+Warning: Method org.springframework.web.servlet.handler.HandlerExceptionResolverComposite.shutdown() not found.
+Warning: Method org.springframework.web.servlet.handler.SimpleUrlHandlerMapping.close() not found.
+Warning: Method org.springframework.web.servlet.handler.SimpleUrlHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver.close() not found.
+Warning: Method org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver.shutdown() not found.
+Warning: Method org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.close() not found.
+Warning: Method org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.shutdown() not found.
+Warning: Method org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.close() not found.
+Warning: Method org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.shutdown() not found.
+Warning: Method org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.initCorsConfiguration(Object, Method, Object) not found.
+Warning: Method org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.registerHandlerMethod(Object, Method, Object) not found.
+Warning: Method org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.registerMapping(Object, Object, Method) not found.
+Warning: Method org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.close() not found.
+Warning: Method org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.shutdown() not found.
+Warning: Method org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.close() not found.
+Warning: Method org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.shutdown() not found.
+Warning: Method org.springframework.web.servlet.resource.ResourceUrlProvider.close() not found.
+Warning: Method org.springframework.web.servlet.resource.ResourceUrlProvider.forPayload(Consumer) not found.
+Warning: Method org.springframework.web.servlet.resource.ResourceUrlProvider.shutdown() not found.
+Warning: Method org.springframework.web.servlet.support.SessionFlashMapManager.close() not found.
+Warning: Method org.springframework.web.servlet.support.SessionFlashMapManager.shutdown() not found.
+Warning: Method org.springframework.web.servlet.theme.FixedThemeResolver.close() not found.
+Warning: Method org.springframework.web.servlet.theme.FixedThemeResolver.shutdown() not found.
+Warning: Method org.springframework.web.servlet.view.ContentNegotiatingViewResolver.close() not found.
+Warning: Method org.springframework.web.servlet.view.ContentNegotiatingViewResolver.shutdown() not found.
+Warning: Method org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator.close() not found.
+Warning: Method org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator.shutdown() not found.
+Warning: Method org.springframework.web.servlet.view.InternalResourceViewResolver.close() not found.
+Warning: Method org.springframework.web.servlet.view.InternalResourceViewResolver.shutdown() not found.
+Warning: Method org.springframework.web.servlet.view.ViewResolverComposite.close() not found.
+Warning: Method org.springframework.web.servlet.view.ViewResolverComposite.shutdown() not found.
+Warning: Could not resolve class org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer.
+Warning: Method org.springframework.web.util.UrlPathHelper.close() not found.
+Warning: Method org.springframework.web.util.UrlPathHelper.shutdown() not found.
+Warning: Method org.springframework.web.util.pattern.PathPatternParser.close() not found.
+Warning: Method org.springframework.web.util.pattern.PathPatternParser.shutdown() not found.
+Warning: Could not resolve class org.springframework.ws.transport.http.MessageDispatcherServlet for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.ws.transport.http.MessageDispatcherServlet.
+Warning: Could not resolve class org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect for reflection configuration. Reason: java.lang.ClassNotFoundException: org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect.
+Warning: Method org.thymeleaf.spring6.SpringTemplateEngine.close() not found.
+Warning: Method org.thymeleaf.spring6.SpringTemplateEngine.shutdown() not found.
+Warning: Method org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver.close() not found.
+Warning: Method org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver.shutdown() not found.
+Warning: Method org.thymeleaf.spring6.view.ThymeleafViewResolver.close() not found.
+Warning: Method org.thymeleaf.spring6.view.ThymeleafViewResolver.shutdown() not found.
+Warning: Could not resolve class org.webjars$WebJarAssetLocator for reflection configuration. Reason: java.lang.ClassNotFoundException: org.webjars$WebJarAssetLocator.
+Warning: Could not resolve class org.webjars.WebJarAssetLocator for reflection configuration. Reason: java.lang.ClassNotFoundException: org.webjars.WebJarAssetLocator.
+Warning: Could not resolve class org.xmlbeam$XBProjector for reflection configuration. Reason: java.lang.ClassNotFoundException: org.xmlbeam$XBProjector.
+Warning: Could not resolve class org.xmlbeam.XBProjector for reflection configuration. Reason: java.lang.ClassNotFoundException: org.xmlbeam.XBProjector.
+Warning: Could not resolve class org.xnio.SslClientAuthMode for reflection configuration. Reason: java.lang.ClassNotFoundException: org.xnio.SslClientAuthMode.
+Warning: Could not resolve class reactor.core.publisher$Flux for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.core.publisher$Flux.
+Warning: Could not resolve class reactor.core.publisher$Mono for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.core.publisher$Mono.
+Warning: Could not resolve class reactor.core.publisher.Flux for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.core.publisher.Flux.
+Warning: Could not resolve class reactor.core.publisher.Mono for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.core.publisher.Mono.
+Warning: Could not resolve class reactor.netty.http.server.HttpServer for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.netty.http.server.HttpServer.
+Warning: Could not resolve class reactor.tools.agent$ReactorDebugAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.tools.agent$ReactorDebugAgent.
+Warning: Could not resolve class reactor.tools.agent.ReactorDebugAgent for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.tools.agent.ReactorDebugAgent.
+Warning: Could not resolve class reactor.util.lang$NonNullApi for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.util.lang$NonNullApi.
+Warning: Could not resolve class reactor.util.lang.NonNullApi for reflection configuration. Reason: java.lang.ClassNotFoundException: reactor.util.lang.NonNullApi.
+Warning: Could not resolve class scala$Option for reflection configuration. Reason: java.lang.ClassNotFoundException: scala$Option.
+Warning: Could not resolve class scala.Option for reflection configuration. Reason: java.lang.ClassNotFoundException: scala.Option.
+Warning: Method sun.security.provider.NativePRNG.<init>(SecureRandomParameters) not found.
+Warning: Method sun.security.provider.SecureRandom.<init>(SecureRandomParameters) not found.
+Warning: Could not resolve class zipkin2.reporter.Sender for reflection configuration. Reason: java.lang.ClassNotFoundException: zipkin2.reporter.Sender.
+Warning: Could not resolve class org.jboss.logmanager.LogManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jboss.logmanager.LogManager.
+Warning: Method com.zaxxer.hikari.HikariConfig.getScheduledExecutorService() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.isInitializationFailFast() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.isJdbc4ConnectionTest() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setInitializationFailFast(boolean) not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setJdbc4ConnectionTest(boolean) not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setScheduledExecutorService(ScheduledThreadPoolExecutor) not found.
+Warning: Could not resolve class com.sun.el.ExpressionFactoryImpl for reflection configuration. Reason: java.lang.ClassNotFoundException: com.sun.el.ExpressionFactoryImpl.
+Warning: Could not resolve class groovy.grape.GrabAnnotationTransformation for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.grape.GrabAnnotationTransformation.
+Warning: Could not resolve class groovy.lang.Script for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang.Script.
+Warning: Could not resolve class groovy.lang.Script for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang.Script.
+Warning: Could not resolve class groovyjarjarantlr.CommonToken for reflection configuration. Reason: java.lang.ClassNotFoundException: groovyjarjarantlr.CommonToken.
+Warning: Could not resolve class javafx.beans.value.ObservableValue for reflection configuration. Reason: java.lang.ClassNotFoundException: javafx.beans.value.ObservableValue.
+Warning: Could not resolve class javax.money.MonetaryAmount for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.money.MonetaryAmount.
+Warning: Could not resolve class org.codehaus.groovy.antlr.GroovySourceAST for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.antlr.GroovySourceAST.
+Warning: Could not resolve class org.codehaus.groovy.ast.builder.AstBuilderTransformation for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.ast.builder.AstBuilderTransformation.
+Warning: Could not resolve class org.codehaus.groovy.runtime.ScriptBytecodeAdapter for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.runtime.ScriptBytecodeAdapter.
+Warning: Could not resolve class org.glassfish.expressly.ValueExpressionImpl for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.expressly.ValueExpressionImpl.
+Warning: Could not resolve class org.glassfish.expressly.parser.AstValue for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.expressly.parser.AstValue.
+Warning: Could not resolve class org.joda.time.ReadableInstant for reflection configuration. Reason: java.lang.ClassNotFoundException: org.joda.time.ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.future.FutureValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.futureorpresent.FutureOrPresentValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.past.PastValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.pastorpresent.PastOrPresentValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.Appender; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.Appender.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.AppenderControl; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.AppenderControl.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.AppenderRef; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.AppenderRef.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.LoggerConfig; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.LoggerConfig.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.Property; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.Property.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.pattern.PatternFormatter; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.pattern.PatternFormatter.
+Warning: Could not resolve class com.oracle.truffle.js.scriptengine.GraalJSEngineFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.oracle.truffle.js.scriptengine.GraalJSEngineFactory.
+Warning: Could not resolve class jakarta.enterprise.inject.spi.BeanManager for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.enterprise.inject.spi.BeanManager.
+Warning: Could not resolve class org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy.
+Warning: Could not resolve class org.wildfly.transaction.client.ContextTransactionManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.ContextTransactionManager.
+Warning: Could not resolve class org.wildfly.transaction.client.ContextTransactionManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.ContextTransactionManager.
+Warning: Could not resolve class org.wildfly.transaction.client.LocalUserTransaction for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.LocalUserTransaction.
+Warning: Method com.mysql.cj.log.StandardLogger.<init>() not found.
+Warning: Could not resolve class com.sun.el.ExpressionFactoryImpl for reflection configuration. Reason: java.lang.ClassNotFoundException: com.sun.el.ExpressionFactoryImpl.
+Warning: Could not resolve class groovy.grape.GrabAnnotationTransformation for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.grape.GrabAnnotationTransformation.
+Warning: Could not resolve class groovy.lang.Script for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang.Script.
+Warning: Could not resolve class groovy.lang.Script for reflection configuration. Reason: java.lang.ClassNotFoundException: groovy.lang.Script.
+Warning: Could not resolve class groovyjarjarantlr.CommonToken for reflection configuration. Reason: java.lang.ClassNotFoundException: groovyjarjarantlr.CommonToken.
+Warning: Could not resolve class javafx.beans.value.ObservableValue for reflection configuration. Reason: java.lang.ClassNotFoundException: javafx.beans.value.ObservableValue.
+Warning: Could not resolve class javax.money.MonetaryAmount for reflection configuration. Reason: java.lang.ClassNotFoundException: javax.money.MonetaryAmount.
+Warning: Could not resolve class org.codehaus.groovy.antlr.GroovySourceAST for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.antlr.GroovySourceAST.
+Warning: Could not resolve class org.codehaus.groovy.ast.builder.AstBuilderTransformation for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.ast.builder.AstBuilderTransformation.
+Warning: Could not resolve class org.codehaus.groovy.runtime.ScriptBytecodeAdapter for reflection configuration. Reason: java.lang.ClassNotFoundException: org.codehaus.groovy.runtime.ScriptBytecodeAdapter.
+Warning: Could not resolve class org.glassfish.expressly.ValueExpressionImpl for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.expressly.ValueExpressionImpl.
+Warning: Could not resolve class org.glassfish.expressly.parser.AstValue for reflection configuration. Reason: java.lang.ClassNotFoundException: org.glassfish.expressly.parser.AstValue.
+Warning: Could not resolve class org.joda.time.ReadableInstant for reflection configuration. Reason: java.lang.ClassNotFoundException: org.joda.time.ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.future.FutureValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.futureorpresent.FutureOrPresentValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.past.PastValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Could not register method org.hibernate.validator.internal.constraintvalidators.bv.time.pastorpresent.PastOrPresentValidatorForReadablePartial.<init>() for reflection. Reason: java.lang.NoClassDefFoundError: org/joda/time/ReadableInstant.
+Warning: Method com.zaxxer.hikari.HikariConfig.getScheduledExecutorService() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.isInitializationFailFast() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.isJdbc4ConnectionTest() not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setInitializationFailFast(boolean) not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setJdbc4ConnectionTest(boolean) not found.
+Warning: Method com.zaxxer.hikari.HikariConfig.setScheduledExecutorService(ScheduledThreadPoolExecutor) not found.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.Appender; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.Appender.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.AppenderControl; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.AppenderControl.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.AppenderRef; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.AppenderRef.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.LoggerConfig; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.LoggerConfig.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.config.Property; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.config.Property.
+Warning: Could not resolve class [Lorg.apache.logging.log4j.core.pattern.PatternFormatter; for reflection configuration. Reason: java.lang.ClassNotFoundException: org.apache.logging.log4j.core.pattern.PatternFormatter.
+Warning: Could not resolve class com.oracle.truffle.js.scriptengine.GraalJSEngineFactory for reflection configuration. Reason: java.lang.ClassNotFoundException: com.oracle.truffle.js.scriptengine.GraalJSEngineFactory.
+Warning: Could not resolve class jakarta.enterprise.inject.spi.BeanManager for reflection configuration. Reason: java.lang.ClassNotFoundException: jakarta.enterprise.inject.spi.BeanManager.
+Warning: Could not resolve class org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy for reflection configuration. Reason: java.lang.ClassNotFoundException: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy.
+Warning: Could not resolve class org.wildfly.transaction.client.ContextTransactionManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.ContextTransactionManager.
+Warning: Could not resolve class org.wildfly.transaction.client.ContextTransactionManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.ContextTransactionManager.
+Warning: Could not resolve class org.wildfly.transaction.client.LocalUserTransaction for reflection configuration. Reason: java.lang.ClassNotFoundException: org.wildfly.transaction.client.LocalUserTransaction.
+Warning: Method com.mysql.cj.log.StandardLogger.<init>() not found.
+Warning: Could not resolve class org.jboss.logmanager.LogManager for reflection configuration. Reason: java.lang.ClassNotFoundException: org.jboss.logmanager.LogManager.
+[1/8] Initializing...                                                                                    (8.1s @ 0.37GB)
+ Java version: 17.0.7+7, vendor version: GraalVM CE 17.0.7-dev+7.1
+ Graal compiler: optimization level: 2, target machine: x86-64-v3
+ C compiler: gcc (linux, x86_64, 9.4.0)
+ Garbage collector: Serial GC (max heap size: 80% of RAM)
+ 2 user-specific feature(s)
+ - org.eclipse.angus.activation.nativeimage.AngusActivationFeature
+ - org.springframework.aot.nativex.feature.PreComputeFieldFeature
+Field org.apache.commons.logging.LogAdapter#log4jSpiPresent set to true at build time
+Field org.apache.commons.logging.LogAdapter#log4jSlf4jProviderPresent set to true at build time
+Field org.apache.commons.logging.LogAdapter#slf4jSpiPresent set to true at build time
+Field org.apache.commons.logging.LogAdapter#slf4jApiPresent set to true at build time
+Field org.springframework.cache.annotation.CachingConfigurationSelector#jsr107Present set to true at build time
+Field org.springframework.cache.annotation.CachingConfigurationSelector#jcacheImplPresent set to true at build time
+Field org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#jndiPresent set to true at build time
+Field org.springframework.core.KotlinDetector#kotlinPresent set to false at build time
+Field org.springframework.core.KotlinDetector#kotlinReflectPresent set to false at build time
+Field org.springframework.core.NativeDetector#imageCode set to true at build time
+Field org.springframework.boot.logging.java.JavaLoggingSystem$Factory#PRESENT set to true at build time
+Field org.springframework.boot.logging.logback.LogbackLoggingSystem$Factory#PRESENT set to true at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#romePresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jaxb2Present set to true at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jackson2Present set to true at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jackson2XmlPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jackson2SmilePresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jackson2CborPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#gsonPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#jsonbPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#kotlinSerializationCborPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#kotlinSerializationJsonPresent set to false at build time
+Field org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#kotlinSerializationProtobufPresent set to false at build time
+Field org.springframework.http.converter.json.Jackson2ObjectMapperBuilder#jackson2XmlPresent set to false at build time
+Field org.springframework.data.util.ReactiveWrappers#PROJECT_REACTOR_PRESENT set to false at build time
+Field org.springframework.data.util.ReactiveWrappers#RXJAVA3_PRESENT set to false at build time
+Field org.springframework.data.util.ReactiveWrappers#KOTLIN_COROUTINES_PRESENT set to false at build time
+Field org.springframework.data.util.ReactiveWrappers#MUTINY_PRESENT set to false at build time
+Field org.springframework.data.repository.util.ReactiveWrapperConverters#RXJAVA3_PRESENT set to false at build time
+Field org.springframework.data.repository.util.ReactiveWrapperConverters#REACTOR_PRESENT set to false at build time
+Field org.springframework.data.repository.util.ReactiveWrapperConverters#KOTLIN_COROUTNES_PRESENT set to false at build time
+Field org.springframework.data.repository.util.ReactiveWrapperConverters#MUTINY_PRESENT set to false at build time
+Field org.springframework.cglib.core.AbstractClassGenerator#imageCode set to true at build time
+Field org.springframework.format.support.DefaultFormattingConversionService#jsr354Present set to false at build time
+Field org.springframework.data.util.NullableWrapperConverters#GUAVA_PRESENT set to false at build time
+Field org.springframework.data.util.NullableWrapperConverters#SCALA_PRESENT set to false at build time
+Field org.springframework.data.util.NullableWrapperConverters#VAVR_PRESENT set to false at build time
+Field org.springframework.web.client.RestTemplate#romePresent set to false at build time
+Field org.springframework.web.client.RestTemplate#jaxb2Present set to true at build time
+Field org.springframework.web.client.RestTemplate#jackson2Present set to true at build time
+Field org.springframework.web.client.RestTemplate#jackson2XmlPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#jackson2SmilePresent set to false at build time
+Field org.springframework.web.client.RestTemplate#jackson2CborPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#gsonPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#jsonbPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#kotlinSerializationCborPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#kotlinSerializationJsonPresent set to false at build time
+Field org.springframework.web.client.RestTemplate#kotlinSerializationProtobufPresent set to false at build time
+Field org.springframework.boot.logging.log4j2.Log4J2LoggingSystem$Factory#PRESENT set to false at build time
+Field org.springframework.transaction.annotation.AnnotationTransactionAttributeSource#jta12Present set to true at build time
+Field org.springframework.transaction.annotation.AnnotationTransactionAttributeSource#ejb3Present set to false at build time
+Field org.springframework.transaction.interceptor.TransactionAspectSupport#vavrPresent set to false at build time
+Field org.springframework.transaction.interceptor.TransactionAspectSupport#reactiveStreamsPresent set to false at build time
+Field org.springframework.boot.jdbc.DataSourceUnwrapper#DELEGATING_DATA_SOURCE_PRESENT set to true at build time
+SLF4J: No SLF4J providers were found.
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See https://www.slf4j.org/codes.html#noProviders for further details.
+Field org.springframework.data.repository.util.QueryExecutionConverters#VAVR_PRESENT set to false at build time
+Field org.springframework.web.servlet.view.InternalResourceViewResolver#jstlPresent set to false at build time
+Field org.springframework.boot.autoconfigure.web.format.WebConversionService#JSR_354_PRESENT set to false at build time
+Field org.springframework.web.servlet.support.RequestContext#jstlPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#jaxb2Present set to true at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#jackson2Present set to true at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#jackson2XmlPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#jackson2SmilePresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#gsonPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#jsonbPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#kotlinSerializationCborPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#kotlinSerializationJsonPresent set to false at build time
+Field org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter#kotlinSerializationProtobufPresent set to false at build time
+Field org.springframework.web.context.support.WebApplicationContextUtils#jsfPresent set to false at build time
+Field org.springframework.web.context.support.StandardServletEnvironment#jndiPresent set to true at build time
+Field org.springframework.web.context.request.RequestContextHolder#jsfPresent set to false at build time
+Field org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator#USER_PROVIDED_ERROR_CODES_FILE_PRESENT set to false at build time
+Field org.springframework.boot.actuate.endpoint.invoker.cache.CachingOperationInvoker#IS_REACTOR_PRESENT set to false at build time
+Field org.springframework.data.querydsl.QuerydslUtils#QUERY_DSL_PRESENT set to false at build time
+Field org.springframework.core.ReactiveAdapterRegistry#reactorPresent set to false at build time
+Field org.springframework.core.ReactiveAdapterRegistry#rxjava3Present set to false at build time
+Field org.springframework.core.ReactiveAdapterRegistry#kotlinCoroutinesPresent set to false at build time
+Field org.springframework.core.ReactiveAdapterRegistry#mutinyPresent set to false at build time
+Field org.springframework.boot.actuate.endpoint.web.annotation.DiscoveredWebOperation#REACTIVE_STREAMS_PRESENT set to false at build time
+Field org.springframework.boot.actuate.endpoint.invoke.reflect.OperationMethodParameter#jsr305Present set to false at build time
+Field org.springframework.boot.logging.logback.LogbackLoggingSystemProperties#JBOSS_LOGGING_PRESENT set to true at build time
+Field org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver#AGENT_CLASS_PRESENT set to false at build time
+Field org.springframework.web.servlet.mvc.method.annotation.ReactiveTypeHandler#isContextPropagationPresent set to false at build time
+Field org.springframework.context.event.ApplicationListenerMethodAdapter#reactiveStreamsPresent set to false at build time
+Field org.springframework.context.annotation.AnnotationConfigUtils#jakartaAnnotationsPresent set to true at build time
+Field org.springframework.context.annotation.AnnotationConfigUtils#jsr250Present set to false at build time
+Field org.springframework.context.annotation.AnnotationConfigUtils#jpaPresent set to true at build time
+[2/8] Performing analysis...  [******]                                                                  (66.5s @ 3.87GB)
+  38,897 (93.60%) of 41,555 types reachable
+  66,875 (69.85%) of 95,747 fields reachable
+ 190,253 (64.47%) of 295,087 methods reachable
+  12,545 types, 3,648 fields, and 18,719 methods registered for reflection
+      73 types,    82 fields, and    60 methods registered for JNI access
+       4 native libraries: dl, pthread, rt, z
+# Printing analysis results stats to: /tmp/bundleRoot-10329914940008037746/output/default/reports/analysis_stats_petclinic-wrk-3-0-0-mixed-medium-default-ce_20230626_135059.json
+[3/8] Building universe...                                                                              (17.0s @ 5.45GB)
+[4/8] Parsing methods...      [***]                                                                      (6.9s @ 4.18GB)
+[5/8] Inlining methods...     [****]                                                                     (4.9s @ 2.73GB)
+[6/8] Compiling methods...    [******]                                                                  (41.8s @ 4.50GB)
+[7/8] Layouting methods...    [****]                                                                    (15.6s @ 3.91GB)
+[8/8] Creating image...       [******]                                                                  (36.3s @ 4.50GB)
+  92.43MB (29.61%) for code area:   128,944 compilation units
+  89.57MB (28.69%) for image heap:  751,405 objects and 929 resources
+ 122.69MB (39.31%) for debug info generated in 12.6s
+   7.44MB ( 2.38%) for other data
+ 312.14MB in total
+------------------------------------------------------------------------------------------------------------------------
+Top 10 origins of code area:                                Top 10 object types in image heap:
+  14.53MB java.base                                           25.27MB byte[] for code metadata
+  13.61MB hibernate-core-6.1.7.Final.jar                      15.18MB byte[] for embedded resources
+   5.71MB h2-2.1.214.jar                                       9.60MB java.lang.Class
+   4.55MB tomcat-embed-core-10.1.5.jar                         7.54MB java.lang.String
+   4.08MB java.xml                                             7.54MB byte[] for java.lang.String
+   4.01MB jdk.proxy4                                           5.46MB byte[] for general heap data
+   3.95MB java.desktop                                         3.26MB com.oracle.svm.core.hub.DynamicHubCompanion
+   3.18MB byte-buddy-1.12.23.jar                               2.92MB byte[] for reflection metadata
+   3.13MB mysql-connector-j-8.0.32.jar                         1.50MB java.lang.String[]
+   2.09MB jackson-databind-2.14.2.jar                          1.36MB c.o.svm.core.hub.DynamicHub$ReflectionMetadata
+  32.66MB for 180 more packages                                9.35MB for 6646 more object types
+------------------------------------------------------------------------------------------------------------------------
+Recommendations:
+ AWT:  Use the tracing agent to collect metadata for AWT.
+ HEAP: Set max heap for improved and more predictable memory usage.
+ CPU:  Enable more CPU features with '-march=native' for improved performance.
+------------------------------------------------------------------------------------------------------------------------
+                       23.5s (11.6% of total time) in 144 GCs | Peak RSS: 8.21GB | CPU load: 8.87
+------------------------------------------------------------------------------------------------------------------------
+Produced artifacts:
+ /tmp/bundleRoot-10329914940008037746/output/default/libawt.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/libawt_headless.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/libawt_xawt.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/libfontmanager.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/libjava.so (jdk_library_shim)
+ /tmp/bundleRoot-10329914940008037746/output/default/libjavajpeg.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/libjvm.so (jdk_library_shim)
+ /tmp/bundleRoot-10329914940008037746/output/default/liblcms.so (jdk_library)
+ /tmp/bundleRoot-10329914940008037746/output/default/petclinic-wrk-3-0-0-mixed-medium-default-ce (executable)
+ /tmp/bundleRoot-10329914940008037746/output/default/petclinic-wrk-3-0-0-mixed-medium-default-ce.debug (debug_info)
+ /tmp/bundleRoot-10329914940008037746/output/default/reports/image_build_statistics.json (build_info)
+ /tmp/bundleRoot-10329914940008037746/output/default/sources (debug_info)
+========================================================================================================================
+Finished generating 'petclinic-wrk-3-0-0-mixed-medium-default-ce' in 3m 20s.
+
+Native Image Bundles: Bundle build output written to /home/serhii/.mx/cache/PETCLINIC_3.0.0_cacbedf0456a769ae5bd022480b1ceeb8f157684b79f682b70c27fd715a4523cd80e030f127c7a9cff8c6b256a83677d2285e6197b82ecd53f99a5231dfd76e9/petclinic-3.0.0.extracted/spring-petclinic-3.0.0-SNAPSHOT.output
+

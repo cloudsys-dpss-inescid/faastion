@@ -1,0 +1,7 @@
+Restoring niuk...
+2023-04-08T21:51:16.640017614 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+HTTP/1.1 204 
+Server: Firecracker API
+Connection: keep-alive
+
+Restoring niuk... done!

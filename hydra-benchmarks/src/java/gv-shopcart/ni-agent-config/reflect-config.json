@@ -1,0 +1,6 @@
+[
+{
+  "name":"micronaut.benchmark.shopcart.Application",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]}
+
+]

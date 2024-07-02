@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+group = 'com.oracle.substratevm.graalvisor'
+version = '1.0'
+description = 'virtualization-benchmarks'
+
+shadowJar {
+    archiveFileName = "virtualization-benchmarks-1.0-all.jar"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.graalvm.sdk:graal-sdk:22.0.0'
+}

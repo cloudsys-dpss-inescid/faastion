@@ -1,0 +1,5 @@
+[
+{ "name":"com.compression.Compression", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
+{ "name":"com.compression.Compression", "allPublicMethods": true }
+
+]

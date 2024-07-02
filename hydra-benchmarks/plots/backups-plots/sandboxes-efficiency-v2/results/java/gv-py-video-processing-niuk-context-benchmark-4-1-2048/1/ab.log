@@ -1,0 +1,138 @@
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.31.28 (be patient).....done
+
+
+Server Software:        
+Server Hostname:        192.168.31.28
+Server Port:            8080
+
+Document Path:          /
+Document Length:        113 bytes
+
+Concurrency Level:      4
+Time taken for tests:   6.416 seconds
+Complete requests:      8
+Failed requests:        7
+   (Connect: 0, Receive: 0, Length: 7, Exceptions: 0)
+Total transferred:      1679 bytes
+Total body sent:        2376
+HTML transferred:       911 bytes
+Requests per second:    1.25 [#/sec] (mean)
+Time per request:       3207.818 [ms] (mean)
+Time per request:       801.954 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.26 [Kbytes/sec] received
+                        0.36 kb/s sent
+                        0.62 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       0
+Processing:   865 2491 1257.4   2444    3943
+Waiting:      864 2488 1253.9   2444    3943
+Total:        865 2491 1257.3   2444    3943
+
+Percentage of the requests served within a certain time (ms)
+  50%   2444
+  66%   3899
+  75%   3921
+  80%   3921
+  90%   3943
+  95%   3943
+  98%   3943
+  99%   3943
+ 100%   3943 (longest request)
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.31.28 (be patient).....done
+
+
+Server Software:        
+Server Hostname:        192.168.31.28
+Server Port:            8080
+
+Document Path:          /
+Document Length:        114 bytes
+
+Concurrency Level:      4
+Time taken for tests:   6.198 seconds
+Complete requests:      8
+Failed requests:        1
+   (Connect: 0, Receive: 0, Length: 1, Exceptions: 0)
+Total transferred:      1679 bytes
+Total body sent:        2376
+HTML transferred:       911 bytes
+Requests per second:    1.29 [#/sec] (mean)
+Time per request:       3099.066 [ms] (mean)
+Time per request:       774.767 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.26 [Kbytes/sec] received
+                        0.37 kb/s sent
+                        0.64 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       0
+Processing:   846 2225 919.5   2620    3155
+Waiting:      846 2225 919.2   2620    3153
+Total:        846 2225 919.5   2620    3156
+
+Percentage of the requests served within a certain time (ms)
+  50%   2620
+  66%   3124
+  75%   3153
+  80%   3153
+  90%   3156
+  95%   3156
+  98%   3156
+  99%   3156
+ 100%   3156 (longest request)
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.31.28 (be patient).....done
+
+
+Server Software:        
+Server Hostname:        192.168.31.28
+Server Port:            8080
+
+Document Path:          /
+Document Length:        114 bytes
+
+Concurrency Level:      4
+Time taken for tests:   5.297 seconds
+Complete requests:      8
+Failed requests:        2
+   (Connect: 0, Receive: 0, Length: 2, Exceptions: 0)
+Total transferred:      1654 bytes
+Total body sent:        2376
+HTML transferred:       887 bytes
+Requests per second:    1.51 [#/sec] (mean)
+Time per request:       2648.536 [ms] (mean)
+Time per request:       662.134 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.30 [Kbytes/sec] received
+                        0.44 kb/s sent
+                        0.74 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       0
+Processing:   248 1825 1184.6   2746    3036
+Waiting:      248 1825 1184.6   2746    3036
+Total:        248 1826 1184.5   2746    3036
+
+Percentage of the requests served within a certain time (ms)
+  50%   2746
+  66%   2798
+  75%   2991
+  80%   2991
+  90%   3036
+  95%   3036
+  98%   3036
+  99%   3036
+ 100%   3036 (longest request)

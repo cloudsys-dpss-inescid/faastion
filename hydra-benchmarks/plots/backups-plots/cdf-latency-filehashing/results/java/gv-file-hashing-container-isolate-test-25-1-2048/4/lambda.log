@@ -1,0 +1,5 @@
+Graalvisor boot time: 165 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function filehashing registered with isolate sandboxing in 12 ms
+[thread 43] New isolate sandbox 140154311278592 in 693 us

@@ -1,0 +1,27 @@
+cp: cannot create regular file '/tmp/test-proxy/app': Text file busy
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function shopcart registered with process sandboxing in 181 ms
+[thread 40] New process sandbox 1213252 in 1105 us
+ __  __ _                                  _   
+|  \/  (_) ___ _ __ ___  _ __   __ _ _   _| |_ 
+| |\/| | |/ __| '__/ _ \| '_ \ / _` | | | | __|
+| |  | | | (__| | | (_) | | | | (_| | |_| | |_ 
+|_|  |_|_|\___|_|  \___/|_| |_|\__,_|\__,_|\__|
+  Micronaut (v3.3.1)
+
+[36m16:00:48.098[0;39m [1;30m[main][0;39m [34mINFO [0;39m [35mio.micronaut.runtime.Micronaut[0;39m - Startup completed in 46ms. Server Running: http://localhost:41781
+
+ Performance counter stats for './app':
+
+        21,968,280      cache-misses                                                
+           140,755      context-switches                                            
+        12,653,193      branch-misses                                               
+            28,418      page-faults                                                 
+
+       9.630546619 seconds time elapsed
+
+       2.481275000 seconds user
+       3.080953000 seconds sys
+
+

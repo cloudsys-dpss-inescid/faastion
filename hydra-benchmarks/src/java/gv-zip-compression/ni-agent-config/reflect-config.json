@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.jni.ZIPCompression",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]}
+
+]

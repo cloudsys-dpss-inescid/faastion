@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+group = 'com.oracle.substratevm.graalvisor'
+version = '1.0'
+description = 'virtualization-benchmarks'
+
+shadowJar {
+    archiveFileName = "virtualization-benchmarks-1.0-all.jar"
+}
+
+repositories {
+    mavenCentral()
+}
+
+processResources{
+    from(zipTree(System.getenv('ARGO_HOME') + '/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar')){
+        include("com.oracle.svm.graalvisor.headers/")
+    }
+}
+
+dependencies {
+    implementation files(System.getenv('ARGO_HOME') + '/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar')
+}

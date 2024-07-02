@@ -1,0 +1,28 @@
+time="2023-04-06T22:59:11-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-04-06T22:59:11-04:00" level=info msg="VMM logging disabled."
+time="2023-04-06T22:59:11-04:00" level=info msg="VMM metrics disabled."
+time="2023-04-06T22:59:11-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc00008e2b4 MemSizeMib:0xc00008e2a8 VcpuCount:0xc00008e2a0}"
+time="2023-04-06T22:59:11-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-04-06T22:59:11-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-04-06T22:59:11-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-04-06T22:59:11-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:DD:1A) at index 1"
+2023-04-06T22:59:11.228482029 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-04-06T22:59:11-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012000] dmi: Firmware registration failed.
+[    0.040760] zswap: default zpool zbud not available
+[    0.041007] zswap: pool creation failed
+Graalvisor boot time: 197 ms.
+Graalvisor listening on port 8080.
+Warning: graalvisor compiled with no truffle language support.
+Function shopcart registered with runtime sandboxing in 514 ms
+[thread 40] New runtime sandbox 140632998805504 in 28967 us
+ __  __ _                                  _   
+|  \/  (_) ___ _ __ ___  _ __   __ _ _   _| |_ 
+| |\/| | |/ __| '__/ _ \| '_ \ / _` | | | | __|
+| |  | | | (__| | | (_) | | | | (_| | |_| | |_ 
+|_|  |_|_|\___|_|  \___/|_| |_|\__,_|\__,_|\__|
+  Micronaut (v3.3.1)
+
+[36m22:59:12.708[0;39m [1;30m[main][0;39m [34mINFO [0;39m [35mio.micronaut.runtime.Micronaut[0;39m - Startup completed in 36ms. Server Running: http://localhost:35541
+time="2023-04-06T22:59:31-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-04-06T22:59:31-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

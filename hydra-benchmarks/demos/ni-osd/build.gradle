@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+group 'com.demo_ni_osd'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+shadowJar() {
+    configurations = [project.configurations.compileClasspath]
+    from sourceSets.main.output
+}
+
+ext {
+    jacksonVersion = '2.13.4'
+    dslJsonVersion = '1.9.9'
+    johnzonVersion = '1.2.19'
+    jmhVersion = '1.35'
+}
+
+dependencies {
+    implementation 'org.graalvm.sdk:graal-sdk:22.2.0'
+    
+    // Jackson
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonVersion}"
+    implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-afterburner', version: "${jacksonVersion}"
+    implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-blackbird', version: "${jacksonVersion}"
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonVersion}"
+    
+    // GSON
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10'
+
+    // DSL-json
+    implementation group: 'com.dslplatform', name: 'dsl-json-java8', version: "${dslJsonVersion}"
+    annotationProcessor group: 'com.dslplatform', name: 'dsl-json-java8', version: "${dslJsonVersion}"
+    
+    // jsoniter
+    implementation group: 'com.jsoniter', name: 'jsoniter', version: '0.9.23'
+    implementation group: 'org.javassist', name: 'javassist', version: '3.29.2-GA'
+    
+    // Kryo
+    implementation 'com.esotericsoftware:kryo:5.3.0'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'com.demo_ni_osd.DemoOSD',
+            'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+        )
+    }
+}

@@ -1,0 +1,6 @@
+2023/04/08 19:14:08.197943 Creating containerd client
+2023/04/08 19:14:08.198567 Created containerd client
+2023/04/08 19:14:10.301810 Successfully pulled docker.io/sergiyivan/large-scale-experiment:photons image with devmapper
+2023/04/08 19:14:10.596696 Successfully created task: benchvm-container for the container
+2023/04/08 19:14:10.608353 Successfully started the container task
+2023/04/08 19:14:28.266532 task exited with status: 143

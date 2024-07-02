@@ -1,0 +1,6 @@
+{
+  "value": {
+    "main": "main",
+    "code": "const timer = ms => new Promise( res => setTimeout(res, ms));\n\nasync function main(event) {\n  var sleep =  event.sleep;\n  return timer(sleep*1000);\n};\n"
+  }
+}

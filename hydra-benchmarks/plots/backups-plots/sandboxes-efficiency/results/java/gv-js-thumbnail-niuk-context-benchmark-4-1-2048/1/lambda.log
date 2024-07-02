@@ -1,0 +1,36 @@
+time="2023-03-25T20:40:36-04:00" level=info msg="Called startVMM(), setting up a VMM on /tmp/testtap.socket"
+time="2023-03-25T20:40:36-04:00" level=info msg="VMM logging disabled."
+time="2023-03-25T20:40:36-04:00" level=info msg="VMM metrics disabled."
+time="2023-03-25T20:40:36-04:00" level=info msg="refreshMachineConfiguration: [GET /machine-config][200] getMachineConfigurationOK  &{CPUTemplate:Uninitialized HtEnabled:0xc000024214 MemSizeMib:0xc000024208 VcpuCount:0xc000024200}"
+time="2023-03-25T20:40:36-04:00" level=info msg="PutGuestBootSource: [PUT /boot-source][204] putGuestBootSourceNoContent "
+time="2023-03-25T20:40:36-04:00" level=info msg="Attaching drive /tmp/test-proxy/polyglot-proxy.img, slot 1, root true."
+time="2023-03-25T20:40:36-04:00" level=info msg="Attached drive /tmp/test-proxy/polyglot-proxy.img: [PUT /drives/{drive_id}][204] putGuestDriveByIdNoContent "
+time="2023-03-25T20:40:36-04:00" level=info msg="Attaching NIC testtap (hwaddr DE:AD:BE:EF:BC:06) at index 1"
+2023-03-25T20:40:36.149240786 [anonymous-instance:main:WARN:src/vmm/src/builder.rs:599] Could not add serial input event to epoll: Error during epoll call: Operation not permitted (os error 1)
+time="2023-03-25T20:40:36-04:00" level=info msg="startInstance successful: [PUT /actions][204] createSyncActionNoContent "
+[    0.012169] dmi: Firmware registration failed.
+[    0.041052] zswap: default zpool zbud not available
+[    0.041300] zswap: pool creation failed
+Graalvisor boot time: 203 ms.
+Graalvisor listening on port 8080.
+Function thumbnail registered with context sandboxing in 381 ms
+[thread 43] New context sandbox 140541687758848 in 26 us
+[thread 36] Creating context org.graalvm.polyglot.Context@6cf2060c
+Mar 26, 2023 12:40:37 AM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libheif.so' via classloader
+Mar 26, 2023 12:40:37 AM com.criteo.vips.Vips loadLibraryFromJar
+WARNING: Could not load lib 'libspng.so' via classloader
+Mar 26, 2023 12:40:37 AM com.criteo.vips.Vips <clinit>
+INFO: JVips dependencies have been loaded from jar
+Mar 26, 2023 12:40:37 AM com.criteo.vips.Vips <clinit>
+INFO: Trying to load JVips
+[thread 46] New context sandbox 140541687758848 in 10 us
+[thread 40] Creating context org.graalvm.polyglot.Context@75bea369
+[thread 47] New context sandbox 140541687758848 in 15 us
+[thread 41] Creating context org.graalvm.polyglot.Context@236e4c65
+[thread 48] New context sandbox 140541687758848 in 20 us
+[thread 42] Creating context org.graalvm.polyglot.Context@2c30fb69
+[thread 49] New context sandbox 140541687758848 in 12 us
+[thread 45] Creating context org.graalvm.polyglot.Context@4fc9ead8
+time="2023-03-25T20:41:21-04:00" level=warning msg="firecracker exited: signal: terminated"
+time="2023-03-25T20:41:21-04:00" level=fatal msg="Wait returned an error 1 error occurred:\n\t* signal: terminated\n\n"

@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
+}
+
+shadowJar {
+    archiveFileName = "azure-dataset-1.0-all.jar"
+}
+
+group 'org.argo.benchmarks'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.5.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+  manifest {
+    attributes(
+      'Main-Class': 'org.graalvm.argo.dataset.DatasetProcessor'
+    )
+  }
+}

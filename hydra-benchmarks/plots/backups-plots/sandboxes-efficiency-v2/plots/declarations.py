@@ -1,0 +1,143 @@
+#!/usr/bin/python
+
+benchmark_labels = [
+    "jv/hw",
+    "jv/hash",
+    "jv/rest",
+    "jv/video",
+    "jv/classify",
+    "js/html",
+    "js/upload",
+    "js/thumbnail",
+    "js/hw",
+    "py/hw",
+    "py/html",
+    "py/thumbnail",
+    "py/upload",
+    "py/compress",
+    "py/video",
+#    "py/mst", # TODO - need to run for openwhisk
+]
+
+isolate_benchmark_path = [
+    "java/gv-hello-world-niuk-isolate-benchmark-8-1-2048",
+    "java/gv-file-hashing-niuk-isolate-benchmark-8-1-2048",
+    "java/gv-httprequest-niuk-isolate-benchmark-8-1-2048",
+    "java/gv-video-processing-niuk-isolate-benchmark-2-1-2048",
+    "java/gv-classify-niuk-isolate-benchmark-1-1-2048",
+    "java/gv-js-dynamic-html-niuk-context-benchmark-8-1-2048",
+    "java/gv-js-uploader-niuk-context-benchmark-8-1-2048",
+    "java/gv-js-thumbnail-niuk-context-benchmark-4-1-2048",
+    "java/gv-js-hello-world-niuk-context-benchmark-8-1-2048",
+    "java/gv-py-hello-world-niuk-context-benchmark-8-1-2048",
+    "java/gv-py-dynamic-html-niuk-context-benchmark-4-1-2048",
+    "java/gv-py-thumbnail-niuk-context-benchmark-2-1-2048",
+    "java/gv-py-uploader-niuk-context-benchmark-4-1-2048",
+    "java/gv-py-compression-niuk-context-benchmark-4-1-2048",
+    "java/gv-py-video-processing-niuk-context-benchmark-2-1-2048",
+#    "java/gv-py-mst-niuk-context-benchmark-2-1-2048",
+]
+
+process_benchmark_path = [
+    "java/gv-hello-world-niuk-process-benchmark-8-1-2048",
+    "java/gv-file-hashing-niuk-process-benchmark-8-1-2048",
+    "java/gv-httprequest-niuk-process-benchmark-8-1-2048",
+    "java/gv-video-processing-niuk-process-benchmark-2-1-2048",
+    "java/gv-classify-niuk-process-benchmark-1-1-2048",
+    "java/gv-js-dynamic-html-niuk-process-benchmark-8-1-2048",
+    "java/gv-js-uploader-niuk-process-benchmark-8-1-2048",
+    "java/gv-js-thumbnail-niuk-process-benchmark-4-1-2048",
+    "java/gv-js-hello-world-niuk-process-benchmark-8-1-2048",
+    "java/gv-py-hello-world-niuk-process-benchmark-8-1-2048",
+    "java/gv-py-dynamic-html-niuk-process-benchmark-4-1-2048",
+    "java/gv-py-thumbnail-niuk-process-benchmark-2-1-2048",
+    "java/gv-py-uploader-niuk-process-benchmark-4-1-2048",
+    "java/gv-py-compression-niuk-process-benchmark-4-1-2048",
+    "java/gv-py-video-processing-niuk-process-benchmark-2-1-2048",
+#    "java/gv-py-mst-niuk-process-benchmark-2-1-2048",
+]
+
+openwhisk_benchmark_path = [
+    "java/cr-hello-world-benchmark-1-1-256",
+    "java/cr-file-hashing-benchmark-1-1-256",
+    "java/cr-httprequest-benchmark-1-1-256",
+    "java/cr-video-processing-benchmark-1-1-1024",
+    "java/cr-classify-benchmark-1-1-1024",
+    "javascript/cr-dynamic-html-benchmark-1-1-256",
+    "javascript/cr-uploader-benchmark-1-1-256",
+    "javascript/cr-thumbnail-benchmark-1-1-512",
+    "javascript/cr-hello-world-benchmark-1-1-256",
+    "python/cr-hello-world-benchmark-1-1-256",
+    "python/cr-dynamic-html-benchmark-1-1-256",
+    "python/cr-thumbnail-benchmark-1-1-256",
+    "python/cr-uploader-benchmark-1-1-256",
+    "python/cr-compression-benchmark-1-1-256",
+    "python/cr-video-processing-benchmark-1-1-512",
+#    "python/cr-mst-benchmark-1-1-512",
+]
+
+photons_benchmark_path = [
+    "java/ph-hello-world-benchmark-8-1-2048",
+    "java/ph-file-hashing-benchmark-8-1-2048",
+    "java/ph-httprequest-benchmark-8-1-2048",
+    "java/ph-video-processing-benchmark-2-1-2048",
+    "java/ph-classify-benchmark-1-1-2048",
+]
+
+snapshot_benchmark_path = [
+    "java/gv-hello-world-niuk-snapshot-isolate-benchmark-1-1-256",
+    "java/gv-file-hashing-niuk-snapshot-isolate-benchmark-1-1-256",
+    "java/gv-httprequest-niuk-snapshot-isolate-benchmark-1-1-256",
+    "java/gv-video-processing-niuk-snapshot-isolate-benchmark-1-1-1024",
+    "java/gv-classify-niuk-snapshot-isolate-benchmark-1-1-2048",
+    "java/gv-js-dynamic-html-niuk-snapshot-context-benchmark-1-1-256",
+    "java/gv-js-uploader-niuk-snapshot-context-benchmark-1-1-256",
+    "java/gv-js-thumbnail-niuk-snapshot-context-benchmark-1-1-512",
+    "java/gv-js-hello-world-niuk-snapshot-context-benchmark-1-1-256",
+    "java/gv-py-hello-world-niuk-snapshot-context-benchmark-1-1-256",
+    "java/gv-py-dynamic-html-niuk-snapshot-context-benchmark-1-1-512",
+    "java/gv-py-thumbnail-niuk-snapshot-context-benchmark-1-1-1024",
+    "java/gv-py-uploader-niuk-snapshot-context-benchmark-1-1-512",
+    "java/gv-py-compression-niuk-snapshot-context-benchmark-1-1-512",
+    "java/gv-py-video-processing-niuk-snapshot-context-benchmark-1-1-2048",
+#    "java/gv-py-mst-niuk-snapshot-context-benchmark-1-1-1024",
+]
+
+# This is the memory used by each VM. For a 2GB slot, we can calculate the total memory and the estimated throughput.
+openwhisk_mem_factor = [
+    256,
+    256,
+    256,
+    1024,
+    1024,
+    256,
+    256,
+    512,
+    256,
+    256,
+    256,
+    256,
+    256,
+    256,
+    512,
+#    512,
+]
+
+snapshot_mem_factor = [
+    256,
+    256,
+    256,
+    1024,
+    2048,
+    256,
+    256,
+    512,
+    256,
+    256,
+    512,
+    1024,
+    512,
+    512,
+    2048,
+#   1024,
+]
