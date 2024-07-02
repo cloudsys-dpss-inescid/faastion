@@ -1,5 +1,0 @@
-[
-{ "name":"com.uploader.Uploader", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.uploader.Uploader", "allPublicMethods": true }
-
-]

@@ -1,6 +1,0 @@
-{
-  "value": {
-    "main": "main",
-    "code": "function main(args) {\n    return { \"result\": \"Hello world from js!\" };\n};\n"
-  }
-}

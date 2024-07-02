@@ -1,5 +1,0 @@
-[
-{ "name":"com.classify.Classify", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.classify.Classify", "allPublicMethods": true }
-
-]

@@ -1,5 +1,0 @@
-[
-{ "name":"com.dna.DNA", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.dna.DNA", "allPublicMethods": true }
-
-]

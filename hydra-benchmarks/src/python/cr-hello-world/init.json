@@ -1,8 +1,0 @@
-{
-   "value": {
-      "name" : "python-helloworld",
-      "main" : "main",
-      "binary" : false,
-      "code" : "def main(args): return {'result': 'Hello World!'}"
-   }
-}

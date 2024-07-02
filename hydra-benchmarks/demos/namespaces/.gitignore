@@ -1,6 +1,0 @@
-backup/
-results-netns/
-results-cgroup/
-results-chroot/
-*.pdf
-*.png

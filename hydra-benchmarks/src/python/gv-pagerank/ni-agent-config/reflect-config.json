@@ -1,5 +1,0 @@
-[
-{ "name":"com.pr.PageRank", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.pr.PageRank", "allPublicMethods": true }
-
-]

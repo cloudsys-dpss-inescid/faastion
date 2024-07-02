@@ -1,5 +1,0 @@
-[
-{ "name":"com.sleep.Sleep", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.sleep.Sleep", "allPublicMethods": true }
-
-]

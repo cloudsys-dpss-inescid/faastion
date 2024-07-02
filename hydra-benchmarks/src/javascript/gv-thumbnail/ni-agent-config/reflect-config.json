@@ -1,5 +1,0 @@
-[
-{ "name":"com.thumbnail.Thumbnail", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.thumbnail.Thumbnail", "allPublicMethods": true }
-
-]

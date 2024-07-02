@@ -1,6 +1,0 @@
-[
-{
-  "name":"GraalvisorGuestIsolateBenchmark",
-  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]}
-
-]

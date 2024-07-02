@@ -1,6 +1,0 @@
-{
-  "main": "main",
-  "dependencies": {
-    "mustache": "^4.2.0"
-  }
-}

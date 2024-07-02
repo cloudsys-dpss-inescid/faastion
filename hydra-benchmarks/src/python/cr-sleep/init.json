@@ -1,8 +1,0 @@
-{
-  "value": {
-    "name": "python-sleep",
-    "main": "main",
-    "binary": false,
-    "code": "import time\n\ndef main(args): return { 'result': str(time.sleep(int(args['time']))) }\n"
-  }
-}

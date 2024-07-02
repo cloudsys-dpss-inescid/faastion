@@ -1,5 +1,0 @@
-[
-{ "name":"com.videoprocessing.VideoProcessing", "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]},
-{ "name":"com.videoprocessing.VideoProcessing", "allPublicMethods": true }
-
-]
