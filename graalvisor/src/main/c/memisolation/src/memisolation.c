@@ -775,33 +775,33 @@ void *managed_supervisor()
 
     while (1)
     {
-            poll(fds, MAX_FDS, 0); // polling multiple fds
+        poll(fds, MAX_FDS, 0); // polling multiple fds
 
-			for (int i = 0; i < MAX_FDS; ++i) {
-        		if (fds[i].revents & POLLIN) {
-            		fprintf(stderr,"File descriptor %d has data to read\n", fds[i].fd);
-					memset(req, 0, sizes.seccomp_notif);
-                // Accepting the seccomp unotify request
-                if (ioctl(fds[i].fd, SECCOMP_IOCTL_NOTIF_RECV, req) == -1){
-                    err(EXIT_FAILURE, "\tioctl-SECCOMP_IOCTL_NOTIF_RECV");
-                }
+		for (int i = 0; i < MAX_FDS; ++i) {
+        	if (fds[i].revents & POLLIN) {
+        		fprintf(stderr,"File descriptor %d has data to read\n", fds[i].fd);
+				memset(req, 0, sizes.seccomp_notif);
+				// Accepting the seccomp unotify request
+				if (ioctl(fds[i].fd, SECCOMP_IOCTL_NOTIF_RECV, req) == -1){
+					err(EXIT_FAILURE, "\tioctl-SECCOMP_IOCTL_NOTIF_RECV");
+				}
 
-                if (!cookie_is_valid(fds[i].fd, req->id)){
-                        perror("ioctl(SECCOMP_IOCTL_NOTIF_ID_VALID)");
-                        continue;
-                }
+				if (!cookie_is_valid(fds[i].fd, req->id)){
+					perror("ioctl(SECCOMP_IOCTL_NOTIF_ID_VALID)");
+					continue;
+				}
 
-                resp->id = req->id;
-                resp->error = resp->val = 0;
-                // Responding to the request with continue flag
-                resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+				resp->id = req->id;
+				resp->error = resp->val = 0;
+				// Responding to the request with continue flag
+				resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
 
-                // Sending the request to the respective fd
-                if (ioctl(fds[i].fd, SECCOMP_IOCTL_NOTIF_SEND, resp) == -1){
-                    perror("ioctl-SECCOMP_IOCTL_NOTIF_SEND");
-                }
-        	}
-    	}
+				// Sending the request to the respective fd
+				if (ioctl(fds[i].fd, SECCOMP_IOCTL_NOTIF_SEND, resp) == -1){
+					perror("ioctl-SECCOMP_IOCTL_NOTIF_SEND");
+				}
+    		}
+		}
     }
     free(req);
     free(resp);
