@@ -2,6 +2,13 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+# GCC
+CC=gcc
+# Musl GCC
+export PATH=$ARGO_HOME/resources/x86_64-linux-musl-native/bin:$PATH
+CC=x86_64-linux-musl-cc
+LIBC_OPTION="--libc=musl"
+
 function run_hotspot {
         $JAVA_HOME/bin/java \
                 -cp build/libs/sleep-1.0-all.jar \
@@ -16,6 +23,7 @@ function build_ni {
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 		--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
+		$LIBC_OPTION \
 		-H:ConfigurationFileDirectories=../ni-agent-config \
 		-H:+ReportExceptionStackTraces \
 		$NI_BIN_OPTS \
