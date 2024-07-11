@@ -1,5 +1,6 @@
 --local function_names = {"factors", "matmul", "httprequest", "nativehw", "sleep", "hw"}
-local function_names = {"hw", "sleep", "httprequest", "factors"}
+--local function_names = {"hw", "sleep", "httprequest", "factors"}
+local function_names = {"hw", "sleep", "httprequest"}
 local function_index = 1
 
 request = function()

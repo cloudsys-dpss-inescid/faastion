@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function DIR {
+    echo "$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+}
+
 # Function to register Java applications in GraalVM
 function gv_java_native_hw_n {
     APP_LANG=java
@@ -31,15 +35,23 @@ function gv_java_native_matrix {
     echo '{"name":"matrixmul","async":"false","cached":"true","arguments":""}' > /tmp/payload.post
 }
 
+function start_webserver {
+    cd $(DIR)/webserver
+    ./webserver.sh &> /dev/null &
+    cd -
+}
+
 # Function to start the Graalvisor
 function start_svm {
     export lambda_timestamp="$(date +%s%N | cut -b1-13)"
     export lambda_port="8081"
     export LD_LIBRARY_PATH=$ARGO_HOME/graalvisor/build/libs:$LD_LIBRARY_PATH
     export LD_PRELOAD=$ARGO_HOME/graalvisor/build/libs/libpreload.so
+
     # Start Graalvisor
     $ARGO_HOME/graalvisor/build/native-image/polyglot-proxy &
     wait
+    unset LD_PRELOAD
 }
 
 function warmup {

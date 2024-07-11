@@ -1,3 +1,7 @@
+function DIR {
+    echo "$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+}
+
 function gv_java_native_factors {
     APP_LANG=java
     APP_NAME=gv-native-factorization
@@ -58,13 +62,17 @@ function gv_java_hw {
     echo '{"name":"hw","async":"false","cached":"true","arguments":""}' > /tmp/payload6.post
 }
 
+source $(DIR)/../shared.sh
+
+start_webserver
+
 export SANDBOX=isolate
 
-gv_java_native_factors
-gv_java_native_matmul
+# gv_java_native_factors
+# gv_java_native_matmul
+# gv_java_native_hw
 gv_java_httprequest
 gv_java_sleep
-gv_java_native_hw
 gv_java_hw
 
 wrk -t$1 -c$1 -d30s -s native.lua http://127.0.0.1:8080

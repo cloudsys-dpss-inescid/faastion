@@ -253,7 +253,7 @@ function setup {
 
 function start_webserver {
     cd $(DIR)/webserver
-    ./webserver.sh &> $LOGS_HOME/webserver.log &
+    $(DIR)/webserver.sh &> $LOGS_HOME/webserver.log &
     cd -
 }
 
