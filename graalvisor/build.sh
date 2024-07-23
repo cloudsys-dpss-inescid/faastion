@@ -28,6 +28,8 @@ function build_memisolation {
             $CC -c -I"$MEM_DIR" -fPIC -o $LIB_DIR/mansupervisor.o $MEM_DIR/utils/mansupervisor.c
             $CC $CFLAGS -o $LIB_DIR/libmemiso.so $LIB_DIR/mansupervisor.o $LIB_DIR/appmap.o $LIB_DIR/helpers.o $LIB_DIR/memisolation.o -lm
 
+            // TODO - libc_callgate compilation.
+
             # LD_PRELOAD library
             $CC -I"$MEM_DIR" $CFLAGS -o $LIB_DIR/libpreload.so $MEM_DIR/preload.c -L$LIB_DIR -lmemiso
 

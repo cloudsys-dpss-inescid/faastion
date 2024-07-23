@@ -114,7 +114,7 @@ ignore = [
 # Preamble.
 print('''
 #define RTLD_NEXT    ((void *)-1)
-#include "libc_callgate_pkru.h"''')
+#include <pkru.h>''')
 
 for line in sys.stdin:
     # Ignore functions with function pointer arguments.

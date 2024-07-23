@@ -3,7 +3,7 @@
 #include "stdio_impl.h"
 #include "libc.h"
 #include "lock.h"
-#include <pkru.h>
+#include "pkru.h"
 #include <sys/mman.h>
 #include <string.h>
 #include <stddef.h>
