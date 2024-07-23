@@ -7,38 +7,14 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 #include <sys/mman.h>
-#include "libc_callgate_pkru.h"
+#include <pkru.h>
 #include "shared_malloc.h"
-
-// Domain IDs from 0 to 15. Domain 0 should not be used (domain 0 uses musl's malloc).
-#define DOMAINS 16
 
 // Size of each memory pool.
 #define POOL_SIZE 256*1048576 // 256 MBs
 
 // Memory pools used in shared malloc.
 static struct sh_memory_pool* pools[DOMAINS] = {0};
-
-// Convert PKRU to domain (used in shared malloc). // TODO - zero first, -1 in the end.
-#define PKRU_TO_DOMAIN(pkru) (\
-    (pkru == 0x00000000) ? 0 : \
-    (pkru == 0x55555551) ? 1 : \
-    (pkru == 0x55555545) ? 2 : \
-    (pkru == 0x55555515) ? 3 : \
-    (pkru == 0x55555455) ? 4 : \
-    (pkru == 0x55555155) ? 5 : \
-    (pkru == 0x55554555) ? 6 : \
-    (pkru == 0x55551555) ? 7 : \
-    (pkru == 0x55545555) ? 8 : \
-    (pkru == 0x55515555) ? 9 : \
-    (pkru == 0x55455555) ? 10 : \
-    (pkru == 0x55155555) ? 11 : \
-    (pkru == 0x54555555) ? 12 : \
-    (pkru == 0x51555555) ? 13 : \
-    (pkru == 0x45555555) ? 14 : \
-    (pkru == 0x15555555) ? 15 : \
-    -1 \
-)
 
 int fprintf(FILE* restrict stream, const char* restrict fmt, ...) {
     int pkru = __rdpkru();

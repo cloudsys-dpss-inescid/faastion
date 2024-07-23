@@ -3,9 +3,11 @@
 #include "stdio_impl.h"
 #include "libc.h"
 #include "lock.h"
+#include <pkru.h>
 #include <sys/mman.h>
 #include <string.h>
 #include <stddef.h>
+
 
 static void dummy_0()
 {
@@ -402,27 +404,7 @@ fail:
 
 #define ARCH_SET_FS   0x1002
 #define ARCH_GET_FS   0x1003
-#define DOMAINS 16 // Domain IDs from 0 to 15.
-// Domain to PKRU conversion table.
-#define DOMAIN_TO_PKRU(domain) (\
-    (domain == 0) ? 0x0 : \
-    (domain == 1) ? 0x55555551 : \
-    (domain == 2) ? 0x55555545 : \
-    (domain == 3) ? 0x55555515 : \
-    (domain == 4) ? 0x55555455 : \
-    (domain == 5) ? 0x55555155 : \
-    (domain == 6) ? 0x55554555 : \
-    (domain == 7) ? 0x55551555 : \
-    (domain == 8) ? 0x55545555 : \
-    (domain == 9) ? 0x55515555 : \
-    (domain == 10) ? 0x55455555 : \
-    (domain == 11) ? 0x55155555 : \
-    (domain == 12) ? 0x54555555 : \
-    (domain == 13) ? 0x51555555 : \
-    (domain == 14) ? 0x45555555 : \
-    (domain == 15) ? 0x15555555 : \
-    -1 \
-)
+
 // Thread spaces are composed of three parts: Stack, TLS, TCB (check pthread_create.c in musl libc).
 static void* thread_spaces;
 // Saves orig stack pointers to restore after leaving the sandbox.
@@ -433,37 +415,6 @@ static void* orig_pthread[DOMAINS];
 #define STACK_SIZE        524288  // 512 KB
 #define THREAD_SPACE(domain) ((void*) (((size_t)thread_spaces) + domain * THREAD_SPACE_SIZE))
 #define STACK(domain)        ((void*) (((size_t)thread_spaces) + domain * THREAD_SPACE_SIZE + STACK_SIZE))
-
-#define read_stackptr(ptr) \
-  do { \
-    __asm__ volatile("movq %%rsp, %0" : "+m" (ptr)); \
-  } while(0)
-
-#define write_stackptr(ptr)					\
-  do {									\
-    __asm__ volatile("movq %0, %%rsp\n" : "=m" (ptr));	\
-  } while(0)
-
-#define switch_stack(newstackloc, oldstackloc)					\
-  do {									\
-    read_stackptr(oldstackloc);					\
-    char * newstack = (char*) newstackloc;       \
-    write_stackptr(newstack);	\
-  } while(0)
-
-#define __wrpkru(PKRU_ARG)			    \
-  do {									\
-    __asm__ volatile ("xor %%ecx, %%ecx\n\txor %%edx, %%edx\n\tmov %0,%%eax\n\t.byte 0x0f,0x01,0xef\n\t" \
-	      : : "n" (PKRU_ARG)					\
-	      :"eax", "ecx", "edx");			\
-  } while (0)
-
-#define __wrpkrumem(PKRU_ARG)			    \
-  do {									\
-    __asm__ volatile ("xor %%ecx, %%ecx\n\txor %%edx, %%edx\n\tmov %0,%%eax\n\t.byte 0x0f,0x01,0xef\n\t" \
-	      : : "m" (PKRU_ARG)					\
-	      :"eax", "ecx", "edx");			\
-  } while (0)
 
 int __pthread_sandbox_init(void)
 {

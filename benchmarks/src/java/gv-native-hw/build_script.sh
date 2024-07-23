@@ -2,34 +2,24 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+# GCC
+CC=gcc
+# Musl GCC
+export PATH=$ARGO_HOME/resources/x86_64-linux-musl-native/bin:$PATH
+CC=x86_64-linux-musl-cc
+LIBC_OPTION="--libc=musl"
+
 GRAALVISOR_HOME=$ARGO_HOME/graalvisor
+JAVASSIST_HOME=$ARGO_HOME/native-execution/javassist
 
 JAVA_AGENT="$JAVASSIST_HOME/target/JavassistWrapper-1.0-jar-with-dependencies.jar"
-
 JNI_INCLUDE="-I$DEF_JAVA_HOME/include -I$DEF_JAVA_HOME/include/linux"
-ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
-CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
-CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
-SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+CFLAGS="-Wall -g -fPIC $JNI_INCLUDE"
+SFLAGS="$-O0 -fno-inline -I$ARGO_HOME/musl/include -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
 
 BENCHMARK_NAME="nativehw"
 SNIPPETS_DIR="$DIR/build/snippets"
-
-function run_hotspot {
-	rm -rf config-dir
-	CLASS_PATH="classes/java/main"
-
-	cd build
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
-	$JAVA_HOME/bin/java \
-			-Djava.awt.headless=true \
-			-agentlib:native-image-agent=config-output-dir=config-dir/ \
-			-cp $CLASS_PATH:libs/native-hw-1.0-all.jar \
-			-Djava.library.path=$LD_LIBRARY_PATH \
-			com.jni.HelloJNI
-}
 
 function build_ni {
 	CLASS_PATH="classes/java/main"
@@ -43,15 +33,11 @@ function build_ni {
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 			--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
+			$LIBC_OPTION \
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
 			-H:Name=lib$BENCHMARK_NAME
-}
-
-function build_ni_standalone {
-	NI_BIN_OPTS="com.jni.HelloJNI"
-	build_ni
 }
 
 function build_ni_sharedlibrary {
@@ -64,21 +50,17 @@ function build_java_agent {
 }
 
 function build_native_library {
-	musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
-}
-
-function build_native_exec {
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
-	for file in "$SNIPPETS_DIR"/*.c; do
-		name=$(basename "$file" .c)
-		gcc $SFLAGS_PROC -o $GRAALVISOR_HOME/build/libs/$name-proc $file -L$GRAALVISOR_HOME/build/libs -lmemiso -Wl,-rpath,$GRAALVISOR_HOME/build/libs
-	done
+	$CC -static $CFLAGS -shared -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
 }
 
 function build_snippets {
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
 	for file in "$SNIPPETS_DIR"/*.c; do
 		name=$(basename "$file" .c)
-		gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib$name.so $file -L$GRAALVISOR_HOME/build/libs -lmemiso
+		# LPI
+		$CC $CFLAGS $SFLAGS -o $GRAALVISOR_HOME/build/libs/$name-proc $file -L$GRAALVISOR_HOME/build/libs -lmemiso -Wl,-rpath,$GRAALVISOR_HOME/build/libs
+		# Actual snippet
+		$CC $CFLAGS $SFLAGS -shared -o $GRAALVISOR_HOME/build/libs/lib$name.so $file -L$GRAALVISOR_HOME/build/libs -lmemiso
 	done
 }
 
@@ -98,7 +80,6 @@ function manipulate_bytecode {
 			$ENTRYPOINT
 }
 
-
 if [ -z "$ARGO_HOME" ]
 then
 	echo "Please set ARGO_HOME first. It should point to a checkout of github.com/graalvm/argo."
@@ -108,12 +89,6 @@ fi
 if [ -z "$JAVA_HOME" ]
 then
 	echo "Please set JAVA_HOME first. It should be a GraalVM with native-image available."
-	exit 1
-fi
-
-if [ -z "$JAVASSIST_HOME" ]
-then
-	echo "Please set JAVASSIST_HOME first."
 	exit 1
 fi
 
@@ -134,9 +109,6 @@ build_native_library
 
 # Manipulate app's bytecode.
 manipulate_bytecode
-
-# Build native executable
-build_native_exec
 
 # Build generated snippets.
 build_snippets

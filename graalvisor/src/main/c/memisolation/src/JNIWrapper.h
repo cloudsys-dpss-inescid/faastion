@@ -16,6 +16,7 @@
   #define JNI_DBM(...)
 #endif
 
+// MAYBE NEEDS TO BE A PER THREAD VARIABLE
 extern const char* (JNICALL *GetStringUTFChars)(JNIEnv *env, jstring str, jboolean *isCopy);
 extern void (JNICALL *ReleaseStringUTFChars)(JNIEnv *env, jstring str, const char* chars);
 

@@ -158,14 +158,12 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("#include <fcntl.h>\n");
 			writer.write("#include <string.h>\n");
 			writer.write("#include <stdio.h>\n");
+			writer.write("#include <pkru.h>\n");
 			if (jniTypes.length > 0) {
 				writer.write("#include \"JNIWrapper.h\"\n");
 			}
 			writer.write("#include \"" + className + ".h\"\n\n");
 
-			writer.write("// Erim includes\n");
-			writer.write("#include <erim.h>\n");
-			writer.write("#include <common.h>\n\n");
 			writer.write("#define BUFFER_SIZE 1024\n");
 			/*
 			 * TODO: TRY TO MAKE THIS WORK!!
@@ -194,17 +192,17 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t}else{\n");
 			writer.write("\t/* Switch to new stack */\n");
 			writer.write("\tSNI_DBM(\"[s]: switching to new stack...\");\n");
-			writer.write("\tERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);\n");
+			writer.write("\tswitch_stack(DOMAIN_STACK_LOC(domain), regular);\n");
 
 			if (returnJniType.equals("void")) {
 				writer.write("\twrapper(" + args + ");\n");
-				writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+				writer.write("\twrite_stackptr(regular);\n\n");
 
 				writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
 				writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
 			} else {
 				writer.write("\t" + returnJniType + " res = wrapper(" + args + ");");
-				writer.write("\tERIM_SWITCH_BACK(regular);\n\n");
+				writer.write("\twrite_stackptr(regular);\n\n");
 
 				writer.write("\tSNI_DBM(\"[s]: application terminated!\");\n");
 				writer.write("\treset_env(\"" + System.getenv("BENCHMARK_NAME") + "\", 0);\n");
@@ -240,8 +238,7 @@ public class NativeRedirection extends CodeDumper {
 			}
 
 			writer.write("\tSNI_DBM(\"[s]: handler's ready, changing domain...\");\n");
-			// writer.write("\t__wrpkrumem(ERIM_DOMAIN(domain));\n");
-			writer.write("\t__wrpkru(0);\n");
+			writer.write("\t__wrpkrumem(DOMAIN_TO_PKRU(domain));\n");
 			if (returnJniType.equals("void")) {
 				writer.write("\t" + mc);
 				writer.write("\t__wrpkru(0);\n");

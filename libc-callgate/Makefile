@@ -17,7 +17,7 @@ run:
 run-gdb:
 	setarch -R gdb -x gdb-commands.txt --args env LD_PRELOAD=./libc_callgate.so ./test
 
-libc_callgate.so: libc_callgate.c libc_api_processor.py libc_callgate_pkru.h
+libc_callgate.so: libc_callgate.c libc_api_processor.py
 	find /usr/local/musl/include/ -type f \
 		| sed 's/\/usr\/local\/musl\/include\///g' \
 		| grep -v "sys/kd.h" \
@@ -33,7 +33,7 @@ libc_callgate.so: libc_callgate.c libc_api_processor.py libc_callgate_pkru.h
 		| tr -s ' ' \
 		| cut -d' ' -f5- \
 		| python libc_api_processor.py >> libc_callgate_generated.c
-	$(CC) $(CFLAGS) -fPIC -o libc_callgate.o -c libc_callgate.c
+	$(CC) $(CFLAGS) -fPIC -I$(ARGO_HOME)/musl/include -o libc_callgate.o -c libc_callgate.c
 	$(CC) $(CFLAGS) -fPIC -o shared_malloc.o -c shared_malloc.c
 	$(CC) $(CFLAGS) -fPIC -o libc_callgate_generated.o -c libc_callgate_generated.c
 	$(CC) $(CFLAGS) -shared -fPIC -o libc_callgate.so libc_callgate.o shared_malloc.o libc_callgate_generated.o -ldl
