@@ -16,6 +16,58 @@
 #include <poll.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/types.h>
+
+typedef struct Node {
+    pid_t pid;
+    struct Node* next;
+} Node;
+
+Node* create_node(pid_t pid) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->pid = pid;
+    newNode->next = NULL;
+    return newNode;
+}
+
+void add_node(Node** head, pid_t pid) {
+    Node* newNode = create_node(pid);
+    newNode->next = *head;
+    *head = newNode;
+}
+
+void remove_node(Node** head, pid_t pid) {
+    Node* current = *head;
+    Node* prev = NULL;
+
+    while (current != NULL) {
+        if (current->pid == pid) {
+            if (prev == NULL) {
+                // Node to be removed is the head
+                *head = current->next;
+            } else {
+                // Node to be removed is in the middle or end
+                prev->next = current->next;
+            }
+            free(current);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+}
+
+void print_list(Node* head) {
+    Node* current = head;
+    while (current != NULL) {
+        printf("PID: %d\n", current->pid);
+        current = current->next;
+    }
+}
 
 // Request to execute by the worker domain thread.
 typedef struct request {
@@ -43,8 +95,14 @@ typedef struct worker {
 
 // Arenas to exchange data between domains.
 static void* arenas;
-// Saves the tid currently using each domain.
-static pid_t* thread_domain;
+// Saves the tids currently using each domain.
+static Node* thread_domains[DOMAINS] = {NULL};
+static pthread_mutex_t domain_mutexes[DOMAINS];
+void init_mutexes() {
+    for (int i = 0; i < DOMAINS; i++) {
+        pthread_mutex_init(&domain_mutexes[i], NULL);
+    }
+}
 // Seccomp thread that intercepts system calls.
 static pthread_t seccomp_thread;
 // Threads that will be running functions inside domains.
@@ -55,7 +113,7 @@ static int seccomp_fd = 0;
 #define ARENA(domain) ((void*) (((char*)arenas) + domain * getpagesize()))
 
 
-static void protect_library(const char* library, int pkey)
+void protect_library(const char* library, int pkey)
 {
     FILE* mapsFile = fopen("/proc/self/maps", "r");
     if (!mapsFile) {
@@ -84,7 +142,7 @@ static void protect_library(const char* library, int pkey)
         size_t size = finish - start;
 
         pkey_mprotect(address, size, prot_flags, pkey);
-        fprintf(stderr, "Moving to domain %d: %s", pkey, line);
+        fprintf(stderr, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
     }
 
     fclose(mapsFile);
@@ -177,9 +235,9 @@ void handle_syscalls(int fd)
                 resp->error = resp->val < 0 ? -errno : 0;
                 resp->flags = 0;
                 int domain = get_thread_domain(req->pid);
-                fprintf(stderr, "thread id %d domain %d mmap: memory %p size %lu!\n",
-                    req->pid, domain, (void*) resp->val, (size_t) args[1]);
                 if (domain != 0) {
+                    fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
+                        req->pid, domain, (void*) resp->val, (size_t) args[1]);
                     if(pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], domain) == -1) {
                         fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n", (void*) resp->val, (size_t) args[1]);
                     }
@@ -212,6 +270,11 @@ void* monitor(void* arg)
 void* worker(void* arg)
 {
     int domain = (int) ((long) arg);
+    fprintf(stderr, "Worker for domain %d is running...\n", domain);
+    
+    // Setting the thread domain is needed so that the monitor knowns which domain to use.
+    set_thread_domain(gettid(), domain);
+
     pthread_mutex_t* lock = &(worker_threads[domain].lock);
     pthread_cond_t* cond = &(worker_threads[domain].cond);
     pthread_mutex_init(lock, NULL);
@@ -221,15 +284,22 @@ void* worker(void* arg)
         pthread_mutex_lock(lock);
         pthread_cond_wait(cond, lock);
         pthread_mutex_unlock(lock);
-        // TODO - jump to target domain.
-        // TODO - call user function
-        // TODO - go back to domain zero.
+        fprintf(stderr, "Worker thread for domain %d notify\n", domain);
+        request_t* request = (request_t*) ARENA(domain);
+
+        // Changing domain and calling the function.
+        __wrpkrumem(DOMAIN_TO_PKRU(domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
+        request->fun(request->arg, request->arg_size, &(request->ret), &(request->ret_size));
+        __wrpkru(DEFAULT_DOMAIN);
+
         pthread_cond_broadcast(cond);
     }
 }
 
 int pkru_sandbox_init(void)
 {
+    init_mutexes();
+
 	arenas = mmap(0, DOMAINS * getpagesize(), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
     if (arenas == MAP_FAILED) {
         fprintf(stderr, "error: failed to mmap arenas\n");
@@ -249,13 +319,6 @@ int pkru_sandbox_init(void)
         fprintf(stdout, "Protected arena at %p - %p with pkey %d\n", ARENA(i), ((char*)ARENA(i) + getpagesize()), i);
     }
 
-    thread_domain = (pid_t*) malloc(DOMAINS * sizeof(pid_t));
-    if (thread_domain == NULL) {
-        fprintf(stderr, "error: failed to malloc memory for the thread domain table\n");
-        return -1;
-    }
-    memset(thread_domain, 0, DOMAINS * sizeof(pid_t));
-
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
 
@@ -271,37 +334,18 @@ int pkru_sandbox_init(void)
 
     // We start from domain 2 since domain 1 is reserved for the loader library.
     for (int i = 2; i < DOMAINS; i++) {
-        // Setting the thread domain is needed so that the monitor knowns which domain to use.
+        // Launching the worker threads.
         set_thread_domain(gettid(), i);
-        // Launching the worker thread.
-        //pthread_create(&worker_threads[i], NULL, worker, (void*) i);
+        pthread_create(&(worker_threads[i].thread), NULL, worker, (void*) i);
+        del_thread_domain(gettid(), i);
     }
-    set_thread_domain(gettid(), 0);
-
+    set_thread_domain(gettid(), DEFAULT_DOMAIN);
 
 	return 0;
 }
 
-// TODO - this function will be deleted and replaced by the worker function.
-void* trampoline(void* arg)
-{
-    int* domain = (int*) arg;
-    request_t* request = (request_t*) ARENA(*domain);
-
-    // Adding thread to domain.
-    set_thread_domain(gettid(), *domain);
-
-    // Changing domain and calling the function.
-    __wrpkrumem(DOMAIN_TO_PKRU(*domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
-    request->fun(request->arg, request->arg_size, &(request->ret), &(request->ret_size));
-    __wrpkru(DEFAULT_DOMAIN);
-    return NULL;
-}
-
 int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void*, size_t, void**, size_t*), void* arg, size_t arg_size)
 {
-    pthread_t trampolier;
-
     // The domain arena is setup in the following way:
     // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
     request_t* request = (request_t*) ARENA(domain);
@@ -311,11 +355,16 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 
     // Copying the function call argument to arena.
     memcpy(request->arg, arg, arg_size);
-
-    // Creating and waiting for worker thread. // TODO - we should have pre-created this thread.
-    pthread_create(&trampolier, NULL, trampoline, &domain); // TODO - add thread to list of threads in domain.
-    pthread_join(trampolier, NULL);
-
+     
+    pthread_mutex_t* lock = &(worker_threads[domain].lock);
+    pthread_cond_t* cond = &(worker_threads[domain].cond);
+    
+    pthread_cond_broadcast(cond);
+    pthread_mutex_lock(lock);
+    pthread_cond_wait(cond, lock);
+    pthread_mutex_unlock(lock);
+    fprintf(stderr, "User thread notify\n");
+   
     // Copying return value to arena and setting ret and ret_size pointers.
     *ret = (void*) (((char*) request->arg) + arg_size);
     *ret_size = request->ret_size;
@@ -327,25 +376,43 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 int get_thread_domain(pid_t tid)
 {
     for (int i = 0; i < DOMAINS; i++) {
-        if (thread_domain[i] == tid) {
-            return i;
+        pthread_mutex_lock(&domain_mutexes[i]);
+        Node* current = thread_domains[i];
+        while (current != NULL) {
+            if (current->pid == tid) {
+                pthread_mutex_unlock(&domain_mutexes[i]);
+                return i;
+            }
+            current = current->next;
         }
+        pthread_mutex_unlock(&domain_mutexes[i]);
     }
     return 0;
 }
 
-// TODO - make it thread safe.
 void set_thread_domain(pid_t tid, int domain)
 {
-    thread_domain[domain] = tid; // TODO - this will overwrite the previous one...
+    pthread_mutex_t mutex = domain_mutexes[domain];
+    pthread_mutex_lock(&mutex);
+    add_node(&thread_domains[domain], tid);
+    pthread_mutex_unlock(&mutex);
+}
+
+void del_thread_domain(pid_t tid, int domain)
+{
+    pthread_mutex_t mutex = domain_mutexes[domain];
+    pthread_mutex_lock(&mutex);
+    remove_node(&thread_domains[domain], tid);
+    pthread_mutex_unlock(&mutex);
 }
 
 // TODO - make it thread safe.
 int book_available_domain(pid_t tid)
 {
-    for (int i = 3; i < DOMAINS; i++) {
-        if (thread_domain[i] == 0) {
-            thread_domain[i] = tid;
+    for (int i = 2; i < DOMAINS; i++) {
+        if (thread_domains[i] == NULL) {
+            set_thread_domain(tid, i);
+            fprintf(stdout, "Booked domain %d for thread %d\n", i, tid);
             return i;
         }
     }

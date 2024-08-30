@@ -69,7 +69,11 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 int get_thread_domain(pid_t tid);
 // Adds a thread with the specified tid to a particular domain.
 void set_thread_domain(pid_t tid, int domain);
+// Removes a thread with the specified tid to a particular domain.
+void del_thread_domain(pid_t tid, int domain);
 // Books an available domain for a thread. Zero is returned in case all domains are used.
 int book_available_domain(pid_t tid);
+
+void protect_library(const char* library, int pkey);
 
 #endif
