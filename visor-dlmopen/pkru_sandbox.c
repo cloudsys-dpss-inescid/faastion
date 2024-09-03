@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
+#include "list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,57 +18,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
-
-typedef struct Node {
-    pid_t pid;
-    struct Node* next;
-} Node;
-
-Node* create_node(pid_t pid) {
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    if (newNode == NULL) {
-        printf("Memory allocation failed\n");
-        exit(1);
-    }
-    newNode->pid = pid;
-    newNode->next = NULL;
-    return newNode;
-}
-
-void add_node(Node** head, pid_t pid) {
-    Node* newNode = create_node(pid);
-    newNode->next = *head;
-    *head = newNode;
-}
-
-void remove_node(Node** head, pid_t pid) {
-    Node* current = *head;
-    Node* prev = NULL;
-
-    while (current != NULL) {
-        if (current->pid == pid) {
-            if (prev == NULL) {
-                // Node to be removed is the head
-                *head = current->next;
-            } else {
-                // Node to be removed is in the middle or end
-                prev->next = current->next;
-            }
-            free(current);
-            return;
-        }
-        prev = current;
-        current = current->next;
-    }
-}
-
-void print_list(Node* head) {
-    Node* current = head;
-    while (current != NULL) {
-        printf("PID: %d\n", current->pid);
-        current = current->next;
-    }
-}
 
 // Request to execute by the worker domain thread.
 typedef struct request {
@@ -377,13 +327,9 @@ int get_thread_domain(pid_t tid)
 {
     for (int i = 0; i < DOMAINS; i++) {
         pthread_mutex_lock(&domain_mutexes[i]);
-        Node* current = thread_domains[i];
-        while (current != NULL) {
-            if (current->pid == tid) {
-                pthread_mutex_unlock(&domain_mutexes[i]);
-                return i;
-            }
-            current = current->next;
+        if (lookup_node(thread_domains[i], tid)) {
+            pthread_mutex_unlock(&domain_mutexes[i]);
+            return i;    
         }
         pthread_mutex_unlock(&domain_mutexes[i]);
     }
