@@ -49,42 +49,6 @@ static worker_t worker_threads[DOMAINS];
 // Seccomp fd to be used by the seccomp thread.
 static int seccomp_fd = 0;
 
-
-void protect_library(const char* library, int pkey)
-{
-    FILE* mapsFile = fopen("/proc/self/maps", "r");
-    if (!mapsFile) {
-        fprintf(stderr, "Failed to open /proc/self/maps\n");
-        exit(EXIT_FAILURE);
-    }
-
-    char line[256];
-    while (fgets(line, sizeof(line), mapsFile)) {
-        if (strstr(line, library) == NULL) {
-            continue;
-        }
-
-        unsigned long start, finish;
-        char r, w, x;
-
-        sscanf(line, "%lx-%lx %c%c%c",
-            &start, &finish, &r, &w, &x);
-
-        int prot_flags = 0;
-        if (r == 'r') prot_flags |= PROT_READ;
-        if (w == 'w') prot_flags |= PROT_WRITE;
-        if (x == 'x') prot_flags |= PROT_EXEC;
-
-        void * address = (void*)start;
-        size_t size = finish - start;
-
-        pkey_mprotect(address, size, prot_flags, pkey);
-        fprintf(stderr, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
-    }
-
-    fclose(mapsFile);
-}
-
 int install_seccomp_filter()
 {
     struct sock_filter filter[] = {
@@ -204,6 +168,34 @@ void* monitor(void* arg)
     return NULL;
 }
 
+int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void*, size_t, void**, size_t*), void* arg, size_t arg_size)
+{
+    // The domain arena is setup in the following way:
+    // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
+    request_t* request = (request_t*) get_arena(domain);
+    request->arg = (void*) ((char*)request + sizeof(request_t));
+    request->arg_size = arg_size;
+    request->fun = fun;
+
+    // Copying the function call argument to arena.
+    memcpy(request->arg, arg, arg_size);
+     
+    pthread_mutex_t* lock = &(worker_threads[domain].lock);
+    pthread_cond_t* cond = &(worker_threads[domain].cond);
+    
+    pthread_cond_broadcast(cond);
+    pthread_mutex_lock(lock);
+    pthread_cond_wait(cond, lock);
+    pthread_mutex_unlock(lock);
+    fprintf(stderr, "User thread notify\n");
+   
+    // Copying return value to arena and setting ret and ret_size pointers.
+    *ret = (void*) (((char*) request->arg) + arg_size);
+    *ret_size = request->ret_size;
+    memcpy(*ret, request->ret, request->ret_size);
+	return 0;
+}
+
 void* worker(void* arg)
 {
     int domain = (int) ((long) arg);
@@ -232,6 +224,8 @@ void* worker(void* arg)
         pthread_cond_broadcast(cond);
     }
 }
+
+void protect_library(const char* library, int pkey);
 
 int pkru_sandbox_init(void)
 {
@@ -263,30 +257,37 @@ int pkru_sandbox_init(void)
 	return 0;
 }
 
-int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void*, size_t, void**, size_t*), void* arg, size_t arg_size)
+void protect_library(const char* library, int pkey)
 {
-    // The domain arena is setup in the following way:
-    // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
-    request_t* request = (request_t*) get_arena(domain);
-    request->arg = (void*) ((char*)request + sizeof(request_t));
-    request->arg_size = arg_size;
-    request->fun = fun;
+    FILE* mapsFile = fopen("/proc/self/maps", "r");
+    if (!mapsFile) {
+        fprintf(stderr, "Failed to open /proc/self/maps\n");
+        exit(EXIT_FAILURE);
+    }
 
-    // Copying the function call argument to arena.
-    memcpy(request->arg, arg, arg_size);
-     
-    pthread_mutex_t* lock = &(worker_threads[domain].lock);
-    pthread_cond_t* cond = &(worker_threads[domain].cond);
-    
-    pthread_cond_broadcast(cond);
-    pthread_mutex_lock(lock);
-    pthread_cond_wait(cond, lock);
-    pthread_mutex_unlock(lock);
-    fprintf(stderr, "User thread notify\n");
-   
-    // Copying return value to arena and setting ret and ret_size pointers.
-    *ret = (void*) (((char*) request->arg) + arg_size);
-    *ret_size = request->ret_size;
-    memcpy(*ret, request->ret, request->ret_size);
-	return 0;
+    char line[256];
+    while (fgets(line, sizeof(line), mapsFile)) {
+        if (strstr(line, library) == NULL) {
+            continue;
+        }
+
+        unsigned long start, finish;
+        char r, w, x;
+
+        sscanf(line, "%lx-%lx %c%c%c",
+            &start, &finish, &r, &w, &x);
+
+        int prot_flags = 0;
+        if (r == 'r') prot_flags |= PROT_READ;
+        if (w == 'w') prot_flags |= PROT_WRITE;
+        if (x == 'x') prot_flags |= PROT_EXEC;
+
+        void * address = (void*)start;
+        size_t size = finish - start;
+
+        pkey_mprotect(address, size, prot_flags, pkey);
+        fprintf(stderr, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
+    }
+
+    fclose(mapsFile);
 }
