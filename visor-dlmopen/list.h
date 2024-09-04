@@ -1,11 +1,13 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-typedef struct Node Node; // private fields
+typedef struct List List; // private fields
 
-void add_node(Node **head, pid_t pid);
-void remove_node(Node **head, pid_t pid);
-void print_list(Node *head);
-Node *lookup_node(Node *current, pid_t pid);
+List *new_list();
+int get_size(List *list);
+void add_node(List *list, pid_t pid);
+void remove_node(List *list, pid_t pid);
+void print_list(List *list);
+int lookup_node(List *list, pid_t pid);
 
 #endif // __LIST_H__

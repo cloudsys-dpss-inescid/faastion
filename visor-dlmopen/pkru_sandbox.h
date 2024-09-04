@@ -61,6 +61,9 @@
   })
 #endif
 
+struct domain;
+extern struct domain *domains[DOMAINS];
+
 // Prepares pkrus, prepares domain arenas, among other initializations.
 int pkru_sandbox_init();
 // Calls a function 'fun' in domain 'domain'.
@@ -73,6 +76,9 @@ void set_thread_domain(pid_t tid, int domain);
 void del_thread_domain(pid_t tid, int domain);
 // Books an available domain for a thread. Zero is returned in case all domains are used.
 int book_available_domain(pid_t tid);
+
+int initialize_domains();
+void *get_arena(int domain);
 
 void protect_library(const char* library, int pkey);
 

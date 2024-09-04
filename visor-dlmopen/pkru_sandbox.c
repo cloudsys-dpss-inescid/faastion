@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
-#include "list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -43,24 +42,12 @@ typedef struct worker {
     pthread_mutex_t lock;
 } worker_t;
 
-// Arenas to exchange data between domains.
-static void* arenas;
-// Saves the tids currently using each domain.
-static Node* thread_domains[DOMAINS] = {NULL};
-static pthread_mutex_t domain_mutexes[DOMAINS];
-void init_mutexes() {
-    for (int i = 0; i < DOMAINS; i++) {
-        pthread_mutex_init(&domain_mutexes[i], NULL);
-    }
-}
 // Seccomp thread that intercepts system calls.
 static pthread_t seccomp_thread;
 // Threads that will be running functions inside domains.
 static worker_t worker_threads[DOMAINS];
 // Seccomp fd to be used by the seccomp thread.
 static int seccomp_fd = 0;
-
-#define ARENA(domain) ((void*) (((char*)arenas) + domain * getpagesize()))
 
 
 void protect_library(const char* library, int pkey)
@@ -235,7 +222,7 @@ void* worker(void* arg)
         pthread_cond_wait(cond, lock);
         pthread_mutex_unlock(lock);
         fprintf(stderr, "Worker thread for domain %d notify\n", domain);
-        request_t* request = (request_t*) ARENA(domain);
+        request_t* request = (request_t*) get_arena(domain);
 
         // Changing domain and calling the function.
         __wrpkrumem(DOMAIN_TO_PKRU(domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
@@ -248,26 +235,8 @@ void* worker(void* arg)
 
 int pkru_sandbox_init(void)
 {
-    init_mutexes();
-
-	arenas = mmap(0, DOMAINS * getpagesize(), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-    if (arenas == MAP_FAILED) {
-        fprintf(stderr, "error: failed to mmap arenas\n");
+    if (initialize_domains())
         return -1;
-    }
-    memset(arenas, 0, DOMAINS * getpagesize());
-
-    for (int i = 1; i < DOMAINS; i++) {
-        if(syscall(SYS_pkey_alloc, 0, 0) < 0) {
-            fprintf(stderr, "error: failed to allocate pkey %d\n", i);
-            return -1;
-        }
-        if (pkey_mprotect(ARENA(i), getpagesize(), PROT_READ|PROT_WRITE, i)) {
-            fprintf(stderr, "error: failed protect arena at %p with pkey %d\n", ARENA(i), i);
-            return -1;
-	    }
-        fprintf(stdout, "Protected arena at %p - %p with pkey %d\n", ARENA(i), ((char*)ARENA(i) + getpagesize()), i);
-    }
 
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
@@ -298,8 +267,8 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 {
     // The domain arena is setup in the following way:
     // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
-    request_t* request = (request_t*) ARENA(domain);
-    request->arg = (void*) ((char*)ARENA(domain) + sizeof(request_t));
+    request_t* request = (request_t*) get_arena(domain);
+    request->arg = (void*) ((char*)request + sizeof(request_t));
     request->arg_size = arg_size;
     request->fun = fun;
 
@@ -320,47 +289,4 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
     *ret_size = request->ret_size;
     memcpy(*ret, request->ret, request->ret_size);
 	return 0;
-}
-
-// TODO - make it thread safe.
-int get_thread_domain(pid_t tid)
-{
-    for (int i = 0; i < DOMAINS; i++) {
-        pthread_mutex_lock(&domain_mutexes[i]);
-        if (lookup_node(thread_domains[i], tid)) {
-            pthread_mutex_unlock(&domain_mutexes[i]);
-            return i;    
-        }
-        pthread_mutex_unlock(&domain_mutexes[i]);
-    }
-    return 0;
-}
-
-void set_thread_domain(pid_t tid, int domain)
-{
-    pthread_mutex_t mutex = domain_mutexes[domain];
-    pthread_mutex_lock(&mutex);
-    add_node(&thread_domains[domain], tid);
-    pthread_mutex_unlock(&mutex);
-}
-
-void del_thread_domain(pid_t tid, int domain)
-{
-    pthread_mutex_t mutex = domain_mutexes[domain];
-    pthread_mutex_lock(&mutex);
-    remove_node(&thread_domains[domain], tid);
-    pthread_mutex_unlock(&mutex);
-}
-
-// TODO - make it thread safe.
-int book_available_domain(pid_t tid)
-{
-    for (int i = 2; i < DOMAINS; i++) {
-        if (thread_domains[i] == NULL) {
-            set_thread_domain(tid, i);
-            fprintf(stdout, "Booked domain %d for thread %d\n", i, tid);
-            return i;
-        }
-    }
-    return 0;
 }

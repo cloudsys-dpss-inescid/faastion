@@ -8,8 +8,8 @@ all: libapp.so visor
 libapp.so: app.c
 	$(CC) $(CFLAGS) -shared -fPIC -o $@ $<
 
-visor: visor.c pkru_sandbox.c list.c pkru_sandbox.h list.h
-	$(CC) $(CFLAGS) -o visor visor.c pkru_sandbox.c list.c
+visor: visor.c pkru_sandbox.c list.c sandbox_domain.c pkru_sandbox.h list.h
+	$(CC) $(CFLAGS) -o visor visor.c pkru_sandbox.c list.c sandbox_domain.c -pthread
 
 run: all
 	strace -f -o strace.log setarch -R env ./visor
