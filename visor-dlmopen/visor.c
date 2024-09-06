@@ -11,24 +11,36 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stddef.h>
-#include "pkru_sandbox.h"
+#include "core/pkru_sandbox.h"
+#include "core/memory_map.h"
 
-void* client(void* arg)
+void copy_file(const char* sourcePath, const char* destPath) {
+    FILE *sourceFile = fopen(sourcePath, "rb");
+    FILE *destFile = fopen(destPath, "wb");
+
+    if (sourceFile == NULL || destFile == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[4096];
+    size_t bytesRead;
+
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), sourceFile)) > 0) {
+        fwrite(buffer, 1, bytesRead, destFile);
+    }
+
+    fclose(sourceFile);
+    fclose(destFile);
+}
+
+int main()
 {
-    fprintf(stdout, "Client is now up, opening libapp.so...\n");
-
-    // Note: in faastion, we would delay this step until we decide to enter native code.
-    // Instead of booking a domain, faastion would keep track of which mmaps were performed
-    // on behalf of each application.
-    
-    // int domain = book_available_domain(gettid());
-    // if (domain == 0) {
-    //    fprintf(stderr, "error: failed to book available domain for thread %d\n", gettid());
-    //    exit(1);
-    // }
-
-    int domain = 2;
-    set_thread_domain(gettid(), domain);
+    // Initialize phtread sandboxes and allocate pkeys.
+    if (pkru_sandbox_init()) {
+        fprintf(stderr, "failed to initialize pthread sandboxes\n");
+        cleanup_and_exit();
+    }
 
     // Note: in faastion, we would do this step before we enter native code.
     // Load dynamic library into a new namespace.
@@ -37,9 +49,16 @@ void* client(void* arg)
         fprintf(stderr, "dlopen error: %s\n", dlerror());
         exit(EXIT_FAILURE);
     }
-
-    // Change library access permissions.
-    //protect_library("libapp.so", domain);
+    
+    // int domain = book_available_domain(gettid());
+    // if (domain == 0) {
+    //    fprintf(stderr, "error: failed to book available domain for thread %d\n", gettid());
+    //    exit(1);
+    // }
+    int pkey = 2;
+    copy_file("/proc/self/smaps", "smaps_before");
+    protect_memory_regions(pkey);
+    copy_file("/proc/self/smaps", "smaps_after");
 
     // Call the target function.
     void (*fun)(void*, size_t, void**, size_t*) = (void (*)(void*, size_t, void**, size_t*))dlsym(handle, "fun");
@@ -48,31 +67,15 @@ void* client(void* arg)
         dlclose(handle);
         exit(EXIT_FAILURE);
     }
-
+    
     // Enter the sandbox, call the function, leave the sandbox.
     void* ret = NULL;
     size_t ret_size = 0;
-    pkru_sandbox_call(domain, &ret, &ret_size, fun, "Hello?", strlen("Hello?") + 1);
+    pkru_sandbox_call(pkey, &ret, &ret_size, fun, "Hello?", strlen("Hello?") + 1);
 
     printf("Function returned %s (size = %lu)\n", (char*)ret, ret_size);
 
     dlclose(handle);
-    return NULL;
-}
-
-int main()
-{
-    // Initialize phtread sandboxes and allocate pkeys.
-    if (pkru_sandbox_init()) {
-        fprintf(stderr, "failed to initialize pthread sandboxes\n");
-    }
-
-    // Launch the client thread.
-    pthread_t client_t;
-    pthread_create(&client_t, NULL, client, NULL);
-
-    // Wait for client to be finished.
-    pthread_join(client_t, NULL);
 
     return EXIT_SUCCESS;
 }

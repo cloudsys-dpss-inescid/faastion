@@ -1,6 +1,8 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
+#include "domain_manager.h"
+#include "memory_map.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,37 +19,64 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <signal.h>
 
-// Request to execute by the worker domain thread.
-typedef struct request {
-    // Function to invoke.
-    void (*fun)(void*, size_t, void**, size_t*);
-    // // Argument to use in the function call.
-    void * arg;
-    // Size (in bytes) of the argument.
-    size_t arg_size;
-    // Address where the returned is present.
-    void* ret;
-    // Size (in bytes) of the return value.
-    size_t ret_size;
-} request_t;
 
-// There is a single worker thread per domain.
-typedef struct worker {
-    // Worker thread pointer (may be used for joining the thread).
-    pthread_t thread;
-    // Conditional variable used to signal a new request.
-    pthread_cond_t cond;
-    // Lock used to synchronize access to the conditional variable.
-    pthread_mutex_t lock;
-} worker_t;
-
-// Seccomp thread that intercepts system calls.
-static pthread_t seccomp_thread;
 // Threads that will be running functions inside domains.
 static worker_t worker_threads[DOMAINS];
-// Seccomp fd to be used by the seccomp thread.
-static int seccomp_fd = 0;
+
+// Threads that will be supervising domains.
+static monitor_t monitor_threads[DOMAINS];
+
+
+void protect_library(const char* library, int pkey)
+{
+    FILE* mapsFile = fopen("/proc/self/maps", "r");
+    if (!mapsFile) {
+        fprintf(stderr, "error: failed to open /proc/self/maps\n");
+        cleanup_and_exit();
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), mapsFile)) {
+        if (strstr(line, library) == NULL) {
+            continue;
+        }
+
+        unsigned long start, finish;
+        char r, w, x;
+
+        sscanf(line, "%lx-%lx %c%c%c",
+            &start, &finish, &r, &w, &x);
+
+        int prot_flags = 0;
+        if (r == 'r') prot_flags |= PROT_READ;
+        if (w == 'w') prot_flags |= PROT_WRITE;
+        if (x == 'x') prot_flags |= PROT_EXEC;
+
+        void * address = (void*)start;
+        size_t size = finish - start;
+
+        pkey_mprotect(address, size, prot_flags, pkey);
+        fprintf(stdout, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
+    }
+
+    fclose(mapsFile);
+}
+
+void handler(int signo)
+{
+    cleanup_and_exit();
+}
+
+void cleanup_and_exit()
+{
+    cleanup_domains();
+    free_memory_region_list();
+    // TODO - Kill workers
+    // TODO - Kill monitors
+    exit(1);
+}
 
 int install_seccomp_filter()
 {
@@ -69,20 +98,20 @@ int install_seccomp_filter()
     };
 
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-        perror("error: failed to prctl(NO_NEW_PRIVS)");
-        return -1;
+        fprintf(stderr, "error: failed to prctl(NO_NEW_PRIVS)");
+        cleanup_and_exit();
     }
 
     int fd = syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_NEW_LISTENER, &prog);
     if (fd < 0) {
-        perror("error: failed to seccomp(SECCOMP_SET_MODE_FILTER)");
-        return -1;
+        fprintf(stderr, "error: failed to seccomp(SECCOMP_SET_MODE_FILTER)");
+        cleanup_and_exit();
     }
 
     return fd;
 }
 
-void handle_syscalls(int fd)
+void handle_syscalls(int pkey)
 {
     struct seccomp_notif_sizes sizes;
     if (syscall(SYS_seccomp, SECCOMP_GET_NOTIF_SIZES, 0, &sizes) < 0) {
@@ -92,6 +121,8 @@ void handle_syscalls(int fd)
 
     struct seccomp_notif *req = (struct seccomp_notif*)malloc(sizes.seccomp_notif);
     struct seccomp_notif_resp *resp = (struct seccomp_notif_resp*)malloc(sizes.seccomp_notif_resp);
+    
+    int fd = monitor_threads[pkey].seccomp_fd;
     struct pollfd fds[1] = {
         {
             .fd  = fd,
@@ -135,14 +166,17 @@ void handle_syscalls(int fd)
                 resp->val = syscall(__NR_mmap, args[0], args[1], args[2], args[3], args[4], args[5]);
                 resp->error = resp->val < 0 ? -errno : 0;
                 resp->flags = 0;
-                int domain = get_thread_domain(req->pid);
-                if (domain != 0) {
+                if (pkey != 0) {
                     fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
-                        req->pid, domain, (void*) resp->val, (size_t) args[1]);
-                    if(pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], domain) == -1) {
+                        req->pid, pkey, (void*) resp->val, (size_t) args[1]);
+                    if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1) {
                         fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n", (void*) resp->val, (size_t) args[1]);
                     }
+                } else {
+                    fprintf(stdout, "Saving region: address %p size %lu prot %d! \n",(void*) resp->val, (size_t) args[1], (int) args[2]);
+                    append_memory_region_node((void*) resp->val, (size_t) args[1], (int) args[2]);
                 }
+                
                 break;
             default:
                 fprintf(stderr, "warning: unhandled syscall %d!\n", req->data.nr);
@@ -163,8 +197,12 @@ void handle_syscalls(int fd)
 
 void* monitor(void* arg)
 {
-    while (seccomp_fd == 0) ;
-    handle_syscalls(seccomp_fd);
+    int pkey = (int) ((long) arg);
+
+    // Wait until seccomp_fd is set
+    while (monitor_threads[pkey].seccomp_fd == 0) ;
+
+    handle_syscalls(pkey);
     return NULL;
 }
 
@@ -172,7 +210,7 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 {
     // The domain arena is setup in the following way:
     // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
-    request_t* request = (request_t*) get_arena(domain);
+    request_t* request = (request_t*) get_domain_arena(domain);
     request->arg = (void*) ((char*)request + sizeof(request_t));
     request->arg_size = arg_size;
     request->fun = fun;
@@ -198,14 +236,11 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(void
 
 void* worker(void* arg)
 {
-    int domain = (int) ((long) arg);
-    fprintf(stderr, "Worker for domain %d is running...\n", domain);
+    int pkey = (int) ((long) arg);
+    fprintf(stderr, "Worker for domain %d is running...\n", pkey);
     
-    // Setting the thread domain is needed so that the monitor knowns which domain to use.
-    set_thread_domain(gettid(), domain);
-
-    pthread_mutex_t* lock = &(worker_threads[domain].lock);
-    pthread_cond_t* cond = &(worker_threads[domain].cond);
+    pthread_mutex_t* lock = &(worker_threads[pkey].lock);
+    pthread_cond_t* cond = &(worker_threads[pkey].cond);
     pthread_mutex_init(lock, NULL);
     pthread_cond_init(cond, NULL);
 
@@ -213,81 +248,64 @@ void* worker(void* arg)
         pthread_mutex_lock(lock);
         pthread_cond_wait(cond, lock);
         pthread_mutex_unlock(lock);
-        fprintf(stderr, "Worker thread for domain %d notify\n", domain);
-        request_t* request = (request_t*) get_arena(domain);
+        fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
+        request_t* request = (request_t*) get_domain_arena(pkey);
 
         // Changing domain and calling the function.
-        __wrpkrumem(DOMAIN_TO_PKRU(domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
+        __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
         request->fun(request->arg, request->arg_size, &(request->ret), &(request->ret_size));
         __wrpkru(DEFAULT_DOMAIN);
 
         pthread_cond_broadcast(cond);
     }
+    return NULL;
 }
 
-void protect_library(const char* library, int pkey);
-
-int pkru_sandbox_init(void)
+void* worker_wrapper(void* arg)
 {
-    if (initialize_domains())
+    int pkey = (int) ((long) arg);
+
+    monitor_threads[pkey].seccomp_fd = install_seccomp_filter();
+    if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
+        fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
+        cleanup_and_exit();
+    }
+    return NULL;
+}
+
+int pkru_sandbox_init()
+{
+    // Register the SIGINT handler
+    if (signal(SIGINT, handler) == SIG_ERR) {
+        fprintf(stderr, "error: Unable to catch SIGINT\n");
         return -1;
+    }
+
+    // Get domains ready for populating
+    if (initialize_all_domains()) {
+        fprintf(stderr, "error: failed initializing domains\n");
+        return -1;
+    }
 
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
 
-    // Launch the monitor thread.
-    pthread_create(&seccomp_thread, NULL, monitor, &seccomp_fd);
-
-    // Install seccomp filter to monitor memory-related operations.
-    seccomp_fd = install_seccomp_filter();
-    if (seccomp_fd < 0) {
-        fprintf(stderr, "error: failed install seccomp filter\n");
-        return -1;
-    }
-
-    // We start from domain 2 since domain 1 is reserved for the loader library.
-    for (int i = 2; i < DOMAINS; i++) {
-        // Launching the worker threads.
-        set_thread_domain(gettid(), i);
-        pthread_create(&(worker_threads[i].thread), NULL, worker, (void*) i);
-        del_thread_domain(gettid(), i);
-    }
-    set_thread_domain(gettid(), DEFAULT_DOMAIN);
-
-	return 0;
-}
-
-void protect_library(const char* library, int pkey)
-{
-    FILE* mapsFile = fopen("/proc/self/maps", "r");
-    if (!mapsFile) {
-        fprintf(stderr, "Failed to open /proc/self/maps\n");
-        exit(EXIT_FAILURE);
-    }
-
-    char line[256];
-    while (fgets(line, sizeof(line), mapsFile)) {
-        if (strstr(line, library) == NULL) {
-            continue;
+    // Launch monitor threads.
+    for (int i = 0; i < DOMAINS; i++) {
+        if (pthread_create(&(monitor_threads[i].thread), NULL, monitor, (void*)(intptr_t) i) != 0) {
+            fprintf(stderr, "error: failed creating monitor thread for domain %d\n", i);
+            return -1;
         }
-
-        unsigned long start, finish;
-        char r, w, x;
-
-        sscanf(line, "%lx-%lx %c%c%c",
-            &start, &finish, &r, &w, &x);
-
-        int prot_flags = 0;
-        if (r == 'r') prot_flags |= PROT_READ;
-        if (w == 'w') prot_flags |= PROT_WRITE;
-        if (x == 'x') prot_flags |= PROT_EXEC;
-
-        void * address = (void*)start;
-        size_t size = finish - start;
-
-        pkey_mprotect(address, size, prot_flags, pkey);
-        fprintf(stderr, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
     }
 
-    fclose(mapsFile);
+    // Launch worker threads.
+    for (int i = 1; i < DOMAINS; i++) {
+        if (pthread_create(&(worker_threads[i].thread), NULL, worker_wrapper, (void*)(intptr_t) i) != 0) {
+            fprintf(stderr, "error: failed creating worker_wrapper thread for domain %d\n", i);
+            return -1;
+        }
+    }
+
+    monitor_threads[DEFAULT_DOMAIN].seccomp_fd = install_seccomp_filter();
+    return 0;
 }
