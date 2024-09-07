@@ -76,7 +76,6 @@ void protect_memory_regions(int pkey) {
                 current->region.address, current->region.size, current->region.prot, pkey);
 
         if (pkey_mprotect(current->region.address, current->region.size, current->region.prot, pkey) != 0) {
-            perror("pkey_mprotect\n");
             fprintf(stderr, "error: failed to protect memory region with pkey %d\n", pkey);
             exit(EXIT_FAILURE);
         }
