@@ -37,6 +37,30 @@ void append_memory_region_node(void* address, size_t size, int prot) {
     current->next = newNode;
 }
 
+void delete_memory_region_node(void *address, size_t size) {
+    if (head == NULL) {
+        fprintf(stderr, "error: could not delete memory region node\n");
+        exit(EXIT_FAILURE);
+    }
+
+    MemoryRegionNode **nodePtr = &head;
+    MemoryRegionNode *current = head;
+    while (current->next != NULL) {
+        if (current->region.address == address) {
+            if (current->region.size != size)
+                fprintf(stdout, "delete_memory_region_node: warning: sizes dont match\n"); // FIXME what should we do in this case?
+            *nodePtr = current->next;
+            free(current);
+            return;
+        }
+        nodePtr = &current->next;
+        current = current->next;
+    }
+
+    // is this possible?
+    fprintf(stdout, "delete_memory_region_node: warning: node not found\n");
+}
+
 void print_memory_regions() {
     MemoryRegionNode* current = head;
     while (current != NULL) {
@@ -52,6 +76,7 @@ void protect_memory_regions(int pkey) {
                 current->region.address, current->region.size, current->region.prot, pkey);
 
         if (pkey_mprotect(current->region.address, current->region.size, current->region.prot, pkey) != 0) {
+            perror("pkey_mprotect\n");
             fprintf(stderr, "error: failed to protect memory region with pkey %d\n", pkey);
             exit(EXIT_FAILURE);
         }

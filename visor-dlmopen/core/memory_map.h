@@ -30,6 +30,8 @@ typedef struct MemoryRegionNode {
  */
 MemoryRegionNode* create_memory_region_node(void* address, size_t size, int prot);
 
+void delete_memory_region_node(void *address, size_t size);
+
 /**
  * @brief Append a new MemoryRegionNode to the end of the linked list.
  * 

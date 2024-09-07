@@ -84,7 +84,10 @@ int install_seccomp_filter()
         BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, arch))),
         BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, AUDIT_ARCH_X86_64, 1, 0),
         BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL),
+
         BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
+        
+        BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_munmap, 1, 0),        
         BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_mmap, 0, 1),
         BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_USER_NOTIF),
 
@@ -166,6 +169,8 @@ void handle_syscalls(int pkey)
                 resp->val = syscall(__NR_mmap, args[0], args[1], args[2], args[3], args[4], args[5]);
                 resp->error = resp->val < 0 ? -errno : 0;
                 resp->flags = 0;
+                if (errno)
+                    break;
                 if (pkey != 0) {
                     fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
                         req->pid, pkey, (void*) resp->val, (size_t) args[1]);
@@ -177,6 +182,17 @@ void handle_syscalls(int pkey)
                     append_memory_region_node((void*) resp->val, (size_t) args[1], (int) args[2]);
                 }
                 
+                break;
+            case __NR_munmap:
+                resp->val = syscall(__NR_munmap, args[0], args[1], args[2], args[3], args[4], args[5]);
+                resp->error = resp->val < 0 ? -errno : 0;
+                resp->flags = 0;
+                if (errno)
+                    break;
+                if (pkey == 0) {
+                    fprintf(stdout, "Deleting region: address %p size %lu\n",(void *)(args[0]), (size_t)(args[1]));
+                    delete_memory_region_node((void *)(args[0]), (size_t)(args[1]));
+                }
                 break;
             default:
                 fprintf(stderr, "warning: unhandled syscall %d!\n", req->data.nr);
