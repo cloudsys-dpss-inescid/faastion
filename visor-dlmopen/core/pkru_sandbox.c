@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
-#include "domain_manager.h"
 #include "memory_map.h"
 #include <stdio.h>
 #include <stdlib.h>

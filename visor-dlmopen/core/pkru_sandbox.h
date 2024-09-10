@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include "domain_manager.h"
+
 
 // Domain IDs from 0 to 15.
 #define DOMAINS 16
