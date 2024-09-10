@@ -33,12 +33,6 @@ void decrement_children(int pkey)
 }
 
 
-int get_children_count(int pkey)
-{
-    return atomic_load(&(domains[pkey]->children));
-}
-
-
 int book_available_domain()
 {
     int expected = 0; // We expect children count to be 0

@@ -32,14 +32,6 @@ void increment_children(int pkey);
 void decrement_children(int pkey);
 
 /**
- * @brief Get the current value of the children counter atomically.
- * 
- * @param pkey The protection key of the domain whose children counter is to be read.
- * @return int The current number of children.
- */
-int get_children_count(int pkey);
-
-/**
  * @brief Get the memory arena for a specific domain.
  * 
  * @param pkey The protection key of the domain from which to retrieve the arena.
