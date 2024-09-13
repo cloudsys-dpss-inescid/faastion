@@ -47,33 +47,33 @@ int main()
     void *handle = dlmopen(LM_ID_NEWLM, "./libapp.so", RTLD_NOW);
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
-        exit(EXIT_FAILURE);
+        cleanup_and_exit();
     }
     
-    // int domain = book_available_domain(gettid());
-    // if (domain == 0) {
-    //    fprintf(stderr, "error: failed to book available domain for thread %d\n", gettid());
-    //    exit(1);
-    // }
-    int pkey = 2;
-    copy_file("/proc/self/smaps", "smaps_before");
+    int pkey = book_available_domain();
+    if (pkey == 0) {
+        fprintf(stderr, "error: failed to book available domain for thread %d\n", gettid());
+        cleanup_and_exit();
+    }
+
     protect_memory_regions(pkey);
-    copy_file("/proc/self/smaps", "smaps_after");
 
     // Call the target function.
     void (*fun)(void*, size_t, void**, size_t*) = (void (*)(void*, size_t, void**, size_t*))dlsym(handle, "fun");
     if (!fun) {
         fprintf(stderr, "dlsym error: %s\n", dlerror());
         dlclose(handle);
-        exit(EXIT_FAILURE);
+        cleanup_and_exit();
     }
     
     // Enter the sandbox, call the function, leave the sandbox.
     void* ret = NULL;
     size_t ret_size = 0;
     pkru_sandbox_call(pkey, &ret, &ret_size, fun, "Hello?", strlen("Hello?") + 1);
-
     printf("Function returned %s (size = %lu)\n", (char*)ret, ret_size);
+    
+    // Free domain
+    decrement_children(pkey);
 
     dlclose(handle);
 

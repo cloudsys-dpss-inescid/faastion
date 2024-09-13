@@ -3,23 +3,41 @@
 
 #include <pthread.h>
 #include <unistd.h>
+#include <stdatomic.h>
+
 
 /**
  * @brief Structure representing a memory protection domain
  */ 
 typedef struct Domain {
-    pthread_mutex_t mutex;   // Mutex to protect the domain's resources
-    void*           arena;   // Pointer to the memory arena
-    // TODO - keep track of number of threads
+    pthread_mutex_t mutex;      // Mutex to protect the domain's resources
+    void*           arena;      // Pointer to the memory arena
+    atomic_int      children;   // Atomic counter for tracking the number of child threads
+    // TODO - define worker_t here
 } Domain;
+
+
+/**
+ * @brief Increment the children counter atomically.
+ * 
+ * @param pkey the protection key of the domain whose children counter needs to be incremented.
+ */
+void increment_children(int pkey);
+
+/**
+ * @brief Decrement the children counter atomically.
+ * 
+ * @param pkey The protection key of the domain whose children counter needs to be decremented.
+ */
+void decrement_children(int pkey);
 
 /**
  * @brief Get the memory arena for a specific domain.
  * 
- * @param domain The index of the domain from which to retrieve the arena.
+ * @param pkey The protection key of the domain from which to retrieve the arena.
  * @return void* Pointer to the memory arena of the specified domain.
  */
-void *get_domain_arena(int domain);
+void *get_domain_arena(int pkey);
 
 /**
  * @brief Initialize a domain with a specific protection key (pkey).
@@ -63,10 +81,9 @@ void remove_thread_from_domain(pid_t tid, int domain);
 /**
  * @brief Find and book an available domain for a thread.
  * 
- * @param tid The thread ID for which to book a domain.
- * @return int The index of the booked domain, or -1 if no available domain is found.
+ * @return int The index of the booked domain, or 0 if no available domain is found.
  */
-int book_available_domain_for_thread(pid_t tid);
+int book_available_domain();
 
 /**
  * @brief Cleanup and destroy all domains and their resources.
