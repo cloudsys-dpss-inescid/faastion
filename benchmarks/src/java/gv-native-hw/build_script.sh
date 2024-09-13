@@ -11,8 +11,9 @@ ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
 CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
-SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+# SFLAGS="$CFLAGS -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+# SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
 
 BENCHMARK_NAME="nativehw"
 SNIPPETS_DIR="$DIR/build/snippets"
@@ -64,7 +65,8 @@ function build_java_agent {
 }
 
 function build_native_library {
-	musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
+	# musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
+	gcc --shared -fpic $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
 }
 
 function build_native_exec {
@@ -85,17 +87,28 @@ function build_snippets {
 function manipulate_bytecode {
 	CLASS_PATH="build/classes/java/main"
 	ENTRYPOINT="com.jni.HelloJNI"
-	TOOL="NativeRedirection"
+	TOOL="JNITemplateBuilder"
 	
 	mkdir -p $DIR/build/snippets
 	
 	export BENCHMARK_NAME="$BENCHMARK_NAME"
 	export SNIPPETS_DIR="$SNIPPETS_DIR"
 	export ENV="memisolation"
-	$DEF_JAVA_HOME/bin/java \
+
+	cmd="$DEF_JAVA_HOME/bin/java \
+			-Djava.library.path="$GRAALVISOR_HOME/build/libs/" \
 			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL::$CLASS_PATH \
+			-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
+			$ENTRYPOINT"
+	echo "$cmd"
+
+	$DEF_JAVA_HOME/bin/java \
+			-Djava.library.path="$GRAALVISOR_HOME/build/libs/" \
+			-cp $CLASS_PATH \
+			-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
 			$ENTRYPOINT
+
+	echo "check snippets"
 }
 
 
@@ -136,17 +149,17 @@ build_native_library
 manipulate_bytecode
 
 # Build native executable
-build_native_exec
+# build_native_exec
 
 # Build generated snippets.
-build_snippets
+# build_snippets
 
-TARGET=$1
-if [ ! -z "$TARGET" ]
-then
-	$TARGET
-exit 0
-else
-	build_ni_sharedlibrary
-	exit 0
-fi
+# TARGET=$1
+# if [ ! -z "$TARGET" ]
+# then
+# 	$TARGET
+# exit 0
+# else
+# 	build_ni_sharedlibrary
+# 	exit 0
+# fi

@@ -5,5 +5,5 @@
 **/test
 .vscode
 
-resources/
+/resources/
 env.*

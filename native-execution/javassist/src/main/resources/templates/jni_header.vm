@@ -1,0 +1,18 @@
+$include <jni.h>
+
+$ifndef $headerGuard
+$define $headerGuard
+
+$ifdef SNI_DBG
+$define SNI_DBM(...) \
+	do { \
+	fprintf(stderr, __VA_ARGS__); \
+	fprintf(stderr, "\n"); \
+	} while(0)
+$else // disable debug
+$define SNI_DBM(...)
+$endif
+
+JNIEXPORT $returnType JNICALL $callGateSignature;
+
+$endif
