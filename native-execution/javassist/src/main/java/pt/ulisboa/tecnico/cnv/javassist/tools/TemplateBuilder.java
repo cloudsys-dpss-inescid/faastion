@@ -30,11 +30,7 @@ public class TemplateBuilder extends AbstractJavassistTool {
         engine.init();
     }
 
-    public void setTemplateVariable(String variable, boolean value) {
-        context.put(variable, value);
-    }
-
-    public void setTemplateVariable(String variable, String value) {
+    public void setTemplateVariable(String variable, Object value) {
         context.put(variable, value);
     }
 
@@ -46,7 +42,6 @@ public class TemplateBuilder extends AbstractJavassistTool {
         StringWriter sw = new StringWriter();
         Template template = engine.getTemplate(vm);
         template.merge(context, sw);
-        System.out.println(sw);
         try (FileWriter writer = new FileWriter(dirName + "/" + fileName)) {
             writer.write(sw.toString());
         } catch (IOException e) {

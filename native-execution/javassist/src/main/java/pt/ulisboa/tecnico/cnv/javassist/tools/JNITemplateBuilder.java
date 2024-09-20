@@ -27,6 +27,64 @@ import java.nio.file.Files;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
+	private class CallGate {
+		private CtClass returnType;
+		private String signature;
+		private String className;
+		private String methodName;
+		private String gateName;
+		private String[] parameters;
+
+		public CallGate(MethodCall methodCall) {
+			CtMethod method = method(methodCall);			
+			this.returnType = returnType(method);
+			this.parameters = parameterTypes(method);
+			this.signature = method.getSignature();
+			this.className = methodCall.getClassName(); 
+			this.methodName = methodCall.getMethodName();
+			this.gateName = methodName + "callGate";
+		}
+
+		public CtClass getReturnType() {
+			return returnType;
+		}
+
+		public String getSignature() {
+			return signature;
+		}
+
+		public String getMethodName() {
+			return methodName;
+		}
+
+		public String getGateName() {
+			return gateName;
+		}
+
+		public String[] getParameters() {
+			return parameters;
+		}
+
+		public boolean returnTypeIsVoid() {
+			return returnType.getName().equals("void");
+		}
+
+		public void createNativeTemplates() {
+			String returnJniType = getJniType(returnType.getName());
+			String[] jniTypes = Arrays.stream(parameters)
+					.map(param -> getJniType(param))
+					.toArray(String[]::new);
+
+			String name = className.replace(".", "_");
+			createHeader(jniTypes, returnJniType, name, gateName);
+			createSnippet(jniTypes, returnJniType, methodName, name, gateName);
+		}
+
+	}
+
+	// private Set<MethodCall> loadLibraryMethodCalls;
+	// private Set<MethodCall> jniMethodCalls; 
+
 	public JNITemplateBuilder(List<String> packageNameList, String writeDestination) {
 		super(packageNameList, writeDestination);
 
@@ -39,7 +97,27 @@ public class JNITemplateBuilder extends TemplateBuilder {
         setTemplateVariable("endif", "#endif");
 	}
 
-	// FIXME: hard to read switch case, comparing pointer and not string
+	public int getTypeSize(String parameterType) {
+		switch(parameterType) {
+		case "jboolean":
+		case "jbyte":
+			return 1;
+		case "jchar":
+		case "jshort":
+			return 2;
+		case "jint":
+		case "jfloat":
+			return 4;
+		case "jlong":
+		case "jdouble":
+			return 8;
+		case "jstring":
+			return -1;
+		default:
+			throw new IllegalArgumentException("Unsupported parameter type: " + parameterType);
+		}
+	}
+
 	public String getJniType(String parameterType) {
 		switch (parameterType) {
 		case "boolean":
@@ -105,126 +183,59 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		super.transform(behavior);
 
 		behavior.instrument(new ExprEditor() {
+
 			public void edit(MethodCall m) throws CannotCompileException {
-				try {
-					CtClass clazz = behavior.getDeclaringClass();
-					CtMethod method = m.getMethod();
-					String methodClassName = m.getClassName();
-					String methodSignature = method.getSignature();
-					String methodName = m.getMethodName();
-					String gateName = methodName + "CallGate";
-
-					if (Modifier.isNative(method.getModifiers()) && !isInternalClass(methodClassName)) {
-						CtClass returnType = method.getReturnType();
-						String returnJniType = getJniType(returnType.getName());
-
-						String[] params = getParameterTypes(methodSignature);
-						String[] jniTypes = Arrays.stream(params)
-								.map(param -> getJniType(param))
-								.toArray(String[]::new);
-
-						if (!isCallGateDeclared(clazz, methodSignature, gateName)) {
-							CtConstructor staticInitializer = clazz.makeClassInitializer();
-							staticInitializer.insertBefore("System.loadLibrary(\"" + methodName + "\");");
-							declareCallGate(clazz, params, returnType, gateName);
-
-							if (methodClassName.contains(".")) {
-								methodClassName = methodClassName.replace(".", "_");
-							}
-
-							createHeader(jniTypes, returnJniType, methodClassName, gateName);
-							createSnippet(jniTypes, returnJniType, methodName, methodClassName, gateName);
-						}
-
-						boolean voidType = returnType.getName().equals("void");
-						m.replace((!voidType ? "$_=" : "") + gateName + "($$);");
+				if (m.getClassName().equals("java.lang.System") && m.getMethodName().equals("loadLibrary")) {
+					m.replace(";");
+				}
+				else if (Modifier.isNative(method(m).getModifiers()) && !isInternalClass(m.getClassName())) {
+					CallGate callGate = new CallGate(m);
+					if (addCallGateMethod(behavior.getDeclaringClass(), callGate)) {
+						callGate.createNativeTemplates();
 					}
-				} catch (NotFoundException e) {
-					System.err.println(e.getMessage());
-				} catch (BadBytecode e) {
-					System.err.println(e.getMessage());
-				} catch (IOException e) {
-					System.err.println(e.getMessage());
-				} catch (Exception e) {
-					e.printStackTrace();
+					m.replace((callGate.returnTypeIsVoid() ? "" : "$_=") + callGate.getGateName() + "($$);");
 				}
 			}
+
 		});
 	}
 
-	public void createHeader(String[] jniTypes, String returnJniType, String className, String gateName)
-			throws IOException {
+	public void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) {
 		System.out.println("Hello from createHeader");
 
-		String headerGuard = "_Included_" + className;
-		String callGateSignature = "Java_" + className + "_" + gateName;
-		if (jniTypes.length > 0) {
-			callGateSignature += "(JNIEnv *, jclass, " + String.join(", ", jniTypes) + ")";
-		} else {
-			callGateSignature += "(JNIEnv *, jclass)";
-		}
-
-        setTemplateVariable("headerGuard", headerGuard);
+        setTemplateVariable("headerGuard", "_Included_" + className);
 		setTemplateVariable("returnType", returnJniType);
-		setTemplateVariable("callGateSignature", callGateSignature);
+		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
+		setTemplateVariable("numArgs", jniTypes.length);
+		setTemplateVariable("jniTypes", jniTypes);
 
-		String dirName = System.getenv("SNIPPETS_DIR");
-        String fileName = className + ".h";
-		buildTemplate("templates/jni_header.vm", dirName, fileName);
+		buildTemplate("templates/jni_header.vm", System.getenv("SNIPPETS_DIR"), className + ".h");
 	}
 
-	public void createSnippet(String[] jniTypes, String returnJniType, String methodName, String className,
-			String gateName) throws IOException {		
-		String params = "JNIEnv *env, jobject obj";
-		String paramTypes = "JNIEnv*, jobject";
-		String args = "env, obj";
-		String literals = "NULL, NULL";
+	public void createSnippet(String[] jniTypes, String returnJniType,
+			String methodName, String className, String gateName)
+	{		
+		int[] argSizes = new int[0];
 		if (jniTypes.length != 0) {
-			String[] extraArguments = IntStream.range(0, jniTypes.length)
-					.mapToObj(i -> "arg" + i)
-					.toArray(String[]::new);
-			params += IntStream.range(0, extraArguments.length)
-					.mapToObj(i -> jniTypes[i] + " " + extraArguments[i])
-					.collect(Collectors.joining(", ", ", ", ""));
-			paramTypes = ", " + String.join(", ", jniTypes);
-			args += ", " + String.join(", ", extraArguments);
-			literals += ", " + String.join(", ", extraArguments); // FIXME: passing undefined variables (arg0, arg1, arg2...)
+			argSizes = IntStream.range(0, jniTypes.length)
+				.map(i -> getTypeSize(jniTypes[i]))
+				.toArray();
 		}
 
-		String headerFilename = className + ".h";
-		String callGate = "Java_" + className + "_" + gateName;
-		String libName = System.getenv("BENCHMARK_NAME");
-		String nativeMethodName = "Java_" + className + "_" + methodName;
-		String nativeELF = System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName + "-proc";
-		String libPathname = System.getenv("ARGO_HOME") + "/graalvisor/build/libs/lib" + libName + "-jni.so";
-
-		setTemplateVariable("methodReceivesExtraArguments", jniTypes.length > 0);
-		setTemplateVariable("headerFilename", headerFilename);
+		String nativeLibName = System.getenv("ARGO_HOME")
+				.concat("/graalvisor/build/libs/lib")
+				.concat(System.getenv("BENCHMARK_NAME"))
+				.concat("-jni.so");
+		setTemplateVariable("nativeLibName", nativeLibName);
+		setTemplateVariable("jniTypes", jniTypes);
+		setTemplateVariable("numArgs", jniTypes.length);
+		setTemplateVariable("argSizes", argSizes);
+		setTemplateVariable("headerFilename", className + ".h");
 		setTemplateVariable("returnType", returnJniType);
-		setTemplateVariable("params", params);
-		setTemplateVariable("callGate", callGate);
-		setTemplateVariable("args", args);
-		setTemplateVariable("paramTypes", paramTypes);
-		setTemplateVariable("libName", libName);
-		setTemplateVariable("nativeMethod", nativeMethodName);
-		setTemplateVariable("nativeELF", nativeELF);
-		setTemplateVariable("libPathname", libPathname);
-		setTemplateVariable("literals", literals);
+		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
+		setTemplateVariable("nativeMethod", "Java_" + className + "_" + methodName);
 
-		String dirName = System.getenv("SNIPPETS_DIR");
-        String fileName = methodName + ".c";
-		buildTemplate("templates/jni_callgate.vm", dirName, fileName);
-	}
-
-	// FIXME: use Javassist built-in method
-	public String[] getParameterTypes(String signature) throws Exception {
-		SignatureAttribute.MethodSignature methodSignature = SignatureAttribute.toMethodSignature(signature);
-
-		String[] parameterTypes = Arrays.stream(methodSignature.getParameterTypes())
-				.map(SignatureAttribute.Type::toString)
-				.toArray(String[]::new);
-
-		return parameterTypes;
+		buildTemplate("templates/jni_callgate.vm", System.getenv("SNIPPETS_DIR"), methodName + ".c");
 	}
 
 	public void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType, String gateName)
@@ -245,7 +256,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		clazz.addMethod(nativeMethod);
 	}
 
-	// FIXME: signature includes name, but does not include return type
 	public boolean isCallGateDeclared(CtClass clazz, String signature, String gateName) {
 		CtMethod[] declaredMethods = clazz.getDeclaredMethods();
 
@@ -258,7 +268,54 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		return false;
 	}
 
-	// FIXME: what is meant by internalClass?
+	boolean addCallGateMethod(CtClass clazz, CallGate callGate) {
+		if (isCallGateDeclared(clazz, callGate.getSignature(), callGate.getGateName())) {
+			return false;
+		}
+
+		try {
+			CtConstructor staticInitializer = clazz.makeClassInitializer();
+			staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getMethodName() + "\");");
+			declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
+		} catch (NotFoundException | CannotCompileException e) {
+			throw new RuntimeException("Could not declare call gate");
+		}
+		
+		return true;
+	}
+
+	public CtMethod method(MethodCall methodCall) {
+		CtMethod method;
+		try {
+			method = methodCall.getMethod();
+		} catch (NotFoundException nfe) {
+			throw new RuntimeException("Method could not be found");
+		}
+		return method;
+	}
+
+	public CtClass returnType(CtMethod method) {
+		CtClass returnType;
+		try {
+			returnType = method.getReturnType();
+		} catch (NotFoundException nfe) {
+			throw new RuntimeException("Return type could not be found");
+		}
+		return returnType;
+	}
+
+	public String[] parameterTypes(CtMethod method) {
+		String[] parameters;
+		try {
+			parameters = Arrays.stream(method.getParameterTypes())
+					.map(param -> param.getName())
+					.toArray(String[]::new);
+		} catch (NotFoundException nfe) {
+			throw new RuntimeException("Parameter types could not be found");
+		}
+		return parameters;
+	}
+
 	public boolean isInternalClass(String className) {
 		return className.startsWith("com.sun.") ||
 				className.startsWith("java.") ||

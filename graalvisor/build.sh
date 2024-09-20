@@ -58,14 +58,37 @@ function build_lazyisolation {
     	fi
 }
 
+function build_pkru_sandbox {
+	release=$(uname -r)
+	major_version=${release%%.*}
+	release=${release#*.}
+	minor_version=${release%%.*}
+
+    JNI_INCLUDE="-I$DEF_JAVA_HOME/include -I$DEF_JAVA_HOME/include/linux"
+	CFLAGS="-Wall -g -fno-inline -fPIC -shared"
+
+	if [ $major_version -ge 5 ] && [ $minor_version -ge 10 ]; then
+	    	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
+	    	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
+        	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/pkru_sandbox.o $PKRU_DIR/pkru_sandbox.c
+            $CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/thread_map.o $PKRU_DIR/thread_map.c
+            $CC $CFLAGS -o $LIB_DIR/libpkru.so $LIB_DIR/domain_manager.o $LIB_DIR/memory_map.o \
+                $LIB_DIR/pkru_sandbox.o $LIB_DIR/thread_map.o
+
+            LINKER_OPTIONS_PKRU_ISO="-H:NativeLinkerOption=$LIB_DIR/libpkru.so"
+    fi
+}
+
 function build_nsi {
 	HEADER_DIR=$DIR/build/generated/sources/headers/java/main
 	C_DIR=$DIR/src/main/c
 	LAZY_DIR=$DIR/src/main/c/lazyisolation/src
     MEM_DIR=$DIR/src/main/c/memisolation/src
+    PKRU_DIR=$DIR/src/main/c/pkru-sandbox/src
 	LIB_DIR=$DIR/build/libs
-    build_memisolation
-	$CC -c -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -I"$HEADER_DIR" -I"$LAZY_DIR" -I"$MEM_DIR" -o $LIB_DIR/NativeSandboxInterface.o $C_DIR/NativeSandboxInterface.c $LAZY_FLAGS $MEM_FLAGS
+    #build_memisolation
+    build_pkru_sandbox
+	$CC -c -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -I"$HEADER_DIR" -I"$LAZY_DIR" -I"$MEM_DIR" -I"$PKRU_DIR" -o $LIB_DIR/NativeSandboxInterface.o $C_DIR/NativeSandboxInterface.c $LAZY_FLAGS $MEM_FLAGS
 	ar rcs $LIB_DIR/libNativeSandboxInterface.a $LIB_DIR/NativeSandboxInterface.o
 }
 
@@ -89,6 +112,7 @@ function build_ni {
         $LIBC_OPTION \
         $LINKER_OPTIONS_LAZY_ISO \
         $LINKER_OPTIONS_MEM_ISO \
+        $LINKER_OPTIONS_PKRU_ISO \
         -H:CLibraryPath=$LIB_DIR \
 	$JAVA_17_OPTS \
         --features=org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterfaceFeature \

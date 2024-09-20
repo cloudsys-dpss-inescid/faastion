@@ -10,11 +10,11 @@ public class HelloJNI {
         System.loadLibrary("nativehw-jni");
     }
 
-    public static native void printHello();
+    public static native void printHello(int age);
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
         HashMap<String, Object> output = new HashMap<>();
-        printHello();
+        printHello(24);
         return output;
     }
 

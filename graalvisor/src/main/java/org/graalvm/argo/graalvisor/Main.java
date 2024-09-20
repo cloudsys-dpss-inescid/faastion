@@ -22,6 +22,8 @@ public abstract class Main {
         String lambda_isolation = System.getenv("lambda_isolation"); // `lazy` to enable lazy isolation, `eager` (default) to disable
         String lambda_mem_isolation = System.getenv("lambda_mem_isolation"); // `true` to enable mem isolation, `false` (default) to disable.
 
+        System.out.println("Java native image library path: " + System.getProperty("java.library.path"));
+
         if (lambda_timestamp != null) {
             System.out.println(String.format("Graalvisor boot time: %s ms.", (System.currentTimeMillis() - Long.parseLong(lambda_timestamp))));
         }

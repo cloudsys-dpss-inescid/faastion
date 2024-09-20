@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include "memisolation.h"
 #endif
+
+#include "pkru_sandbox.h"
+
 #include "org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface.h"
 
 #define PIPE_READ_END  0
@@ -50,19 +53,23 @@ JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSan
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_setupMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
+#ifdef MEM_ISOLATION    
     if (eager_mpk) {
         const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
         find_domain_eager(function_name);
         (*env)->ReleaseStringUTFChars(env, functionName, function_name);
     }
+#endif
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardownMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
+#ifdef MEM_ISOLATION    
     if (eager_mpk) {
         const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
         reset_env(function_name, 1);
         (*env)->ReleaseStringUTFChars(env, functionName, function_name);
     }
+#endif
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_ginit(JNIEnv *env, jobject thisObj) {
@@ -77,6 +84,10 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
         }
         initialize_memory_isolation();
 #endif
+    if (pkru_sandbox_init()) {
+        fprintf(stderr, "failed to initialize pthread sandboxes\n");
+        cleanup_and_exit();
+    }
 }
 
 JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_createNativeProcessSandbox(JNIEnv *env, jobject thisObj, jintArray childPipeFD, jintArray parentPipeFD, jboolean lazyIsolation) {

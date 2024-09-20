@@ -1,3 +1,10 @@
+#set( $paramTypes = "JNIEnv *, jclass" )
+#if( $numArgs > 0 )
+#foreach( $type in $jniTypes )
+#set( $paramTypes = "${paramTypes}, $type" )
+#end
+#end
+
 $include <jni.h>
 
 $ifndef $headerGuard
@@ -13,6 +20,6 @@ $else // disable debug
 $define SNI_DBM(...)
 $endif
 
-JNIEXPORT $returnType JNICALL $callGateSignature;
+JNIEXPORT $returnType JNICALL $callGate($paramTypes);
 
 $endif

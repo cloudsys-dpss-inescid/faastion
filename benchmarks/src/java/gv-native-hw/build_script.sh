@@ -13,7 +13,7 @@ CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
 # SFLAGS="$CFLAGS -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
 # SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
-SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
 
 BENCHMARK_NAME="nativehw"
 SNIPPETS_DIR="$DIR/build/snippets"
@@ -78,34 +78,34 @@ function build_native_exec {
 }
 
 function build_snippets {
-	for file in "$SNIPPETS_DIR"/*.c; do
-		name=$(basename "$file" .c)
-		gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib$name.so $file -L$GRAALVISOR_HOME/build/libs -lmemiso
-	done
+	pathname=$(ls "$SNIPPETS_DIR"/*.c)
+	file=${pathname##*/}
+	name=${file%.*}
+	gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib$name.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
 }
 
 function manipulate_bytecode {
 	CLASS_PATH="build/classes/java/main"
 	ENTRYPOINT="com.jni.HelloJNI"
 	TOOL="JNITemplateBuilder"
-	
+
+	rm -f $GRAALVISOR_HOME/build/libs/libprintHello.so
+
 	mkdir -p $DIR/build/snippets
 	
 	export BENCHMARK_NAME="$BENCHMARK_NAME"
 	export SNIPPETS_DIR="$SNIPPETS_DIR"
 	export ENV="memisolation"
 
-	cmd="$DEF_JAVA_HOME/bin/java \
-			-Djava.library.path="$GRAALVISOR_HOME/build/libs/" \
-			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
-			$ENTRYPOINT"
-	echo "$cmd"
+	# cmd="$DEF_JAVA_HOME/bin/java \
+	# 		-cp $CLASS_PATH \
+	# 		-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
+	# 		$ENTRYPOINT"
+	# echo "$cmd"
 
 	$DEF_JAVA_HOME/bin/java \
-			-Djava.library.path="$GRAALVISOR_HOME/build/libs/" \
 			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
+			-javaagent:$JAVA_AGENT=$TOOL::$CLASS_PATH \
 			$ENTRYPOINT
 
 	echo "check snippets"
@@ -152,14 +152,14 @@ manipulate_bytecode
 # build_native_exec
 
 # Build generated snippets.
-# build_snippets
+build_snippets
 
-# TARGET=$1
-# if [ ! -z "$TARGET" ]
-# then
-# 	$TARGET
-# exit 0
-# else
-# 	build_ni_sharedlibrary
-# 	exit 0
-# fi
+TARGET=$1
+if [ ! -z "$TARGET" ]
+then
+	$TARGET
+	exit 0
+else
+	build_ni_sharedlibrary
+	exit 0
+fi

@@ -1,175 +1,127 @@
-#set( $invokeWrapper = 
-    "#if($returnType == 'void')wrapper($args);
-    #else$returnType res = wrapper($args);
-    #end" )
-#set ( $invokeNativeMethod = 
-    "#if($returnType == 'void')native_method($args);
-    #else$returnType res = native_method($args);
-    #end" )
-#set( $returnInvocationResult =
-    "#if($returnType != 'void')return res;
-    #end" )
-
-$include <memisolation.h>
-$include <unistd.h>
-$include <stdlib.h>
-$include <time.h>
-$include <spawn.h>
-$include <fcntl.h>
-$include <string.h>
-$include <stdio.h>
-#if($methodReceivesExtraArguments)
-$include "JNIWrapper.h"
+#set( $params = "JNIEnv *env, jobject obj" )
+#if( $numArgs > 0 )
+#foreach( $type in $jniTypes )
+#set( $idx = $foreach.index )
+#set( $params = "${params}, $type arg$idx" )
 #end
+#end
+
+#set( $paramTypes = "JNIEnv *, jobject" )
+#if( $numArgs > 0 )
+#foreach( $type in $jniTypes )
+#set( $paramTypes = "${paramTypes}, $type" )
+#end
+#end
+
+#set( $args = "request->env, request->obj" )
+#if( $numArgs > 0 )
+#foreach( $type in $jniTypes )
+#set( $idx = $foreach.index )
+#set( $args = "${args}, *(($type *)request->args[${idx}])" )
+#end
+#end
+
+$define _GNU_SOURCE
+
+$include <stdio.h>
+$include <string.h>
+$include <dlfcn.h>
+$include <jni.h>
+
+$include <memory_map.h>
+$include <pkru_sandbox.h>
+$include <domain_manager.h>
+
 $include "$headerFilename"
 
-// Erim includes
-$include <erim.h>
-$include <common.h>
+$returnType (*native_method)($paramTypes) = NULL;
 
-$define BUFFER_SIZE 1024
-static __thread char* regular = NULL; // thread regular stack
-static __thread int fd = 0; // seccomp filter fd
+void nativeMethodInterface(int pkey) {
+    request_t* request = (request_t*) get_domain_arena(pkey);
 
-/* Function declaration */
-int warm_execution(void);
-void cold_execution(void);
-$returnType wrapper($params);
+    if (native_method == NULL) {
+        void *handle = dlmopen(LM_ID_NEWLM, "$nativeLibName", RTLD_LAZY);
+        //void *handle = dlopen("$nativeLibName", RTLD_LAZY | RTLD_GLOBAL);
+        if (handle == NULL) {
+            perror("dlmopen");
+            fprintf(stdout, "Could not load library $nativeLibName\n");
+            exit(EXIT_FAILURE);
+        }
+        if ((native_method = dlsym(handle, "$nativeMethod")) == NULL) {
+            perror("dlsym");
+            fprintf(stdout, "Failed to find the symbol: $nativeMethod\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN) & 0x55555554);
+    native_method($args);
+    __wrpkru(DEFAULT_DOMAIN);
+
+    // TODO: implement correct return value
+}
 
 JNIEXPORT $returnType JNICALL $callGate($params) {
-    /* Get available domain */
     SNI_DBM("[s]: Getting available domain...");
-    acquire_domain("$libName", &fd);
-    if (domain == -1) {
-        int result = warm_execution();
-        if (result != 0) {
-            cold_execution();
-        }
-    } else {
-        /* Switch to new stack */
-        SNI_DBM("[s]: switching to new stack...");
-        ERIM_SWITCH_STACK(ERIM_DOMAIN_STACK_LOC(domain), regular);
-        $invokeWrapper
-        ERIM_SWITCH_BACK(regular);
-
-        SNI_DBM("[s]: application terminated!");
-        reset_env("$libName", 0);
-        $returnInvocationResult
-    }
-}
-
-$returnType wrapper($params) {
-    void (*native_method)($paramTypes) = dlsym(RTLD_DEFAULT, "$nativeMethod");
-    if (native_method == NULL) {
-        fprintf(stdout, "Failed to find the symbol: $nativeMethod\n");
-        exit(EXIT_FAILURE);
+    int domain;
+    // TODO: implement LPI
+    while ((domain = book_available_domain()) == 0) {
+        usleep(100);
     }
 
-    SNI_DBM("[s]: handler's ready, changing domain...");
-    __wrpkru(0);
-    $invokeNativeMethod
-    __wrpkru(0);
-    $returnInvocationResult
-}
+    // The domain arena is setup in the following way:
+    // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
+    request_t* request = (request_t*) get_domain_arena(domain);
+    request->fun = nativeMethodInterface;
 
-// FIXME: need arguments?
-int warm_execution() {
-    int i;
-    atomic_int expected;
+    [[maybe_unused]] size_t size;
+    [[maybe_unused]] void *aux = (void *)((char *)request + sizeof(request_t));
 
-    int fd, fd2;
-    for (i = 0; i < NUM_PROCESSES; i++) {
-        expected = atomic_load(&procIDs[i]);
-        if (expected != 0 &&
-            __atomic_compare_exchange_n(&procIDs[i], &expected,
-                            0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
-            char fifo_path[50];
-            snprintf(fifo_path, sizeof(fifo_path), "/tmp/fifo/fifo_%d", expected);
-            fd = open(fifo_path, O_WRONLY);
-            if (fd == -1){
-                perror("Error Opening FIFO111");
-                exit(EXIT_FAILURE);
-            };
-            char buffer[BUFFER_SIZE];
-            char *argv = "$nativeELF";
-            snprintf(buffer, sizeof(buffer), "%s", argv);
-            write(fd, buffer, strlen(buffer));
-            close(fd);
+    // Copying the function call argument to arena.
+#if( $numArgs > 0 )
+#foreach( $_ in [1..$numArgs] )
+#set( $idx = $foreach.index )
 
-            char fifo_path_2[30], buffer2[BUFFER_SIZE];
-            snprintf(fifo_path_2, sizeof(fifo_path_2), "/tmp/ret/ret_%d", expected);
-            fd2 = open(fifo_path_2, O_RDONLY);
-            if (fd2 == -1){
-                perror("Error Opening FIFO22222");
-                exit(EXIT_FAILURE);
-            };
-            ssize_t bytes_read = read(fd2, buffer2, BUFFER_SIZE);
-            if (bytes_read == -1){
-                perror("Error reading from FIFO1212");
-                exit(EXIT_FAILURE);
-            };
-            close(fd2);
-            buffer2[bytes_read] = '\0';
-            return 0;
-        } else {
-            continue;
-        }
+    // copy arg$idx
+    request->args[$idx] = aux;
+    printf("%p\n", request->args[$idx]);
+#if( $jniTypes[$idx] != "jstring" )
+    size = $argSizes[$idx];
+    request->arg_sizes[$idx] = size;
+    memcpy(request->args[$idx], &arg$idx, size);
+#else
+    size = (*env)->GetStringLength(env, arg$idx) * sizeof(short);
+    memcpy(request->args[$idx], (*env)->GetStringChars(env, arg$idx, NULL), size);
+    printf("string size: %ld, content: ", size);
+    for (int i = 0; i < size; i++) {
+        printf("%c", *((char *)request->args[$idx] + i));
     }
-    return 1;
-}
+    printf("\n");
+    fflush(stdout);
+#end
+    aux = (void *)((char *)aux + size);
+#end
+#end
 
-// FIXME: need arguments?
-void cold_execution() {
-    int ret;
-    pid_t child_pid;
-    int pipefd[2];
-    char buffer[1024];
-    memset(buffer,'\0',sizeof(buffer));
+    // TODO: copy arguments
+    request->env = env;
+    request->obj = obj;
 
-    if (pipe(pipefd) == -1) {
-        perror("pipe error");
-        exit(EXIT_FAILURE);
-    }
-    char *argv[] = {"$nativeELF", NULL};
-    char **environ = {NULL};
+    // run function in worker domain
+    pthread_cond_t* cond = get_domain_cond(domain);
+    pthread_cond_broadcast(cond);
 
-    posix_spawn_file_actions_t child_fd_actions;
-    if ((ret = posix_spawn_file_actions_init(&child_fd_actions)) != 0) {
-        fprintf(stderr, "posix_spawn_file_actions_init failed %d", ret);
-    }
-
-    if ((ret = posix_spawn_file_actions_addclose(&child_fd_actions, pipefd[0])) != 0) {
-        fprintf(stderr, "posix_spawn_file_actions_addclose failed %d", ret);
-    }
-
-    if ((ret = posix_spawn_file_actions_adddup2(&child_fd_actions, pipefd[1], 1)) != 0) {
-        fprintf(stderr, "posix_spawn_file_actions_adddup2 failed %d", ret);
-    }
-
-    if ((ret = posix_spawn_file_actions_addclose(&child_fd_actions, pipefd[1])) != 0) {
-        fprintf(stderr, "posix_spawn_file_actions_addclose failed %d", ret);
-    }
-
-    if ((ret = posix_spawn(&child_pid, argv[0], &child_fd_actions, NULL, argv, environ)) != 0) {
-        fprintf(stderr, "posix_spawn failed %d", ret);
-        exit(ret);
-    }
-}
-
-int main() {
-    void *open_lib;
-    open_lib = dlopen("$libPathname", RTLD_LAZY);
-    if (!open_lib) {
-        fprintf(stderr, "Error: %s", dlerror());
-        return 1;
-    }
-
-    void (*native_method)($paramTypes) = dlsym(open_lib, "$nativeMethod");
-    if (native_method == NULL) {
-        fprintf(stdout, "Failed to find the symbol: $nativeMethod\n");
-        exit(EXIT_FAILURE);
-    }
-
-    native_method($literals);
-    dlclose(open_lib);
+    // wait
+    pthread_mutex_t* lock = get_domain_lock(domain); 
+    pthread_mutex_lock(lock);
+    pthread_cond_wait(cond, lock);
+    pthread_mutex_unlock(lock);
+    fprintf(stderr, "User thread notify\n");
+   
+    // Copying return value to arena and setting ret and ret_size pointers.
+    // __attribute__((unused)) void *ret = (void*) (((char*) request->arg) + arg_size);
+    // *ret_size = request->ret_size; // TODO
+    // memcpy(*ret, request->ret, request->ret_size); // TODO
+	// return ret; // TODO: implement correct return value
+    return;
 }
