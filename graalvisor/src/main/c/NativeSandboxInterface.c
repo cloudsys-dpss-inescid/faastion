@@ -2,25 +2,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
-#ifdef LAZY_ISOLATION
-#include "lazyisolation.h"
-#endif
-#ifdef MEM_ISOLATION
-#include <time.h>
-#include <stdlib.h>
-#include "memisolation.h"
-#endif
-
 #include "pkru_sandbox.h"
 
 #include "org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface.h"
 
 #define PIPE_READ_END  0
 #define PIPE_WRITE_END 1
-
-#ifdef MEM_ISOLATION
-int eager_mpk = 0;
-#endif
 
 void close_parent_fds(int childWrite, int parentRead) {
     // TODO - we should try to get a sense for the used file descriptors.
@@ -45,45 +32,20 @@ JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSan
 }
 
 JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_isMemIsolationSupported(JNIEnv *env, jobject thisObj) {
-#ifdef MEM_ISOLATION
-    return 1;
-#else
     return 0;
-#endif
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_setupMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
-#ifdef MEM_ISOLATION    
-    if (eager_mpk) {
-        const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
-        find_domain_eager(function_name);
-        (*env)->ReleaseStringUTFChars(env, functionName, function_name);
-    }
-#endif
+
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardownMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
-#ifdef MEM_ISOLATION    
-    if (eager_mpk) {
-        const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
-        reset_env(function_name, 1);
-        (*env)->ReleaseStringUTFChars(env, functionName, function_name);
-    }
-#endif
+
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_ginit(JNIEnv *env, jobject thisObj) {
     setbuf(stdout, NULL);
-#ifdef LAZY_ISOLATION
-        initialize_seccomp();
-#endif
-#ifdef MEM_ISOLATION
-        char* mpk_env = getenv("EAGER_MPK");
-        if (mpk_env != NULL) {
-            eager_mpk = atoi(mpk_env);
-        }
-        initialize_memory_isolation();
-#endif
+    
     if (pkru_sandbox_init()) {
         fprintf(stderr, "failed to initialize pthread sandboxes\n");
         cleanup_and_exit();
