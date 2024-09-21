@@ -179,30 +179,17 @@ void handle_syscalls(int pkey)
                 resp->val = syscall(__NR_mmap, args[0], args[1], args[2], args[3], args[4], args[5]);
                 resp->error = resp->val < 0 ? -errno : 0;
                 resp->flags = 0;
-                if (errno)
-                    break;
-                if (pkey != 0) {
+                if (!errno && pkey != 0) {
                     fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
                         req->pid, pkey, (void*) resp->val, (size_t) args[1]);
-                    if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1) {
+                    if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1)
                         fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n", (void*) resp->val, (size_t) args[1]);
-                    }
-                } else if ((info = get_thread_info(req->pid))->register_mmaps) {
-                    fprintf(stdout, "Saving region: address %p size %lu prot %d! \n",(void*) resp->val, (size_t) args[1], (int) args[2]);
-                    insert_app_region(info->appName, (void*) resp->val, (size_t) args[1], (int) args[2]);
-                }
-                
+                }                
                 break;
             case __NR_munmap:
                 resp->val = syscall(__NR_munmap, args[0], args[1], args[2], args[3], args[4], args[5]);
                 resp->error = resp->val < 0 ? -errno : 0;
                 resp->flags = 0;
-                if (errno)
-                    break;
-                if (pkey == 0 && (info = get_thread_info(req->pid))->appName != NULL) {
-                    fprintf(stdout, "Deleting region: address %p size %lu\n",(void *)(args[0]), (size_t)(args[1]));
-                    remove_app_region(info->appName, (void *)(args[0]), (size_t)(args[1]));
-                }
                 break;
             default:
                 fprintf(stderr, "warning: unhandled syscall %d!\n", req->data.nr);

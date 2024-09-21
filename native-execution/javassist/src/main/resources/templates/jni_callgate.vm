@@ -13,7 +13,7 @@
 #end
 #end
 
-#set( $args = "request->env, request->obj" )
+#set( $args = "NULL, NULL" )
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
 #set( $idx = $foreach.index )
@@ -34,27 +34,31 @@ $include <domain_manager.h>
 
 $include "$headerFilename"
 
-$returnType (*native_method)($paramTypes) = NULL;
+static __thread $returnType (*_native_method)($paramTypes) = NULL; // accessible in default domain only
 
-void nativeMethodInterface(int pkey) {
-    request_t* request = (request_t*) get_domain_arena(pkey);
-
-    if (native_method == NULL) {
+int load_native_method() {
+    if (_native_method == NULL) {
         void *handle = dlmopen(LM_ID_NEWLM, "$nativeLibName", RTLD_LAZY);
-        //void *handle = dlopen("$nativeLibName", RTLD_LAZY | RTLD_GLOBAL);
         if (handle == NULL) {
-            perror("dlmopen");
-            fprintf(stdout, "Could not load library $nativeLibName\n");
-            exit(EXIT_FAILURE);
+            fprintf(stdout, "Could not load library: $nativeLibName\n");
+            return -1;
         }
-        if ((native_method = dlsym(handle, "$nativeMethod")) == NULL) {
-            perror("dlsym");
+        if ((_native_method = dlsym(handle, "$nativeMethod")) == NULL) {
             fprintf(stdout, "Failed to find the symbol: $nativeMethod\n");
-            exit(EXIT_FAILURE);
+            return -1;
         }
     }
+    return 0;
+}
 
-    __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN) & 0x55555554);
+void nativeMethodInterface(int pkey) {
+    if (load_native_method())
+        exit(EXIT_FAILURE);
+
+    request_t* request = (request_t*) get_domain_arena(pkey);
+    void (*native_method)(JNIEnv *, jobject, jint) = _native_method; // accessible in worker domain
+
+    __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
     native_method($args);
     __wrpkru(DEFAULT_DOMAIN);
 
