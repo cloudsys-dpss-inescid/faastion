@@ -20,18 +20,15 @@ void* get_domain_arena(int pkey)
     return domains[pkey]->arena;
 }
 
-
 void increment_children(int pkey)
 {
     atomic_fetch_add(&(domains[pkey]->children), 1);
 }
 
-
 void decrement_children(int pkey)
 {
     atomic_fetch_sub(&(domains[pkey]->children), 1);
 }
-
 
 int book_available_domain()
 {
@@ -46,7 +43,6 @@ int book_available_domain()
     }
     return 0;
 }
-
 
 int initialize_domain(int pkey)
 {
@@ -89,7 +85,6 @@ int initialize_domain(int pkey)
     return 0;
 }
 
-
 int initialize_all_domains()
 {
     PAGE_SIZE = getpagesize();
@@ -101,7 +96,6 @@ int initialize_all_domains()
     }
     return 0;
 }
-
 
 void cleanup_domains()
 {

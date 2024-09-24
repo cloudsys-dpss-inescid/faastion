@@ -67,6 +67,14 @@ void nativeMethodInterface(int pkey) {
 
 JNIEXPORT $returnType JNICALL $callGate($params) {
     SNI_DBM("[s]: Getting available domain...");
+
+    IsolateFunction *function = get_isolate_function();
+    if (function == NULL) {
+        function = get_app_function(gettid());
+        set_isolate_function(function);
+    }
+    printf("function: %p\n", function);
+
     int domain;
     // TODO: implement LPI
     while ((domain = book_available_domain()) == 0) {
@@ -88,7 +96,6 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     // copy arg$idx
     request->args[$idx] = aux;
-    printf("%p\n", request->args[$idx]);
 #if( $jniTypes[$idx] != "jstring" )
     size = $argSizes[$idx];
     request->arg_sizes[$idx] = size;

@@ -17,4 +17,8 @@ public class NativeSandboxInterface {
     public static native void createNativeIsolateSandbox(boolean lazyIsolation);
 
     public static native void createNativeRuntimeSandbox(boolean lazyIsolation);
+
+    public static native void createIsolateFunction();
+
+    public static native void destroyIsolateFunction();
 }

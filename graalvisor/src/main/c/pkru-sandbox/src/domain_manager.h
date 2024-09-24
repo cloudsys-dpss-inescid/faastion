@@ -10,9 +10,9 @@
  * @brief Structure representing a memory protection domain
  */ 
 typedef struct Domain {
-    pthread_mutex_t mutex;      // Mutex to protect the domain's resources
-    void*           arena;      // Pointer to the memory arena
-    atomic_int      children;   // Atomic counter for tracking the number of child threads
+    pthread_mutex_t mutex;          // Mutex to protect the domain's resources
+    void*           arena;          // Pointer to the memory arena
+    atomic_int      children;       // Atomic counter for tracking the number of child threads
     // TODO - define worker_t here
 } Domain;
 

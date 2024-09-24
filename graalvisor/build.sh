@@ -19,12 +19,11 @@ function build_pkru_sandbox {
 	CFLAGS="-Wall -g -fno-inline -fPIC -shared"
 
 	if [ $major_version -ge 5 ] && [ $minor_version -ge 10 ]; then
-	    	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
-	    	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
-        	$CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/pkru_sandbox.o $PKRU_DIR/pkru_sandbox.c
-            $CC -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/thread_map.o $PKRU_DIR/thread_map.c
+	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
+	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
+        	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/pkru_sandbox.o $PKRU_DIR/pkru_sandbox.c
             $CC $CFLAGS -o $LIB_DIR/libpkru.so $LIB_DIR/domain_manager.o $LIB_DIR/memory_map.o \
-                $LIB_DIR/pkru_sandbox.o $LIB_DIR/thread_map.o
+                $LIB_DIR/pkru_sandbox.o
 
             LINKER_OPTIONS_PKRU_ISO="-H:NativeLinkerOption=$LIB_DIR/libpkru.so"
     fi

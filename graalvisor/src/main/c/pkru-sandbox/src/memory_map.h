@@ -1,6 +1,7 @@
 #ifndef MEMORY_REGION_LIST_H
 #define MEMORY_REGION_LIST_H
 
+#include <unistd.h>
 #include <stddef.h>
 
 /**
@@ -20,9 +21,20 @@ typedef struct MemoryRegionNode {
     struct MemoryRegionNode* next;   /** Pointer to the next node in the list */
 } MemoryRegionNode;
 
+typedef struct ChildrenNode {
+    pid_t tid;
+    struct ChildrenNode *next;
+} ChildrenNode;
+
+typedef struct {
+    int current_domain;             
+    ChildrenNode *children;         /** Used to free up hash table entries after teardownIsolate */
+    MemoryRegionNode* regions;
+} IsolateFunction;
+
 typedef struct Bucket {
-    char *appName;
-    MemoryRegionNode* regions; 
+    pid_t tid;
+    IsolateFunction *function;
     struct Bucket *next;
 } Bucket;
 
@@ -33,13 +45,25 @@ typedef struct {
 
 void init_hash_table(int size);
 
-MemoryRegionNode *get_app_regions(char *appName);
+void protect_app_regions(IsolateFunction *function, int pkey);
 
-void protect_app_regions(char *appName, int pkey);
+void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot);
 
-void insert_app_region(char *appName, void* address, size_t size, int prot);
+void remove_app_region(IsolateFunction *function, void *address, size_t size);
 
-void remove_app_region(char *appName, void *address, size_t size);
+IsolateFunction *create_isolate_function();
+
+void destroy_isolate_function(IsolateFunction *function);
+
+void set_isolate_function(IsolateFunction *function);
+
+IsolateFunction *get_isolate_function();
+
+IsolateFunction *get_app_function(pid_t tid);
+
+void insert_app_thread(pid_t tid, IsolateFunction *function);
+
+void remove_app_thread(pid_t tid);
 
 void free_hash_table();
 
