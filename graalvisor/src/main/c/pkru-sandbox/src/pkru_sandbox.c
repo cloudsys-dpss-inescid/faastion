@@ -214,54 +214,6 @@ void handle_jni_syscalls(int pkey) {
     free(resp);
 }
 
-void handle_jvm_syscalls() {
-    int fd;
-    volatile int *child;
-    IsolateFunction *function;
-    struct clone_args *cl_args;
-    long long unsigned int *args;
-
-    struct seccomp_notif *req;
-    struct seccomp_notif_resp *resp;
-
-    fd = monitor_threads[0].seccomp_fd;
-    req = (struct seccomp_notif*)malloc(seccomp_sizes.seccomp_notif);
-    resp = (struct seccomp_notif_resp*)malloc(seccomp_sizes.seccomp_notif_resp);
-
-    for(;;) {
-        if (receive_notification(fd, req, resp))
-            continue;
-
-        resp->id = req->id;
-        resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
-        args = req->data.args;
-        if (send_response(fd, req, resp))
-            continue;
-
-        switch (req->data.nr) {
-        case __NR_clone3: // clone3(cl_args, size)
-            cl_args = (struct clone_args *)args[0];
-            child = (int *)cl_args->parent_tid;
-            break;
-        case __NR_clone: // clone(clone_flags, newsp, parent_tidptr, child_tidptr, tls)
-            child = (int *)args[2];
-            break;
-        default:
-            continue;
-        }
-            
-        if (child != NULL && (function = get_app_function(req->pid)) != NULL) {
-            while (*child == 0)
-                ;
-            insert_app_thread(*child, function);
-        }
-    }
-
-    close(fd);
-    free(req);
-    free(resp);
-}
-
 void* jni_monitor(void* arg)
 {
     int pkey = (int) ((long) arg);
@@ -270,15 +222,6 @@ void* jni_monitor(void* arg)
     while (monitor_threads[pkey].seccomp_fd == 0) ;
 
     handle_jni_syscalls(pkey);
-    return NULL;
-}
-
-void* jvm_monitor(void* arg)
-{
-    // Wait until seccomp_fd is set
-    while (monitor_threads[0].seccomp_fd == 0) ;
-
-    handle_jvm_syscalls();
     return NULL;
 }
 
@@ -372,11 +315,6 @@ int pkru_sandbox_init()
         return -1;
     }
 
-    if (pthread_create(&(monitor_threads[0].thread), NULL, jvm_monitor, NULL) != 0) {
-        fprintf(stderr, "error: failed creating monitor thread for default domain\n");
-        return -1;
-    }
-
     // Launch worker threads.
     for (int i = 1; i < DOMAINS; i++) {
         if (pthread_create(&(monitor_threads[i].thread), NULL, jni_monitor, (void*)(intptr_t) i) != 0) {
@@ -390,6 +328,5 @@ int pkru_sandbox_init()
         }
     }
 
-    monitor_threads[DEFAULT_DOMAIN].seccomp_fd = install_seccomp_filter(default_domain_filter);
     return 0;
 }

@@ -1,3 +1,4 @@
+#set( $nativeLibName = "${libPath}lib${functionName}-jni.so" )
 #set( $params = "JNIEnv *env, jobject obj" )
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
@@ -70,7 +71,7 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     IsolateFunction *function = get_isolate_function();
     if (function == NULL) {
-        function = get_app_function(gettid());
+        function = get_app_function("$functionName");
         set_isolate_function(function);
     }
     printf("function: %p\n", function);

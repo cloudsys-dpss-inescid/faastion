@@ -21,19 +21,14 @@ typedef struct MemoryRegionNode {
     struct MemoryRegionNode* next;   /** Pointer to the next node in the list */
 } MemoryRegionNode;
 
-typedef struct ChildrenNode {
-    pid_t tid;
-    struct ChildrenNode *next;
-} ChildrenNode;
-
 typedef struct {
     int current_domain;             
-    ChildrenNode *children;         /** Used to free up hash table entries after teardownIsolate */
+    int children;
     MemoryRegionNode* regions;
 } IsolateFunction;
 
 typedef struct Bucket {
-    pid_t tid;
+    char *functionName;
     IsolateFunction *function;
     struct Bucket *next;
 } Bucket;
@@ -59,11 +54,11 @@ void set_isolate_function(IsolateFunction *function);
 
 IsolateFunction *get_isolate_function();
 
-IsolateFunction *get_app_function(pid_t tid);
+IsolateFunction *get_app_function(char *functionName);
 
-void insert_app_thread(pid_t tid, IsolateFunction *function);
+void insert_app_function(const char *functionName, IsolateFunction *function);
 
-void remove_app_thread(pid_t tid);
+void remove_app_function(char *functionName);
 
 void free_hash_table();
 

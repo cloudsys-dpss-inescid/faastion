@@ -222,11 +222,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.toArray();
 		}
 
-		String nativeLibName = System.getenv("ARGO_HOME")
-				.concat("/graalvisor/build/libs/lib")
-				.concat(System.getenv("BENCHMARK_NAME"))
-				.concat("-jni.so");
-		setTemplateVariable("nativeLibName", nativeLibName);
+		setTemplateVariable("functionName", System.getenv("BENCHMARK_NAME"));
+		setTemplateVariable("libPath", System.getenv("ARGO_HOME").concat("/graalvisor/build/libs/"));
 		setTemplateVariable("jniTypes", jniTypes);
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("argSizes", argSizes);

@@ -25,7 +25,7 @@ public class IsolateSandboxHandle extends SandboxHandle {
     public String invokeSandbox(String jsonArguments) throws Exception {
         PolyglotFunction function = isProvider.getFunction();
         String functionName = function.getName();
-        NativeSandboxInterface.createIsolateFunction();
+        NativeSandboxInterface.createIsolateFunction(functionName);
         String resp = isProvider.getGraalvisorAPI().invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);
         NativeSandboxInterface.destroyIsolateFunction();
         return resp;

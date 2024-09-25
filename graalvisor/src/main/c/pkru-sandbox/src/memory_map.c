@@ -99,32 +99,6 @@ void free_memory_region_list(MemoryRegionNode *head) {
     }
 }
 
-ChildrenNode* create_children_node(pid_t tid) {
-    ChildrenNode* newNode = (ChildrenNode*)malloc(sizeof(ChildrenNode));
-    if (!newNode) {
-        perror("Failed to allocate memory for MemoryRegionNode");
-        exit(EXIT_FAILURE);
-    }
-    newNode->tid = tid;
-    newNode->next = NULL;
-    return newNode;
-}
-
-void add_child(ChildrenNode **head, pid_t tid) {
-    ChildrenNode* newNode = create_children_node(tid);
-
-    if (*head == NULL) {
-        *head = newNode;
-        return;
-    }
-
-    ChildrenNode* current = *head;
-    while (current->next != NULL) {
-        current = current->next;
-    }
-    current->next = newNode;
-}
-
 IsolateFunction *create_isolate_function() {
     IsolateFunction *function = (IsolateFunction *)malloc(sizeof(IsolateFunction));
     if (!function) {
@@ -132,8 +106,8 @@ IsolateFunction *create_isolate_function() {
         exit(1);
     }
     function->regions = NULL;
-    function->children = NULL;
-    function->current_domain = 0;
+    function->children = 0;
+    function->current_domain = -1;
     return function;
 }
 
@@ -146,14 +120,6 @@ IsolateFunction *get_isolate_function() {
 }
 
 void destroy_isolate_function(IsolateFunction *function) {
-    ChildrenNode *current = function->children;
-    ChildrenNode *next;
-    while (current != NULL) {
-        next = current->next;
-        remove_app_thread(current->tid);
-        free(current);
-        current = next;
-    }
     free_memory_region_list(function->regions);
     free(function);
 }
@@ -194,33 +160,35 @@ void init_hash_table(int size) {
     }
 }
 
-Bucket *get_bucket(pid_t tid) {
-    Bucket *currentBucket = hashTable->buckets[hash_int(tid)];
-    while (currentBucket != NULL && currentBucket->tid != tid) {
+Bucket *get_bucket(const char *functionName) {
+    Bucket *currentBucket = hashTable->buckets[hash_string(functionName)];
+    while (currentBucket != NULL &&
+        currentBucket->functionName != NULL &&
+        strcmp(currentBucket->functionName, functionName) != 0)
+    {
         currentBucket = currentBucket->next;
     }
     return currentBucket;
 }
 
-void insert_app_thread(pid_t tid, IsolateFunction *function) {
-    Bucket **head = &hashTable->buckets[hash_int(tid)];
-    Bucket *currentBucket = get_bucket(tid);
+void insert_app_function(const char *functionName, IsolateFunction *function) {
+    Bucket **head = &hashTable->buckets[hash_string(functionName)];
+    Bucket *currentBucket = get_bucket(functionName);
     if (currentBucket == NULL) {
         currentBucket = (Bucket *)malloc(sizeof(Bucket));
-        currentBucket->tid = tid;
+        currentBucket->functionName = strdup(functionName);
         currentBucket->function = function;
         currentBucket->next = *head;
         *head = currentBucket;
     }
-    add_child(&function->children, tid);
 }
 
-void remove_app_thread(pid_t tid) {
-    Bucket **head = &hashTable->buckets[hash_int(tid)];
+void remove_app_function(char *functionName) {
+    Bucket **head = &hashTable->buckets[hash_string(functionName)];
     Bucket *currentBucket = *head;
     Bucket *previousBucket = NULL;
     while (currentBucket != NULL) {
-        if (currentBucket->tid != tid) {
+        if (currentBucket->functionName == NULL || strcmp(currentBucket->functionName, functionName) != 0) {
             previousBucket = currentBucket;
             currentBucket = currentBucket->next;
             continue;
@@ -229,13 +197,15 @@ void remove_app_thread(pid_t tid) {
         } else {
             previousBucket->next = currentBucket->next;
         }
+        destroy_isolate_function(currentBucket->function);
+        free(currentBucket->functionName);
         free(currentBucket);
         break;
     } 
 }
 
-IsolateFunction *get_app_function(pid_t tid) {
-    Bucket *currentBucket = get_bucket(tid);
+IsolateFunction *get_app_function(char *functionName) {
+    Bucket *currentBucket = get_bucket(functionName);
     return currentBucket ? currentBucket->function : NULL;
 }
 
@@ -254,10 +224,14 @@ void remove_app_region(IsolateFunction *function, void *address, size_t size) {
 void free_hash_table() {
     for (int i = 0; i < hashTable->size; i++) {
         Bucket *currentBucket = hashTable->buckets[i];
+        Bucket *nextBucket;
 
         while (currentBucket != NULL) {
+            nextBucket = currentBucket->next;
             destroy_isolate_function(currentBucket->function);
-            currentBucket = hashTable->buckets[i];
+            free(currentBucket->functionName);
+            free(currentBucket);
+            currentBucket = nextBucket;
         }
     }
 
