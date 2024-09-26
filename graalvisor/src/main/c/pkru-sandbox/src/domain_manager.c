@@ -20,26 +20,25 @@ void* get_domain_arena(int pkey)
     return domains[pkey]->arena;
 }
 
-void increment_children(int pkey)
-{
-    atomic_fetch_add(&(domains[pkey]->children), 1);
+IsolateFunction *get_domain_function(int domain) {
+    return (IsolateFunction *)domains[domain]->function;
 }
 
-void decrement_children(int pkey)
-{
-    atomic_fetch_sub(&(domains[pkey]->children), 1);
+int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function) {
+    if (domain == 0)
+        return 0;
+
+    return atomic_compare_exchange_strong(
+            &domains[domain]->function,
+            &expected,
+            (atomic_intptr_t)function);
 }
 
-int book_available_domain()
+int book_available_domain(IsolateFunction *function)
 {
-    int expected = 0; // We expect children count to be 0
-
     for (int i = 2; i < DOMAINS; i++) {
-        // Try to set children to 1 only if it is currently 0
-        // NOTE - need to decrement after execution is finished
-        if (atomic_compare_exchange_strong(&domains[i]->children, &expected, 1)) {
+        if (swap_domain_function(i, NULL, function))
             return i;
-        }
     }
     return 0;
 }
@@ -63,8 +62,7 @@ int initialize_domain(int pkey)
     
     // Populate domain
     domain->arena = arena;
-    pthread_mutex_init(&domain->mutex, NULL);
-    atomic_init(&domain->children, 0);
+    atomic_init(&domain->function, (atomic_intptr_t) NULL);
     domains[pkey] = domain;
 
     // Allocate protection key
@@ -105,9 +103,6 @@ void cleanup_domains()
                 perror("munmap");
             }
 
-            // Destroy the mutex
-            pthread_mutex_destroy(&domains[i]->mutex);
-            
             // Free the domain structure
             free(domains[i]);
 

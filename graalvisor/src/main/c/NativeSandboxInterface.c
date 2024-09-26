@@ -99,7 +99,8 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     (*env)->ReleaseStringUTFChars(env, functionName, function_name);
 }
 
-JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_destroyIsolateFunction(JNIEnv *env, jobject thisObj) {
-    IsolateFunction *function = get_isolate_function();
-    destroy_isolate_function(function);
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_destroyIsolateFunction(JNIEnv *env, jobject thisObj, jstring functionName) {
+    const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
+    remove_app_function(function_name);
+    (*env)->ReleaseStringUTFChars(env, functionName, function_name);
 }

@@ -27,7 +27,7 @@ public class IsolateSandboxHandle extends SandboxHandle {
         String functionName = function.getName();
         NativeSandboxInterface.createIsolateFunction(functionName);
         String resp = isProvider.getGraalvisorAPI().invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);
-        NativeSandboxInterface.destroyIsolateFunction();
+        NativeSandboxInterface.destroyIsolateFunction(functionName);
         return resp;
     }
 

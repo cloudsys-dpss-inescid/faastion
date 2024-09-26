@@ -20,5 +20,5 @@ public class NativeSandboxInterface {
 
     public static native void createIsolateFunction(String functionName);
 
-    public static native void destroyIsolateFunction();
+    public static native void destroyIsolateFunction(String functionName);
 }

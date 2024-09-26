@@ -31,12 +31,8 @@ static monitor_t monitor_threads[DOMAINS];
 
 static struct seccomp_notif_sizes seccomp_sizes;
 
-pthread_cond_t *get_domain_cond(int domain) {
-    return &(worker_threads[domain].cond);
-}
-
-pthread_mutex_t *get_domain_lock(int domain) {
-    return &(worker_threads[domain].lock);
+pthread_mutex_t *get_request_lock(int domain) {
+    return &(worker_threads[domain].request_lock);
 }
 
 void protect_library(const char* library, int pkey)
@@ -94,7 +90,10 @@ struct sock_filter worker_domain_filter[] = {
     BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL),
 
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
-        
+
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_exit, 4, 0),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone3, 3, 0),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone, 2, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_munmap, 1, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_mmap, 0, 1),
     BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_USER_NOTIF),
@@ -167,6 +166,7 @@ int send_response(int fd, struct seccomp_notif *req, struct seccomp_notif_resp *
 
 void handle_jni_syscalls(int pkey) {
     int fd;
+    IsolateFunction *function;
     long long unsigned int *args;
 
     struct seccomp_notif *req;
@@ -191,13 +191,28 @@ void handle_jni_syscalls(int pkey) {
                 fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
                     req->pid, pkey, (void*) resp->val, (size_t) args[1]);
                 if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1)
-                    fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n", (void*) resp->val, (size_t) args[1]);
+                    fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n",
+                        (void*) resp->val, (size_t) args[1]);
+                else
+                    insert_app_region(get_domain_function(pkey),
+                        (void*) resp->val, (size_t) args[1], (int) args[2]);
             }                
             break;
         case __NR_munmap:
             resp->val = syscall(__NR_munmap, args[0], args[1], args[2], args[3], args[4], args[5]);
             resp->error = resp->val < 0 ? -errno : 0;
             resp->flags = 0;
+            if (errno == 0)
+                remove_app_region(get_domain_function(pkey), (void *)args[0], (size_t)args[1]);
+            break;
+        case __NR_clone3:
+        case __NR_clone:
+            clone_function_thread(get_domain_function(pkey));
+            resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+            break;
+        case __NR_exit:
+            join_function_thread(get_domain_function(pkey));
+            resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
             break;
         default:
             fprintf(stderr, "warning: unhandled syscall %d!\n", req->data.nr);
@@ -225,32 +240,41 @@ void* jni_monitor(void* arg)
     return NULL;
 }
 
+void notify_worker(int domain) {
+    sem_post(&(worker_threads[domain].request));
+}
+
+void wait_worker(int domain) {
+    sem_wait(&(worker_threads[domain].response));
+}
+
 int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int), void *argv[], int argc)
 {
     // The domain arena is setup in the following way:
     // |--- request (sizeof(request_t bytes) long) ---|--- arg (arg_size bytes long) ---|--- ret (ret_size bytes long) ---|
     request_t* request = (request_t*) get_domain_arena(domain);
     void **args = (void **) ((char*)request + sizeof(request_t));
+
+    pthread_mutex_t *request_lock = &(worker_threads[domain].request_lock);
+    pthread_mutex_lock(request_lock);
+
     // request->arg = (void*) ((char*)request + sizeof(request_t));
     request->num_args = argc;
     request->fun = fun;
 
     // Copying the function call argument to arena.
     // memcpy(request->arg, arg, arg_size);
-     
-    pthread_mutex_t* lock = &(worker_threads[domain].lock);
-    pthread_cond_t* cond = &(worker_threads[domain].cond);
     
-    pthread_cond_broadcast(cond);
-    pthread_mutex_lock(lock);
-    pthread_cond_wait(cond, lock);
-    pthread_mutex_unlock(lock);
+    notify_worker(domain);
+    wait_worker(domain);
     fprintf(stderr, "User thread notify\n");
    
     // Copying return value to arena and setting ret and ret_size pointers.
     *ret = (void*) ((char*)request + sizeof(request_t));
     *ret_size = request->ret_size;
     memcpy(*ret, request->ret, request->ret_size);
+
+    pthread_mutex_unlock(request_lock);
 	return 0;
 }
 
@@ -259,22 +283,23 @@ void* worker(void* arg)
     int pkey = (int) ((long) arg);
     fprintf(stderr, "Worker for domain %d is running...\n", pkey);
     
-    pthread_mutex_t* lock = &(worker_threads[pkey].lock);
-    pthread_cond_t* cond = &(worker_threads[pkey].cond);
-    pthread_mutex_init(lock, NULL);
-    pthread_cond_init(cond, NULL);
+    sem_t *request = &(worker_threads[pkey].request);
+    sem_t *response = &(worker_threads[pkey].response);
+    pthread_mutex_t *request_lock = &(worker_threads[pkey].request_lock);
+
+    sem_init(request, 0, 0);
+    sem_init(response, 0, 0);
+    pthread_mutex_init(request_lock, NULL);
 
     for (;;) {
-        pthread_mutex_lock(lock);
-        pthread_cond_wait(cond, lock);
-        pthread_mutex_unlock(lock);
+        sem_wait(request);
         fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
         request_t* request = (request_t*) get_domain_arena(pkey);
 
         // calling native function generated in javassist 
         request->fun(pkey);
 
-        pthread_cond_broadcast(cond);
+        sem_post(response);
     }
     return NULL;
 }

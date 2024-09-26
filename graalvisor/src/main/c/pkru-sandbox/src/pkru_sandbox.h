@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <semaphore.h>
 #include <jni.h>
 #include "domain_manager.h"
 
@@ -87,8 +88,9 @@ typedef struct request {
  */
 typedef struct worker {
     pthread_t thread;         /** Worker thread for the domain. */
-    pthread_cond_t cond;      /** Condition variable for signaling new requests. */
-    pthread_mutex_t lock;     /** Lock for synchronizing access to the conditional variable. */
+    sem_t request;
+    sem_t response;
+    pthread_mutex_t request_lock;
 } worker_t;
 
 /**
@@ -167,7 +169,10 @@ void* worker_wrapper(void* arg);
  */
 int pkru_sandbox_init();
 
-pthread_cond_t *get_domain_cond(int pkey);
-pthread_mutex_t *get_domain_lock(int pkey);
+pthread_mutex_t *get_request_lock(int pkey);
+
+void notify_worker(int domain);
+
+void wait_worker(int domain);
 
 #endif // PKRU_SANDBOX_H

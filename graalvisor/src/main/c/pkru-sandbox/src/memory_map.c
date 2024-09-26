@@ -1,10 +1,12 @@
 #define _GNU_SOURCE
 
+#include "domain_manager.h"
 #include "memory_map.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <dlfcn.h>
 
 
 // Head of the linked list
@@ -105,9 +107,12 @@ IsolateFunction *create_isolate_function() {
         fprintf(stderr, "Could not allocate isolate function\n");
         exit(1);
     }
+    pthread_mutex_init(&function->mutex, NULL);
+    function->dl_handle = NULL;
     function->regions = NULL;
-    function->children = 0;
-    function->current_domain = -1;
+    function->jni_threads = 0;
+    function->current_domain = 0;
+    function->prev_domain = 0;
     return function;
 }
 
@@ -119,9 +124,57 @@ IsolateFunction *get_isolate_function() {
     return isolate_function;
 }
 
+// FIXME: what happens if clone operation is not successful?
+void clone_function_thread(IsolateFunction *function) {
+    if (function == NULL)
+        return;
+    pthread_mutex_lock(&function->mutex);
+    function->jni_threads += 1;
+    pthread_mutex_unlock(&function->mutex);
+}
+
+// FIXME: what happens if thread exits via signal
+void join_function_thread(IsolateFunction *function) {
+    if (function == NULL)
+        return;
+    leave_function_domain(function);
+}
+
 void destroy_isolate_function(IsolateFunction *function) {
+    dlclose(function->dl_handle);
     free_memory_region_list(function->regions);
+    pthread_mutex_destroy(&function->mutex);
     free(function);
+}
+
+void leave_function_domain(IsolateFunction *function) {
+    pthread_mutex_lock(&function->mutex);
+    int current = function->current_domain;
+    function->jni_threads -= 1;
+    if (function->jni_threads == 0) {
+        swap_domain_function(function->current_domain, function, NULL);
+        function->current_domain = 0;
+    }
+    pthread_mutex_unlock(&function->mutex);
+}
+
+int enter_function_domain(IsolateFunction *function) {
+    int domain;
+    pthread_mutex_lock(&function->mutex);
+    if (function->current_domain) {
+        domain = function->current_domain;
+    } else if (swap_domain_function(function->prev_domain, NULL, function)) {
+        domain = function->prev_domain;
+    } else {
+        while ((domain = book_available_domain(function)) == 0)
+            usleep(100);
+        protect_app_regions(function, domain);
+    }
+    function->current_domain = domain;
+    function->prev_domain = domain;
+    function->jni_threads += 1;
+    pthread_mutex_unlock(&function->mutex);
+    return domain;
 }
 
 unsigned int hash_string(const char *str) {
@@ -183,7 +236,7 @@ void insert_app_function(const char *functionName, IsolateFunction *function) {
     }
 }
 
-void remove_app_function(char *functionName) {
+void remove_app_function(const char *functionName) {
     Bucket **head = &hashTable->buckets[hash_string(functionName)];
     Bucket *currentBucket = *head;
     Bucket *previousBucket = NULL;
@@ -210,6 +263,8 @@ IsolateFunction *get_app_function(char *functionName) {
 }
 
 void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot) {
+    if (function == NULL)
+        return;
     append_memory_region_node(&(function->regions), address, size, prot);
 }
 
@@ -218,6 +273,8 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
 }
 
 void remove_app_region(IsolateFunction *function, void *address, size_t size) {
+    if (function == NULL)
+        return;
     delete_memory_region_node(function->regions, address, size);    
 }
 

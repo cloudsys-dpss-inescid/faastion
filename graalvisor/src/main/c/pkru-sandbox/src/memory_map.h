@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <stddef.h>
+#include <pthread.h>
 
 /**
  * @brief Structure representing a memory region.
@@ -22,9 +23,12 @@ typedef struct MemoryRegionNode {
 } MemoryRegionNode;
 
 typedef struct {
+    pthread_mutex_t mutex;
+    void *dl_handle;
     int current_domain;             
-    int children;
-    MemoryRegionNode* regions;
+    int prev_domain;
+    int jni_threads;
+    MemoryRegionNode *regions;
 } IsolateFunction;
 
 typedef struct Bucket {
@@ -46,6 +50,14 @@ void insert_app_region(IsolateFunction *function, void* address, size_t size, in
 
 void remove_app_region(IsolateFunction *function, void *address, size_t size);
 
+void leave_function_domain(IsolateFunction *function);
+
+int enter_function_domain(IsolateFunction *function);
+
+void clone_function_thread(IsolateFunction *function);
+
+void join_function_thread(IsolateFunction *function);
+
 IsolateFunction *create_isolate_function();
 
 void destroy_isolate_function(IsolateFunction *function);
@@ -58,7 +70,7 @@ IsolateFunction *get_app_function(char *functionName);
 
 void insert_app_function(const char *functionName, IsolateFunction *function);
 
-void remove_app_function(char *functionName);
+void remove_app_function(const char *functionName);
 
 void free_hash_table();
 
