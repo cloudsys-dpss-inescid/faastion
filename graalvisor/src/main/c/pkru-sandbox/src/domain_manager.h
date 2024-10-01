@@ -9,8 +9,10 @@
  * @brief Structure representing a memory protection domain
  */ 
 typedef struct Domain {
-    void*               arena;          // Pointer to the memory arena
-    atomic_intptr_t     function;       // Function being executed inside this domain
+    void*               arena;              // Pointer to the memory arena
+    atomic_intptr_t     function;           // Function being executed inside this domain
+    IsolateFunction*    prev_function;      // Last function executed inside this domain
+    pthread_mutex_t     prev_function_lock;
     // TODO - define worker_t here
 } Domain;
 
@@ -38,9 +40,11 @@ int initialize_domain(int pkey);
  */
 int initialize_all_domains();
 
-int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function);
-
 IsolateFunction *get_domain_function(int domain);
+
+void cancel_domain_booking(IsolateFunction *function);
+
+int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function);
 
 /**
  * @brief Find and book an available domain for a thread.

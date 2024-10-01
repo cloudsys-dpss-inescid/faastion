@@ -44,28 +44,115 @@ void append_memory_region_node(MemoryRegionNode** head, void* address, size_t si
     current->next = newNode;
 }
 
-void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t size) {
-    if (head == NULL) {
-        fprintf(stderr, "error: could not delete memory region node\n");
-        exit(EXIT_FAILURE);
-    }
+int protect_memory_region_node(MemoryRegionNode *head, void *address, size_t size, int prot) {
+    if (head == NULL)
+        return size;
 
     MemoryRegionNode **nodePtr = &head;
     MemoryRegionNode *current = head;
-    while (current->next != NULL) {
-        if (current->region.address == address) {
-            if (current->region.size != size)
-                fprintf(stdout, "delete_memory_region_node: warning: sizes dont match\n");
-            *nodePtr = current->next;
-            free(current);
-            return;
+    int prot_flags;
+    size_t bytes_left;
+    unsigned long addr;
+    unsigned long mem_end_addr;
+    unsigned long mem_start_addr;
+    unsigned long mem_split_start_addr;
+    bytes_left = size;
+    addr = (unsigned long)address;
+    mem_split_start_addr = (unsigned long)address + size;
+    while (current != NULL) {
+        mem_start_addr = (unsigned long)current->region.address;
+        mem_end_addr = (unsigned long)mem_start_addr + current->region.size;
+        if (addr == mem_start_addr) {
+            if (mem_split_start_addr == mem_end_addr) {
+                current->region.prot = prot;
+            } else if (mem_split_start_addr < mem_end_addr) {
+                prot_flags = current->region.prot;
+                current->region.size = mem_split_start_addr - mem_start_addr;
+                current->region.prot = prot;
+                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                    mem_end_addr - mem_split_start_addr, prot_flags);
+            } else {
+                delete_memory_region_node(head, (void *)mem_end_addr, 
+                    mem_split_start_addr - mem_end_addr);
+                current->region.size = size;
+                current->region.prot = prot;
+            }
+            return 0;
+        } else if (addr > mem_start_addr && addr < mem_end_addr) {
+            if (mem_split_start_addr == mem_end_addr) {
+                current->region.size = addr - mem_start_addr;
+                append_memory_region_node(&head, (void *)addr,
+                    mem_split_start_addr - addr, prot);
+            } else if (mem_split_start_addr < mem_end_addr) {
+                current->region.size = addr - mem_start_addr;
+                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                    mem_end_addr - mem_split_start_addr, current->region.prot);
+                append_memory_region_node(&head, (void *)addr,
+                    mem_split_start_addr - addr, prot);
+            } else {
+                delete_memory_region_node(head, (void *)mem_end_addr, 
+                    mem_split_start_addr - mem_end_addr);
+                current->region.size = addr - mem_start_addr;
+                append_memory_region_node(&head, (void *)addr,
+                    mem_split_start_addr - mem_start_addr, prot);
+            }
+            return 0;
+        } else {
+            nodePtr = &current->next;
+            current = current->next;
         }
-        nodePtr = &current->next;
-        current = current->next;
     }
 
-    // FIXME: what should happen
-    fprintf(stdout, "delete_memory_region_node: warning: node not found\n");
+    return bytes_left;
+}
+
+void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t size) {
+    if (head == NULL)
+        return;
+
+    MemoryRegionNode **nodePtr = &head;
+    MemoryRegionNode *current = head;
+    unsigned long addr;
+    unsigned long mem_end_addr;
+    unsigned long mem_start_addr;
+    unsigned long mem_split_start_addr;
+    addr = (unsigned long)address;
+    mem_split_start_addr = (unsigned long)address + size;
+    while (current != NULL) {
+        mem_start_addr = (unsigned long)current->region.address;
+        mem_end_addr = (unsigned long)mem_start_addr + current->region.size;
+        if (addr == mem_start_addr) {
+            if (mem_split_start_addr == mem_end_addr) {
+                *nodePtr = current->next;
+                free(current);
+            } else if (mem_split_start_addr < mem_end_addr) {
+                current->region.address = (void *)mem_split_start_addr;
+                current->region.size = mem_end_addr - mem_split_start_addr;
+            } else {
+                *nodePtr = current->next;
+                free(current);
+                delete_memory_region_node(head, (void *)mem_end_addr,
+                    mem_split_start_addr - mem_end_addr);
+            }
+            return;
+        } else if (addr > mem_start_addr && addr < mem_end_addr) {
+            if (mem_split_start_addr == mem_end_addr) {
+                current->region.size = addr - mem_start_addr;
+            } else if (mem_split_start_addr < mem_end_addr) {
+                current->region.size = addr - mem_start_addr;
+                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                    mem_end_addr - mem_split_start_addr, current->region.prot);
+            } else {
+                current->region.size = addr - mem_start_addr;
+                delete_memory_region_node(head, (void *)mem_end_addr,
+                    mem_split_start_addr - mem_end_addr);
+            }
+            return;
+        } else {
+            nodePtr = &current->next;
+            current = current->next;
+        }
+    }
 }
 
 // void print_memory_regions() {
@@ -79,10 +166,13 @@ void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
 void protect_memory_regions(MemoryRegionNode *head, int pkey) {
     MemoryRegionNode* current = head;
     while (current != NULL) {
-        fprintf(stdout, "Protecting region: address %p, size %zu, prot %d with pkey %d\n", 
-                current->region.address, current->region.size, current->region.prot, pkey);
+        fprintf(stdout, "Protecting region: address %ld-%ld, prot %d with pkey %d\n", 
+                (unsigned long)current->region.address, 
+                (unsigned long)current->region.address + current->region.size,
+                current->region.prot, pkey);
 
         if (pkey_mprotect(current->region.address, current->region.size, current->region.prot, pkey) != 0) {
+            perror("pkey_mprotect");
             fprintf(stderr, "error: failed to protect memory region with pkey %d\n", pkey);
             exit(EXIT_FAILURE);
         }
@@ -140,8 +230,30 @@ void join_function_thread(IsolateFunction *function) {
     leave_function_domain(function);
 }
 
+static void print_file(char* filepath, char* logpath)
+{
+    FILE* logfile = fopen(logpath, "w");
+    FILE* file = fopen(filepath, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open %s\n", filepath);
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        fprintf(logfile, "%s", line);
+    }
+
+    fclose(logfile);
+    fclose(file);
+}
+
 void destroy_isolate_function(IsolateFunction *function) {
-    dlclose(function->dl_handle);
+    // print_file("/proc/self/maps", "maps_after");
+    cancel_domain_booking(function);
+    if (dlclose(function->dl_handle)) {
+        fprintf(stderr, "dlclose error\n");
+    }
     free_memory_region_list(function->regions);
     pthread_mutex_destroy(&function->mutex);
     free(function);
@@ -161,15 +273,7 @@ void leave_function_domain(IsolateFunction *function) {
 int enter_function_domain(IsolateFunction *function) {
     int domain;
     pthread_mutex_lock(&function->mutex);
-    if (function->current_domain) {
-        domain = function->current_domain;
-    } else if (swap_domain_function(function->prev_domain, NULL, function)) {
-        domain = function->prev_domain;
-    } else {
-        while ((domain = book_available_domain(function)) == 0)
-            usleep(100);
-        protect_app_regions(function, domain);
-    }
+    domain = function->current_domain ? function->current_domain : book_available_domain(function);
     function->current_domain = domain;
     function->prev_domain = domain;
     function->jni_threads += 1;
@@ -265,7 +369,17 @@ IsolateFunction *get_app_function(char *functionName) {
 void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot) {
     if (function == NULL)
         return;
-    append_memory_region_node(&(function->regions), address, size, prot);
+    size_t bytes_left = protect_memory_region_node(function->regions, address, size, prot);
+    if (bytes_left) {
+        address = (void *)((char *)address + size - bytes_left);
+        append_memory_region_node(&function->regions, address, bytes_left, prot);
+    }
+}
+
+void protect_app_region(IsolateFunction *function, void *address, size_t size, int prot) {
+    if (function == NULL)
+        return;
+    protect_memory_region_node(function->regions, address, size, prot);
 }
 
 void protect_app_regions(IsolateFunction *function, int pkey) {
@@ -275,7 +389,7 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
 void remove_app_region(IsolateFunction *function, void *address, size_t size) {
     if (function == NULL)
         return;
-    delete_memory_region_node(function->regions, address, size);    
+    delete_memory_region_node(function->regions, address, size);
 }
 
 void free_hash_table() {

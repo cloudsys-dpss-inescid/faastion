@@ -10,6 +10,12 @@
 #include <assert.h>
 
 
+// return first non zero
+#define COALESCE(a, b, c) ({\
+int res;\
+res = (res = (a)) ? res : (res = (b)) ? res : (c);\
+})
+
 // Global array of domains
 Domain *domains[DOMAINS];
 static int PAGE_SIZE;
@@ -24,6 +30,16 @@ IsolateFunction *get_domain_function(int domain) {
     return (IsolateFunction *)domains[domain]->function;
 }
 
+void cancel_domain_booking(IsolateFunction *function) {
+    int domain = function->prev_domain;
+    pthread_mutex_lock(&domains[domain]->prev_function_lock);
+    if (domains[domain]->prev_function == function) {
+        protect_app_regions(function, 0);
+        domains[domain]->prev_function = NULL;
+    }
+    pthread_mutex_unlock(&domains[domain]->prev_function_lock);
+}
+
 int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function) {
     if (domain == 0)
         return 0;
@@ -34,13 +50,58 @@ int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction 
             (atomic_intptr_t)function);
 }
 
-int book_available_domain(IsolateFunction *function)
-{
+int book_any_domain(IsolateFunction *function) {
+    IsolateFunction *prev_function;
     for (int i = 2; i < DOMAINS; i++) {
-        if (swap_domain_function(i, NULL, function))
+        if (swap_domain_function(i, NULL, function)) {
+            pthread_mutex_lock(&domains[i]->prev_function_lock);
+            prev_function = domains[i]->prev_function;
+            if (prev_function) {
+                protect_app_regions(prev_function, 0);
+            }
+            domains[i]->prev_function = function;
+            pthread_mutex_unlock(&domains[i]->prev_function_lock);
+            protect_app_regions(function, i);
             return i;
+        }
     }
     return 0;
+}
+
+int book_unused_domain(IsolateFunction *function) {
+    for (int i = 2; i < DOMAINS; i++) {
+        if (domains[i]->prev_function == NULL && swap_domain_function(i, NULL, function)) {
+            pthread_mutex_lock(&domains[i]->prev_function_lock);
+            domains[i]->prev_function = function;
+            pthread_mutex_unlock(&domains[i]->prev_function_lock);
+            protect_app_regions(function, i);
+            return i;
+        }
+    }
+    return 0;
+}
+
+int book_previous_domain(IsolateFunction *function) {
+    int domain = function->prev_domain;
+    if (domain == 0)
+        return 0;
+
+    if (domains[domain]->prev_function == function &&
+        swap_domain_function(domain, NULL, function))
+    {
+        pthread_mutex_lock(&domains[domain]->prev_function_lock);
+        domains[domain]->prev_function = function;
+        pthread_mutex_unlock(&domains[domain]->prev_function_lock);
+        return domain;
+    }
+    return 0;
+}
+
+int book_available_domain(IsolateFunction *function)
+{
+    return COALESCE(book_previous_domain(function),
+            book_unused_domain(function),
+            book_any_domain(function));
 }
 
 int initialize_domain(int pkey)
@@ -63,6 +124,8 @@ int initialize_domain(int pkey)
     // Populate domain
     domain->arena = arena;
     atomic_init(&domain->function, (atomic_intptr_t) NULL);
+    pthread_mutex_init(&domain->prev_function_lock, NULL);
+    domain->prev_function = NULL;
     domains[pkey] = domain;
 
     // Allocate protection key

@@ -55,6 +55,7 @@ function build_ni {
     fi
     $JAVA_HOME/bin/native-image \
         --no-fallback \
+        -Dsun.net.httpserver.nodelay=true \
         --enable-url-protocols=http \
         --initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
         $LIBC_OPTION \

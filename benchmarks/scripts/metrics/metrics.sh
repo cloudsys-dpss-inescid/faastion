@@ -96,7 +96,8 @@ function gv_java_factors {
 }
 
 function compile_jni_benchmarks {
-    for benchmark in gv-native-hw gv-native-factorization gv-native-matmul
+    # for benchmark in gv-native-hw gv-native-factorization gv-native-matmul
+    for benchmark in gv-native-hw
     do
         cd "$JAVA_BENCHMARKS/$benchmark"
         ./build_script.sh
@@ -124,11 +125,11 @@ function start_svm {
     export lambda_timestamp="$(date +%s%N | cut -b1-13)"
     export lambda_port="8080"
     export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:$LD_LIBRARY_PATH
-    export LD_PRELOAD=$GRAALVISOR_HOME/build/libs/libpreload.so
+    # export LD_PRELOAD=$GRAALVISOR_HOME/build/libs/libpreload.so
     # Start Graalvisor
     $GRAALVISOR_HOME/build/native-image/polyglot-proxy &
     wait
-    unset LD_PRELOAD
+    # unset LD_PRELOAD
 }
 
 function log_resources {
@@ -236,7 +237,7 @@ function execute {
     register
 
     # Comment for cold-start measures
-    warmup
+    # warmup
     
     # Run Benchmarking tool
     #capture
@@ -245,7 +246,8 @@ function execute {
 
 function setup {
     base_dir="/tmp/${experiment_name}"
-    directories=("isolate" "process" "faastlane" "faastion")
+    # directories=("isolate" "process" "faastlane" "faastion")
+    directories=("isolate" "process" "faastion")
     for dir in "${directories[@]}"; do
         mkdir -p "${base_dir}/${dir}"
     done
@@ -260,7 +262,7 @@ function start_webserver {
 function cleanup_resources {
     echo "Received signal, cleaning up resources..."
     pkill -9 -f polyglot-proxy
-    LPI_cleanup
+    # LPI_cleanup
     exit
 }
 
@@ -273,14 +275,14 @@ fi
 # Clean resources if killed with signal
 trap 'cleanup_resources' SIGINT
 
-WORKLOAD=20
-DURATION="30s"
+WORKLOAD=1
+DURATION="1s"
 
 echo "$experiment_name" > /tmp/experiment_name.log
 
 mkdir -p $LOGS_HOME
 
-LPI_requirements
+# LPI_requirements
 
 setup
 
@@ -301,7 +303,7 @@ setup
 # done
 
 # # JNI compilation
-  compile_jni_benchmarks
+# compile_jni_benchmarks
 
 export SANDBOX=isolate
 for approach in faastion # faastlane 

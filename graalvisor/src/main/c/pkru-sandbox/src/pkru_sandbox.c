@@ -91,6 +91,7 @@ struct sock_filter worker_domain_filter[] = {
 
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
 
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_mprotect, 5, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_exit, 4, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone3, 3, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone, 2, 0),
@@ -188,8 +189,11 @@ void handle_jni_syscalls(int pkey) {
             resp->error = resp->val < 0 ? -errno : 0;
             resp->flags = 0;
             if (errno == 0) {
-                fprintf(stdout, "thread id %d domain %d mmap: memory %p size %lu!\n",
-                    req->pid, pkey, (void*) resp->val, (size_t) args[1]);
+                fprintf(stdout, "thread id %d domain %d mmap %p-%p // %ld-%ld // prot: %d!\n",
+                    req->pid, pkey, (void *)resp->val,
+                    (void *)((char *)resp->val + (size_t)args[1]),
+                    (unsigned long)resp->val,
+                    (unsigned long)resp->val + (size_t)args[1], (int)args[2]);
                 if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1)
                     fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n",
                         (void*) resp->val, (size_t) args[1]);
@@ -204,6 +208,14 @@ void handle_jni_syscalls(int pkey) {
             resp->flags = 0;
             if (errno == 0)
                 remove_app_region(get_domain_function(pkey), (void *)args[0], (size_t)args[1]);
+            break;
+        case __NR_mprotect:
+            resp->val = syscall(__NR_mprotect, args[0], args[1], args[2], args[3], args[4], args[5]);
+            resp->error = resp->val < 0 ? -errno : 0;
+            resp->flags = 0;
+            if (errno == 0)
+                protect_app_region(get_domain_function(pkey),
+                    (void *)args[0], (size_t)args[1], (int)args[2]);
             break;
         case __NR_clone3:
         case __NR_clone:

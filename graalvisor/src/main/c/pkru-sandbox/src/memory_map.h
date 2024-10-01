@@ -48,6 +48,8 @@ void protect_app_regions(IsolateFunction *function, int pkey);
 
 void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot);
 
+void protect_app_region(IsolateFunction *function, void *address, size_t size, int prot);
+
 void remove_app_region(IsolateFunction *function, void *address, size_t size);
 
 void leave_function_domain(IsolateFunction *function);
