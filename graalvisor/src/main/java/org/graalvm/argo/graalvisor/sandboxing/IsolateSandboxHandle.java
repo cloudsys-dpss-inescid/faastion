@@ -14,10 +14,7 @@ public class IsolateSandboxHandle extends SandboxHandle {
     public IsolateSandboxHandle(IsolateSandboxProvider isProvider, IsolateThread isolateThread) {
         this.isProvider = isProvider;
         this.isolateThread = isolateThread;
-        PolyglotFunction function = isProvider.getFunction();
-        String functionName = function.getName();
-        NativeSandboxInterface.createNativeIsolateSandbox(((NativeFunction) function).hasLazyIsolation());
-        NativeSandboxInterface.createIsolateFunction(functionName);
+        NativeSandboxInterface.createNativeIsolateSandbox(((NativeFunction) isProvider.getFunction()).hasLazyIsolation());
     }
 
     public IsolateThread getIsolateThread() {
@@ -30,12 +27,6 @@ public class IsolateSandboxHandle extends SandboxHandle {
         String functionName = function.getName();
         String resp = isProvider.getGraalvisorAPI().invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);
         return resp;
-    }
-
-    public void destroySandboxHandle() {
-        PolyglotFunction function = isProvider.getFunction();
-        String functionName = function.getName();
-        NativeSandboxInterface.destroyIsolateFunction(functionName);
     }
 
     @Override
