@@ -182,6 +182,10 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	protected void transform(CtBehavior behavior) throws Exception {
 		super.transform(behavior);
 
+		if (isInternalClass(behavior.getDeclaringClass().getName())) {
+			return;
+		}
+
 		behavior.instrument(new ExprEditor() {
 
 			public void edit(MethodCall m) throws CannotCompileException {
@@ -271,8 +275,11 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		}
 
 		try {
+			// TODO: create callgate method variable
 			CtConstructor staticInitializer = clazz.makeClassInitializer();
-			staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getMethodName() + "\");");
+			staticInitializer.insertBefore("System.loadLibrary(\"" +
+					System.getenv("BENCHMARK_NAME") + "-" +
+					callGate.getMethodName() + "\");");
 			declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new RuntimeException("Could not declare call gate");
