@@ -5,6 +5,6 @@
 #define _Included_com_jni_HelloJNI
 
 JNIEXPORT void JNICALL Java_com_jni_HelloJNI_printHello
-  (JNIEnv *, jclass, jint age);
+  (JNIEnv *, jclass);
 
 #endif
