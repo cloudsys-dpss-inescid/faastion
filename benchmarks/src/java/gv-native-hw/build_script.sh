@@ -15,6 +15,7 @@ CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
 # SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
 SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
 
+BENCHMARK_NAME="nativehw"
 SNIPPETS_DIR="$DIR/build/snippets"
 
 CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
@@ -35,7 +36,7 @@ function build_ni {
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
-			-H:Name=lib$BENCHMARK_REALNAME
+			-H:Name=lib$FUNCTION_ID
 	
 	cd -
 }
@@ -51,7 +52,7 @@ function build_java_agent {
 
 function build_native_library {
 	# musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
-	gcc --shared -fpic $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_REALNAME-jni.so $DIR/src/main/c/HelloJNI.c
+	gcc --shared -fpic $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
 }
 
 # TODO
@@ -67,7 +68,7 @@ function build_snippets {
 	pathname=$(ls "$SNIPPETS_DIR"/*.c)
 	file=${pathname##*/}
 	name=${file%.*}
-	gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib${BENCHMARK_REALNAME}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
+	gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
 }
 
 function manipulate_bytecode {
@@ -75,12 +76,13 @@ function manipulate_bytecode {
 	ENTRYPOINT="com.jni.HelloJNI"
 	TOOL="JNITemplateBuilder"
 
-	rm -f $GRAALVISOR_HOME/build/libs/lib${BENCHMARK_REALNAME}-printHello.so
+	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-printHello.so
 
 	mkdir -p $DIR/build/snippets
 	
-	export BENCHMARK_NAME="$BENCHMARK_REALNAME"
+	export BENCHMARK_NAME="$BENCHMARK_NAME"
 	export SNIPPETS_DIR="$SNIPPETS_DIR"
+	export FUNCTION_ID="$FUNCTION_ID"
 	export ENV="memisolation"
 
 	# cmd="$DEF_JAVA_HOME/bin/java \
@@ -128,10 +130,11 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
+build_native_library
+
 CONCURRENCY_LEVEL=32
 for i in $(seq 1 $CONCURRENCY_LEVEL); do
-	BENCHMARK_REALNAME="nativehw${i}"
-	build_native_library
+	FUNCTION_ID="$BENCHMARK_NAME${i}"
 	manipulate_bytecode
 	build_snippets
 	build_ni_sharedlibrary

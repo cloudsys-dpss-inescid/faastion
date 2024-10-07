@@ -1,4 +1,3 @@
-#set( $nativeLibName = "${libPath}lib${functionName}-jni.so" )
 #set( $params = "JNIEnv *env, jobject obj" )
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
@@ -26,6 +25,7 @@ $define _GNU_SOURCE
 
 $include <stdio.h>
 $include <string.h>
+$include <malloc.h>
 $include <dlfcn.h>
 $include <jni.h>
 
@@ -64,7 +64,7 @@ void nativeMethodInterface(int pkey) {
         exit(EXIT_FAILURE);
 
     request_t* request = (request_t*) get_domain_arena(pkey);
-    void (*native_method)(JNIEnv *, jobject, jint) = _native_method; // accessible in worker domain
+    $returnType (*native_method)($paramTypes) = _native_method; // accessible in worker domain
 
     __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
     native_method($args);
@@ -93,7 +93,7 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     function = get_isolate_function();
     if (function == NULL) {
-        function = get_app_function("$functionName");
+        function = get_app_function("$functionID");
         set_isolate_function(function);
     }
     

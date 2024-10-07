@@ -33,6 +33,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		private String className;
 		private String methodName;
 		private String gateName;
+		private String gateLib;
 		private String[] parameters;
 
 		public CallGate(MethodCall methodCall) {
@@ -43,6 +44,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			this.className = methodCall.getClassName(); 
 			this.methodName = methodCall.getMethodName();
 			this.gateName = methodName + "callGate";
+			this.gateLib = functionID.concat("-").concat(methodName);
 		}
 
 		public CtClass getReturnType() {
@@ -59,6 +61,10 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 		public String getGateName() {
 			return gateName;
+		}
+
+		public String getGateLib() {
+			return gateLib;
 		}
 
 		public String[] getParameters() {
@@ -82,11 +88,19 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 	}
 
-	// private Set<MethodCall> loadLibraryMethodCalls;
-	// private Set<MethodCall> jniMethodCalls; 
+	private String functionID;
+	private String templateDir;
+	private String nativeLibName;
 
 	public JNITemplateBuilder(List<String> packageNameList, String writeDestination) {
 		super(packageNameList, writeDestination);
+
+		functionID = System.getenv("FUNCTION_ID");
+		templateDir = System.getenv("SNIPPETS_DIR");
+		nativeLibName = System.getenv("ARGO_HOME")
+				.concat("/graalvisor/build/libs/lib")
+				.concat(System.getenv("BENCHMARK_NAME"))
+				.concat("-jni.so");
 
 		// default variables to escape the preprocessor directives in C
 		setTemplateVariable("include", "#include");
@@ -213,7 +227,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("jniTypes", jniTypes);
 
-		buildTemplate("templates/jni_header.vm", System.getenv("SNIPPETS_DIR"), className + ".h");
+		buildTemplate("templates/jni_header.vm", templateDir, className + ".h");
 	}
 
 	public void createSnippet(String[] jniTypes, String returnJniType,
@@ -226,8 +240,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.toArray();
 		}
 
-		setTemplateVariable("functionName", System.getenv("BENCHMARK_NAME"));
-		setTemplateVariable("libPath", System.getenv("ARGO_HOME").concat("/graalvisor/build/libs/"));
+		setTemplateVariable("functionID", functionID);
+		setTemplateVariable("nativeLibName", nativeLibName);
 		setTemplateVariable("jniTypes", jniTypes);
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("argSizes", argSizes);
@@ -236,7 +250,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
 		setTemplateVariable("nativeMethod", "Java_" + className + "_" + methodName);
 
-		buildTemplate("templates/jni_callgate.vm", System.getenv("SNIPPETS_DIR"), methodName + ".c");
+		buildTemplate("templates/jni_callgate.vm", templateDir, methodName + ".c");
 	}
 
 	public void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType, String gateName)
@@ -275,11 +289,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		}
 
 		try {
-			// TODO: create callgate method variable
 			CtConstructor staticInitializer = clazz.makeClassInitializer();
-			staticInitializer.insertBefore("System.loadLibrary(\"" +
-					System.getenv("BENCHMARK_NAME") + "-" +
-					callGate.getMethodName() + "\");");
+			staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getGateLib() + "\");");
 			declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new RuntimeException("Could not declare call gate");
