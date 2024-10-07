@@ -21,6 +21,8 @@
 #include <dlfcn.h>
 #include <sched.h>
 #include <linux/sched.h>
+#include <malloc.h>
+
 
 
 // Threads that will be running functions inside domains.
@@ -292,7 +294,29 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int)
 
 void* worker(void* arg)
 {
+    void *stackaddr;
+    size_t stacksize;
+    pthread_attr_t attr;
     int pkey = (int) ((long) arg);
+
+    monitor_threads[pkey].seccomp_fd = install_seccomp_filter(worker_domain_filter);
+
+    pthread_getattr_np(pthread_self(), &attr);
+    pthread_attr_getstack(&attr, &stackaddr, &stacksize);
+    pkey_mprotect(stackaddr, stacksize, PROT_READ | PROT_WRITE | PROT_EXEC, pkey);
+
+    // FIXME: This requires a more robust solution 
+    // Worker heap allocation was being added to some function memory mappings
+    // Meaning that when said function moves to domain 0, this worker heap becomes unreachable
+    // The malloc operation below forces the worker thread to pre allocate heap
+    // It overcomes part of the problem; however, future heap allocations may still happen
+    {
+        void *heap;
+        if ((heap = malloc(1))) {
+            free(heap);
+        }
+    }
+
     fprintf(stderr, "Worker for domain %d is running...\n", pkey);
     
     sem_t *request = &(worker_threads[pkey].request);
@@ -312,18 +336,6 @@ void* worker(void* arg)
         request->fun(pkey);
 
         sem_post(response);
-    }
-    return NULL;
-}
-
-void* worker_wrapper(void* arg)
-{
-    int pkey = (int) ((long) arg);
-
-    monitor_threads[pkey].seccomp_fd = install_seccomp_filter(worker_domain_filter);
-    if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
-        fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
-        cleanup_and_exit();
     }
     return NULL;
 }
@@ -359,7 +371,7 @@ int pkru_sandbox_init()
             return -1;
         }
 
-        if (pthread_create(&(worker_threads[i].thread), NULL, worker_wrapper, (void*)(intptr_t) i) != 0) {
+        if (pthread_create(&(worker_threads[i].thread), NULL, worker, (void*)(intptr_t) i) != 0) {
             fprintf(stderr, "error: failed creating worker_wrapper thread for domain %d\n", i);
             return -1;
         }
