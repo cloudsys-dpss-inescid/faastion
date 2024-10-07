@@ -249,7 +249,6 @@ static void print_file(char* filepath, char* logpath)
 }
 
 void destroy_isolate_function(IsolateFunction *function) {
-    // print_file("/proc/self/maps", "maps_after");
     cancel_domain_booking(function);
     if (dlclose(function->dl_handle)) {
         fprintf(stderr, "dlclose error\n");
@@ -274,6 +273,10 @@ int enter_function_domain(IsolateFunction *function) {
     int domain;
     pthread_mutex_lock(&function->mutex);
     domain = function->current_domain ? function->current_domain : book_available_domain(function);
+    while (domain == 0) {
+        usleep(100);
+        domain = book_available_domain(function);
+    }
     function->current_domain = domain;
     function->prev_domain = domain;
     function->jni_threads += 1;
