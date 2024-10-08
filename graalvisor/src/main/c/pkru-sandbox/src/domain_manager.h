@@ -13,6 +13,7 @@ typedef struct Domain {
     atomic_intptr_t     function;           // Function being executed inside this domain
     IsolateFunction*    prev_function;      // Last function executed inside this domain
     pthread_mutex_t     prev_function_lock;
+    IsolateFunction*    primary_function;   // overcome the hard limit of 16 namespaces in dlmopen
     // TODO - define worker_t here
 } Domain;
 
@@ -39,6 +40,10 @@ int initialize_domain(int pkey);
  * @return int 0 on success, -1 on error.
  */
 int initialize_all_domains();
+
+void set_primary_domain_function(int domain, IsolateFunction *function);
+
+IsolateFunction *get_primary_domain_function(int domain);
 
 IsolateFunction *get_domain_function(int domain);
 

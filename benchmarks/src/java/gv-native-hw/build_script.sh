@@ -68,7 +68,7 @@ function build_snippets {
 	pathname=$(ls "$SNIPPETS_DIR"/*.c)
 	file=${pathname##*/}
 	name=${file%.*}
-	gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
+	gcc $SFLAGS -DREMOVE_NNS_LIMIT -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
 }
 
 function manipulate_bytecode {

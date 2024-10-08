@@ -21,6 +21,14 @@ Domain *domains[DOMAINS];
 static int PAGE_SIZE;
 
 
+void set_primary_domain_function(int domain, IsolateFunction *function) {
+    domains[domain]->primary_function = function;
+}
+
+IsolateFunction *get_primary_domain_function(int domain) {
+    return (IsolateFunction *)domains[domain]->primary_function;
+}
+
 void* get_domain_arena(int pkey)
 {
     return domains[pkey]->arena;
@@ -125,6 +133,7 @@ int initialize_domain(int pkey)
     domain->arena = arena;
     atomic_init(&domain->function, (atomic_intptr_t) NULL);
     pthread_mutex_init(&domain->prev_function_lock, NULL);
+    domain->primary_function = NULL;
     domain->prev_function = NULL;
     domains[pkey] = domain;
 

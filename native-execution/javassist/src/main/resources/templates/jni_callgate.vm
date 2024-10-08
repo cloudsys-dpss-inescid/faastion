@@ -25,7 +25,6 @@ $define _GNU_SOURCE
 
 $include <stdio.h>
 $include <string.h>
-$include <malloc.h>
 $include <dlfcn.h>
 $include <jni.h>
 
@@ -37,24 +36,47 @@ $include "$headerFilename"
 
 $returnType (*_native_method)($paramTypes); // accessible in default domain only
 
-int load_native_method(IsolateFunction *function) {
+void *get_handle(IsolateFunction *function) {
     static char *error;
+
+#ifdef REMOVE_NNS_LIMIT
+    int domain = function->current_domain;
+    IsolateFunction *primary_function = get_primary_domain_function(domain);
+    if (primary_function) {
+        return primary_function->dl_handle;
+    }
+#endif
+
     if (function->dl_handle == NULL) {
         dlerror();
         function->dl_handle = dlmopen(LM_ID_NEWLM, "$nativeLibName", RTLD_LAZY);
-        error = dlerror();
-        if (error != NULL) {
+        if ((error = dlerror()) != NULL) {
             fprintf(stdout, "Could not load library: $nativeLibName: %s\n", error);
-            return -1;
+            return NULL;   
         }
     }
+
+#ifdef REMOVE_NNS_LIMIT
+    set_primary_domain_function(domain, function);
+#endif
+
+    return function->dl_handle;
+}
+
+int load_native_method(IsolateFunction *function) {
+    static char *error;
+    void *dl_handle;
+    
+    if ((dl_handle = get_handle(function)) == NULL)
+        return -1;
+
     dlerror();
-    _native_method = dlsym(function->dl_handle, "$nativeMethod");
-    error = dlerror();
-    if (error != NULL) {
+    _native_method = dlsym(dl_handle, "$nativeMethod");    
+    if ((error = dlerror()) != NULL) {
         fprintf(stdout, "Failed to find the symbol: $nativeMethod: %s\n", error);
         return -1;
     }
+
     return 0;
 }
 

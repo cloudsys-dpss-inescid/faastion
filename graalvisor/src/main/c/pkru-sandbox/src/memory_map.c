@@ -272,10 +272,9 @@ void leave_function_domain(IsolateFunction *function) {
 int enter_function_domain(IsolateFunction *function) {
     int domain;
     pthread_mutex_lock(&function->mutex);
-    domain = function->current_domain ? function->current_domain : book_available_domain(function);
-    while (domain == 0) {
+    domain = function->current_domain;
+    while (domain == 0 && (domain = book_available_domain(function)) == 0) {
         usleep(100);
-        domain = book_available_domain(function);
     }
     function->current_domain = domain;
     function->prev_domain = domain;
@@ -386,6 +385,21 @@ void protect_app_region(IsolateFunction *function, void *address, size_t size, i
 }
 
 void protect_app_regions(IsolateFunction *function, int pkey) {
+#ifdef REMOVE_NNS_LIMIT
+    int domain;
+
+    if (pkey == 0)
+        domain = function->prev_domain;
+    else
+        domain = pkey;
+
+    IsolateFunction *primary_function = get_primary_domain_function(domain);
+    if (primary_function) {
+        protect_memory_regions(primary_function->regions, pkey);
+        return;
+    }
+#endif
+
     protect_memory_regions(function->regions, pkey);
 }
 

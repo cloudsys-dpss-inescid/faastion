@@ -20,7 +20,7 @@ function build_pkru_sandbox {
 
 	if [ $major_version -ge 5 ] && [ $minor_version -ge 10 ]; then
 	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
-	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
+	    	$CC -g -DREMOVE_NNS_LIMIT -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
         	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/pkru_sandbox.o $PKRU_DIR/pkru_sandbox.c
             $CC $CFLAGS -o $LIB_DIR/libpkru.so $LIB_DIR/domain_manager.o $LIB_DIR/memory_map.o \
                 $LIB_DIR/pkru_sandbox.o
