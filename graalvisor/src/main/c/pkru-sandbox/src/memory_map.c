@@ -166,13 +166,12 @@ void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
 void protect_memory_regions(MemoryRegionNode *head, int pkey) {
     MemoryRegionNode* current = head;
     while (current != NULL) {
-        fprintf(stdout, "Protecting region: address %ld-%ld, prot %d with pkey %d\n", 
-                (unsigned long)current->region.address, 
-                (unsigned long)current->region.address + current->region.size,
-                current->region.prot, pkey);
+        // fprintf(stdout, "Protecting region: address %ld-%ld, prot %d with pkey %d\n", 
+        //         (unsigned long)current->region.address, 
+        //         (unsigned long)current->region.address + current->region.size,
+        //         current->region.prot, pkey);
 
         if (pkey_mprotect(current->region.address, current->region.size, current->region.prot, pkey) != 0) {
-            perror("pkey_mprotect");
             fprintf(stderr, "error: failed to protect memory region with pkey %d\n", pkey);
             exit(EXIT_FAILURE);
         }
@@ -228,24 +227,6 @@ void join_function_thread(IsolateFunction *function) {
     if (function == NULL)
         return;
     leave_function_domain(function);
-}
-
-static void print_file(char* filepath, char* logpath)
-{
-    FILE* logfile = fopen(logpath, "w");
-    FILE* file = fopen(filepath, "r");
-    if (!file) {
-        fprintf(stderr, "Failed to open %s\n", filepath);
-        exit(EXIT_FAILURE);
-    }
-
-    char line[256];
-    while (fgets(line, sizeof(line), file)) {
-        fprintf(logfile, "%s", line);
-    }
-
-    fclose(logfile);
-    fclose(file);
 }
 
 void destroy_isolate_function(IsolateFunction *function) {

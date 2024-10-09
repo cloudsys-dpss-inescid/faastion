@@ -160,7 +160,7 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     notify_worker(domain);
     wait_worker(domain);
-    fprintf(stderr, "User thread notify\n");
+    // fprintf(stderr, "User thread notify\n");
    
     // Copying return value to arena and setting ret and ret_size pointers.
     // __attribute__((unused)) void *ret = (void*) (((char*) request->arg) + arg_size);

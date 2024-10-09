@@ -66,7 +66,7 @@ void protect_library(const char* library, int pkey)
         size_t size = finish - start;
 
         pkey_mprotect(address, size, prot_flags, pkey);
-        fprintf(stdout, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
+        // fprintf(stdout, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
     }
 
     fclose(mapsFile);
@@ -191,11 +191,11 @@ void handle_jni_syscalls(int pkey) {
             resp->error = resp->val < 0 ? -errno : 0;
             resp->flags = 0;
             if (errno == 0) {
-                fprintf(stdout, "thread id %d domain %d mmap %p-%p // %ld-%ld // prot: %d!\n",
-                    req->pid, pkey, (void *)resp->val,
-                    (void *)((char *)resp->val + (size_t)args[1]),
-                    (unsigned long)resp->val,
-                    (unsigned long)resp->val + (size_t)args[1], (int)args[2]);
+                // fprintf(stdout, "thread id %d domain %d mmap %p-%p // %ld-%ld // prot: %d!\n",
+                //     req->pid, pkey, (void *)resp->val,
+                //     (void *)((char *)resp->val + (size_t)args[1]),
+                //     (unsigned long)resp->val,
+                //     (unsigned long)resp->val + (size_t)args[1], (int)args[2]);
                 if (pkey_mprotect((void*) resp->val, (size_t) args[1], (int) args[2], pkey) == -1)
                     fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n",
                         (void*) resp->val, (size_t) args[1]);
@@ -329,7 +329,7 @@ void* worker(void* arg)
 
     for (;;) {
         sem_wait(request);
-        fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
+        // fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
         request_t* request = (request_t*) get_domain_arena(pkey);
 
         // calling native function generated in javassist 

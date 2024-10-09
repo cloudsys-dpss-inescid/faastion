@@ -150,7 +150,7 @@ int initialize_domain(int pkey)
         fprintf(stderr, "error: failed to protect arena at %p with pkey %d\n", arena, pkey);
         return -1;
     }
-    fprintf(stdout, "Protected arena at %p - %p with pkey %d\n", arena, (char*)arena + PAGE_SIZE, pkey);
+    // fprintf(stdout, "Protected arena at %p - %p with pkey %d\n", arena, (char*)arena + PAGE_SIZE, pkey);
 
     return 0;
 }
