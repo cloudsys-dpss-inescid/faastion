@@ -39,14 +39,14 @@ function build_ni {
 	cd -
 }
 
-function build_ni_sharedlibrary {
+function build_faastion_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/output"
 
 	build_ni
 }
 
-function build_native_exec {
+function build_vanila_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
 	FUNCTION_ID="$BENCHMARK_NAME"
@@ -131,13 +131,13 @@ cd $DIR &> /dev/null
 
 build_native_library
 
-build_native_exec
+build_vanila_image
 
 CONCURRENCY_LEVEL=32
 for i in $(seq 1 $CONCURRENCY_LEVEL); do
 	FUNCTION_ID="$BENCHMARK_NAME${i}"
 	manipulate_bytecode
 	build_snippets
-	build_ni_sharedlibrary
+	build_faastion_image
 done
 exit 0
