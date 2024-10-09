@@ -21,8 +21,6 @@ SNIPPETS_DIR="$DIR/build/snippets"
 CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
 
 function build_ni {
-	CLASS_PATH="$DIR/output"
-
 	cd build
 
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
@@ -43,6 +41,16 @@ function build_ni {
 
 function build_ni_sharedlibrary {
 	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
+
+	build_ni
+}
+
+function build_native_exec {
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/java/main"
+	FUNCTION_ID="$BENCHMARK_NAME"
+
 	build_ni
 }
 
@@ -53,15 +61,6 @@ function build_java_agent {
 function build_native_library {
 	# musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
 	gcc --shared -fpic $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/HelloJNI.c
-}
-
-# TODO
-function build_native_exec {
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
-	for file in "$SNIPPETS_DIR"/*.c; do
-		name=$(basename "$file" .c)
-		gcc $SFLAGS_PROC -o $GRAALVISOR_HOME/build/libs/$name-proc $file -L$GRAALVISOR_HOME/build/libs -lmemiso -Wl,-rpath,$GRAALVISOR_HOME/build/libs
-	done
 }
 
 function build_snippets {
@@ -131,6 +130,8 @@ cd $DIR &> /dev/null
 ./gradlew clean shadowJar assemble
 
 build_native_library
+
+build_native_exec
 
 CONCURRENCY_LEVEL=32
 for i in $(seq 1 $CONCURRENCY_LEVEL); do
