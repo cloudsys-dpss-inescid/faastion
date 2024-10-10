@@ -370,14 +370,20 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
     int domain;
 
     if (pkey == 0)
-        domain = function->prev_domain;
+        // FIXME: (temporary workaround)
+        // our tests use different function names to make sure we use different domains
+        // However, we do not wish to use different memory mappings
+        return; 
+        // domain = function->prev_domain;
     else
         domain = pkey;
 
     IsolateFunction *primary_function = get_primary_domain_function(domain);
     if (primary_function) {
-        protect_memory_regions(primary_function->regions, pkey);
+        // FIXME: (temporary workaround)
         return;
+        // protect_memory_regions(primary_function->regions, pkey);
+        // return;
     }
 #endif
 
