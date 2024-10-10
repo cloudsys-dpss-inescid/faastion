@@ -327,13 +327,13 @@ void* worker(void* arg)
     sem_init(response, 0, 0);
     pthread_mutex_init(request_lock, NULL);
 
+    request_t* arena_request = (request_t*) get_domain_arena(pkey);
     for (;;) {
         sem_wait(request);
         // fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
-        request_t* request = (request_t*) get_domain_arena(pkey);
 
         // calling native function generated in javassist 
-        request->fun(pkey);
+        arena_request->fun(pkey);
 
         sem_post(response);
     }
