@@ -31,6 +31,26 @@ function register_function {
     fi
 }
 
+function gv_java_native_factors {
+    APP_LANG=java
+    APP_NAME=gv-native-factorization
+    APP_MAIN=com.jni.Factorization
+
+    LIB_NAME="factors"
+
+    register_function
+}
+
+function gv_java_native_matmul {
+    APP_LANG=java
+    APP_NAME=gv-native-matmul
+    APP_MAIN=com.jni.MatrixMultiplication
+
+    LIB_NAME="matmul"
+
+    register_function
+}
+
 function gv_java_native_hw {
     APP_LANG=java
     APP_NAME=gv-native-hw
@@ -112,12 +132,13 @@ function capture {
     echo $top75             > $RESULTS_HOME/$approach/$WORKLOAD-75p.txt
     echo $top90             > $RESULTS_HOME/$approach/$WORKLOAD-90p.txt
     echo $top99             > $RESULTS_HOME/$approach/$WORKLOAD-99p.txt
+    echo $output            > $RESULTS_HOME/$approach/$WORKLOAD-wrk_output.txt
 }
 
 function register {
-    # gv_java_native_factors
+    gv_java_native_factors
     # gv_java_factors
-    # gv_java_native_matmul
+    gv_java_native_matmul
     # gv_java_httprequest
     # gv_java_sleep
     gv_java_native_hw
@@ -200,13 +221,12 @@ setup
 
 export SANDBOX=isolate
 
-DURATION="1s"
+DURATION="1m"
 
-# workloads=(1 2 4 8 16 32)
-workloads=(1 2)
+workloads=(1 2 4 8 16 32)
 for WORKLOAD in "${workloads[@]}"
 do
-    for approach in isolate faastion process # faastlane isolate process
+    for approach in isolate faastlane faastion process
     do
         echo -e "${GREEN}###################################################"
         echo -e "       Measuring metrics for $approach - $WORKLOAD      "
