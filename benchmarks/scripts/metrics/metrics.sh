@@ -8,11 +8,6 @@ GRAALVISOR_HOME=$ARGO_HOME/graalvisor
 BENCHMARKS_HOME=$ARGO_HOME/benchmarks
 JAVA_BENCHMARKS=$BENCHMARKS_HOME/src/java
 
-experiment_name=$(date +"experiment_%Y%m%d_%H%M%S")
-
-LOGS_HOME=$(DIR)/logs/$experiment_name
-RESULTS_HOME=$(DIR)/results/$experiment_name
-
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
@@ -31,7 +26,7 @@ function register_function {
     fi
 }
 
-function gv_java_native_factors {
+function register_gv_native_factors {
     APP_LANG=java
     APP_NAME=gv-native-factorization
     APP_MAIN=com.jni.Factorization
@@ -41,7 +36,7 @@ function gv_java_native_factors {
     register_function
 }
 
-function gv_java_native_matmul {
+function register_gv_native_matmul {
     APP_LANG=java
     APP_NAME=gv-native-matmul
     APP_MAIN=com.jni.MatrixMultiplication
@@ -51,7 +46,7 @@ function gv_java_native_matmul {
     register_function
 }
 
-function gv_java_native_hw {
+function register_gv_native_hw {
     APP_LANG=java
     APP_NAME=gv-native-hw
     APP_MAIN=com.jni.HelloJNI
@@ -135,17 +130,6 @@ function capture {
     echo $output            > $RESULTS_HOME/$approach/$WORKLOAD-wrk_output.txt
 }
 
-function register {
-    gv_java_native_factors
-    # gv_java_factors
-    gv_java_native_matmul
-    # gv_java_httprequest
-    # gv_java_sleep
-    gv_java_native_hw
-    # gv_java_hw
-    # gv_java_maxtrixmul
-}
-
 function execute {
     
     # Start Graalvisor
@@ -156,7 +140,8 @@ function execute {
     log_resources $PID &
 
     # Register applications
-    register
+    # register
+    register_$benchmark_name
     
     # Run Benchmarking tool
     capture
@@ -212,10 +197,6 @@ fi
 # Clean resources if killed with signal
 trap 'cleanup_resources' SIGINT
 
-echo "$experiment_name" > /tmp/experiment_name.log
-
-setup
-
 ### SCRIPT STARTS HERE ###
 # start_webserver
 
@@ -223,16 +204,24 @@ export SANDBOX=isolate
 
 DURATION="1m"
 
-workloads=(1 2 4 8 16 32)
-for WORKLOAD in "${workloads[@]}"
+for benchmark_name in gv_native_hw gv_native_matmul gv_native_factors
 do
-    for approach in isolate faastlane faastion process
+    echo "Running workloads for $benchmark_name"
+    experiment_name=$(date +"experiment_${benchmark_name}_%Y%m%d_%H%M%S")
+    LOGS_HOME=$(DIR)/logs/$experiment_name
+    RESULTS_HOME=$(DIR)/results/$experiment_name
+    setup
+    workloads=(1 2 4 8 16 32)
+    for WORKLOAD in "${workloads[@]}"
     do
-        echo -e "${GREEN}###################################################"
-        echo -e "       Measuring metrics for $approach - $WORKLOAD      "
-        echo -e "###################################################${NC}"
-        execute_$approach
-        sleep 1
+        for approach in isolate faastlane faastion process
+        do
+            echo -e "${GREEN}###################################################"
+            echo -e "       Measuring metrics for $approach - $WORKLOAD      "
+            echo -e "###################################################${NC}"
+            execute_$approach
+            sleep 1
+        done
     done
 done
 
