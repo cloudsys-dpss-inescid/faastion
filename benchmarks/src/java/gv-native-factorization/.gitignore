@@ -5,6 +5,7 @@ build/
 bin/
 target/
 out/
+output/
 .idea
 *.iml
 *.ipr
