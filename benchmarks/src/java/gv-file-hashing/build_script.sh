@@ -123,7 +123,10 @@ build_native_library
 
 build_vanila_image
 
-CONCURRENCY_LEVEL=32
+if [ -z $CONCURRENCY_LEVEL ]; then
+	CONCURRENCY_LEVEL=32
+fi
+
 for i in $(seq 1 $CONCURRENCY_LEVEL); do
 	FUNCTION_ID="$BENCHMARK_NAME${i}"
 	manipulate_bytecode
