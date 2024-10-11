@@ -3,6 +3,7 @@ package com.jni;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -25,15 +26,26 @@ public class FileHashing {
     public static boolean downloadFile(String url, String filePath) {
         InputStream is = null;
         FileOutputStream fos = null;
+        FileOutputStream ignore = null;
         try {
+            boolean fileExists = (new File(filePath)).exists();
             URLConnection conn = new URL(url).openConnection();
             is = conn.getInputStream();
-            fos = new FileOutputStream(filePath);
+
+            if (!fileExists) {
+                fos = new FileOutputStream(filePath);
+            }
+
+            ignore = new FileOutputStream("/dev/null");
 
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = is.read(buffer)) != -1) {
-                fos.write(buffer, 0, bytesRead);
+                if (fileExists) {
+                    ignore.write(buffer, 0, bytesRead);
+                } else {
+                    fos.write(buffer, 0, bytesRead);
+                }
             }
             return true;
         } catch (IOException e) {
@@ -43,6 +55,7 @@ public class FileHashing {
             try {
                 if (is != null) is.close();
                 if (fos != null) fos.close();
+                if (ignore != null) ignore.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -59,16 +72,17 @@ public class FileHashing {
     }
 
     public static HashMap<String, Object> main(Map<String, Object> args) {
-        String url = "http://127.0.0.1:8000/snap.png";
-        String filePath = "~/snap.png";
-        boolean success = downloadFile(url, filePath);
+	HashMap<String, Object> output = new HashMap<>();
+
+	String url = "http://127.0.0.1:8000/snap.png";
+    String filePath = "/tmp/snap.png";
+	boolean success = downloadFile(url, filePath);
 
         if (success) {
             hash();
-            deleteFile(filePath);
         }
         output.put("success", success);
-        
+
         return output;
     }
 
