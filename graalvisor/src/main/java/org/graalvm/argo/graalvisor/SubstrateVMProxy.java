@@ -106,9 +106,15 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
         private final AtomicInteger active = new AtomicInteger(0);
 
+        private final int maxFaastlaneWorkers = 15;
+        
+        private boolean faastlane;
+
         public FunctionPipeline(PolyglotFunction function) {
             this.function = function;
             this.queue = new ArrayBlockingQueue<>(64);
+            String faastlane_mode = System.getenv("faastlane");
+            this.faastlane = faastlane_mode != null && faastlane_mode.equals("true");
         }
 
         public String invokeInCachedSandbox(String input) {
@@ -117,8 +123,10 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
             synchronized (this) {
                 if (workers.intValue() < active.intValue()) {
-                    workers.incrementAndGet();
-                    new Worker(this).start();
+                    if (!faastlane || workers.intValue() < maxFaastlaneWorkers) {
+                        workers.incrementAndGet();
+                        new Worker(this).start();
+                    }
                 }
             }
 

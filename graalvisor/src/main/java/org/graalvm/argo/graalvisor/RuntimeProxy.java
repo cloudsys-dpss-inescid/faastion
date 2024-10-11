@@ -84,13 +84,7 @@ public abstract class RuntimeProxy {
         server.createContext("/warmup", new WarmupHandler());
         server.createContext("/register", new RegisterHandler());
         server.createContext("/deregister", new DeregisterHandler());
-
-        String faastlane_mode = System.getenv("faastlane");
-        if (faastlane_mode != null && faastlane_mode.equals("true")) {
-            server.setExecutor(Executors.newFixedThreadPool(15));
-        } else {
-            server.setExecutor(Executors.newCachedThreadPool());
-        }
+        server.setExecutor(Executors.newCachedThreadPool());
     }
 
     static {
