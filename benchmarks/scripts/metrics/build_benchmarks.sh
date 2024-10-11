@@ -23,7 +23,11 @@ if [ -z $CONCURRENCY_LEVEL ]; then
 	export CONCURRENCY_LEVEL=32
 fi
 
-for benchmark_name in gv_native_hw gv_native_matmul gv_native_factors gv_filehashing
+benchmarks=(gv_native_hw gv_native_matmul gv_native_factors gv_filehashing)
+build_duration=$(echo "scale=2; ${#benchmarks[@]} * 30 / 60" | bc)
+total_duration=$(echo "scale=2; ($CONCURRENCY_LEVEL + 1) * $build_duration" | bc)
+echo "Estimated build time ~= $total_duration mins"
+for benchmark_name in ${benchmarks[@]}
 do
 	$benchmark_name
 	cd "$BENCHMARK_DIR"
