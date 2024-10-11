@@ -8,6 +8,8 @@ GRAALVISOR_HOME=$ARGO_HOME/graalvisor
 BENCHMARKS_HOME=$ARGO_HOME/benchmarks
 JAVA_BENCHMARKS=$BENCHMARKS_HOME/src/java
 
+EXPERIMENT_HOME="$(DIR)/experiments/$(date +%Y%m%d_%H%M%S)"
+
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
@@ -24,6 +26,16 @@ function register_function {
                 --data-binary @"$ARGO_HOME/benchmarks/src/$APP_LANG/$APP_NAME/build/lib$LIB_NAME$idx.so" &> /dev/null
         done
     fi
+}
+
+function register_gv_filehashing {
+    APP_LANG=java
+    APP_NAME=gv-file-hashing
+    APP_MAIN=com.jni.FileHashing
+
+    LIB_NAME="filehashing"
+
+    register_function
 }
 
 function register_gv_native_factors {
@@ -69,7 +81,7 @@ function start_svm {
 
 function log_resources {
     PID=$1
-    OFILE_RSS=$RESULTS_HOME/$approach/$WORKLOAD-footprint.csv
+    OFILE_RSS=$RESULTS_HOME/$approach/memory/$WORKLOAD-footprint.csv
 
     rm $OFILE_RSS &> /dev/null
         while kill -0 $PID &> /dev/null; do
@@ -95,52 +107,53 @@ function benchmark {
         script="native.lua"
     fi
 
-    env function_name=$LIB_NAME wrk --latency -t$WORKLOAD -c$WORKLOAD -d$DURATION -s $script http://127.0.0.1:8080
+    env function_name=$LIB_NAME wrk --latency -t$WORKLOAD -c$WORKLOAD -d$DURATION -s $script http://127.0.0.1:8080 &> "$output"
 
     # Kill Graalvisor
     pkill -9 -f polyglot-proxy
 }
 
 function capture {
+    output="$RESULTS_HOME/$approach/debug/$WORKLOAD-wrk_output.txt"
     # Execute wrk and capture the output
-    output=$(benchmark)
+    benchmark
 
     # Extract percentiles
-    top50=$(echo "$output" | grep "50%" | awk '{print $2}')
-    top75=$(echo "$output" | grep "75%" | awk '{print $2}')
-    top90=$(echo "$output" | grep "90%" | awk '{print $2}')
-    top99=$(echo "$output" | grep "99%" | awk '{print $2}')
+    top50=$(less $output | grep "50%" | awk 'END {print $2}')
+    top75=$(less $output | grep "75%" | awk 'END {print $2}')
+    top90=$(less $output | grep "90%" | awk 'END {print $2}')
+    top99=$(less $output | grep "99%" | awk 'END {print $2}')
 
     # Extract the average latency
-    avg_latency=$(echo "$output" | grep "Latency" | awk '{print $2}')
+    avg_latency=$(less $output | grep "Latency" | awk '{print $2}')
 
     # Extract the standard deviation of latency
-    stddev_latency=$(echo "$output" | grep "Latency" | awk '{print $3}')
+    stddev_latency=$(less $output | grep "Latency" | awk '{print $3}')
 
     # Extract the throughput (requests per second)
-    throughput=$(echo "$output" | grep "Requests/sec" | awk '{print $2}')
+    throughput=$(less $output | grep "Requests/sec" | awk '{print $2}')
 
-    echo $avg_latency       > $RESULTS_HOME/$approach/$WORKLOAD-avg_latency.txt
-    echo $stddev_latency    > $RESULTS_HOME/$approach/$WORKLOAD-stddev_latency.txt
-    echo $throughput        > $RESULTS_HOME/$approach/$WORKLOAD-throughput.txt
-    echo $top50             > $RESULTS_HOME/$approach/$WORKLOAD-50p.txt
-    echo $top75             > $RESULTS_HOME/$approach/$WORKLOAD-75p.txt
-    echo $top90             > $RESULTS_HOME/$approach/$WORKLOAD-90p.txt
-    echo $top99             > $RESULTS_HOME/$approach/$WORKLOAD-99p.txt
-    echo $output            > $RESULTS_HOME/$approach/$WORKLOAD-wrk_output.txt
+    latency_home="$RESULTS_HOME/$approach/latency"
+
+    echo $avg_latency       >> "$latency_home/avg_latency.txt"
+    echo $stddev_latency    >> "$latency_home/stddev_latency.txt"
+    echo $throughput        >> "$latency_home/throughput.txt"
+    echo $top50             >> "$latency_home/50p.txt"
+    echo $top75             >> "$latency_home/75p.txt"
+    echo $top90             >> "$latency_home/90p.txt"
+    echo $top99             >> "$latency_home/99p.txt"
 }
 
 function execute {
     
     # Start Graalvisor
-    start_svm &> $LOGS_HOME/$approach/$WORKLOAD-lambda.log &
+    start_svm &> "$LOGS_HOME/$approach/$WORKLOAD-lambda.log" &
     PID=$(echo -n "$!")
 
     # Log Resources (memory and CPU)
     log_resources $PID &
 
     # Register applications
-    # register
     register_$benchmark_name
     
     # Run Benchmarking tool
@@ -170,15 +183,20 @@ function execute_process {
 }
 
 function setup {
+    echo "Running workloads for $benchmark_name"
+
+    LOGS_HOME=$EXPERIMENT_HOME/$benchmark_name/logs
+    RESULTS_HOME=$EXPERIMENT_HOME/$benchmark_name/results
+
     directories=("isolate" "process" "faastlane" "faastion")
     for dir in "${directories[@]}"; do
-        mkdir -p "${RESULTS_HOME}/${dir}" "${LOGS_HOME}/${dir}"
+        mkdir -p "${RESULTS_HOME}/${dir}/debug" "${RESULTS_HOME}/${dir}/memory" "${RESULTS_HOME}/${dir}/latency" "${LOGS_HOME}/${dir}"
     done
 }
 
 function start_webserver {
     cd $(DIR)/webserver
-    $(DIR)/webserver.sh &> $LOGS_HOME/webserver.log &
+    $(DIR)/webserver.sh &> /dev/null &
     cd -
 }
 
@@ -202,16 +220,19 @@ trap 'cleanup_resources' SIGINT
 
 export SANDBOX=isolate
 
-DURATION="1m"
-
-for benchmark_name in gv_native_hw gv_native_matmul gv_native_factors
+workloads=(1 2 4 8 16 32)
+for benchmark_name in gv_native_hw gv_native_matmul gv_native_factors gv_filehashing
 do
-    echo "Running workloads for $benchmark_name"
-    experiment_name=$(date +"experiment_${benchmark_name}_%Y%m%d_%H%M%S")
-    LOGS_HOME=$(DIR)/logs/$experiment_name
-    RESULTS_HOME=$(DIR)/results/$experiment_name
     setup
-    workloads=(1 2 4 8 16 32)
+
+    if [ "$benchmark_name" = "gv_native_factors" ]; then
+        DURATION="10s"
+    elif [ "$benchmark_name" = "gv_filehashing" ]; then
+        DURATION="15s"
+    else
+        DURATION="1s"
+    fi
+
     for WORKLOAD in "${workloads[@]}"
     do
         for approach in isolate faastlane faastion process
