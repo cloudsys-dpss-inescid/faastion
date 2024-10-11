@@ -1,6 +1,6 @@
 local socket = require("socket")
 
-local function_name = "nativehw" 
+local function_name = os.getenv("function_name")
 
 request = function()
 

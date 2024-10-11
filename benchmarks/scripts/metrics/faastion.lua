@@ -1,7 +1,6 @@
 local socket = require("socket")
 
-
-local function_name = "nativehw" 
+local function_name = os.getenv("function_name")
 local thread_counter = 0
 
 function setup(thread)

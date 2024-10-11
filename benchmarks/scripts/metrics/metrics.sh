@@ -95,7 +95,7 @@ function benchmark {
         script="native.lua"
     fi
 
-    wrk --latency -t$WORKLOAD -c$WORKLOAD -d$DURATION -s $script http://127.0.0.1:8080
+    env function_name=$LIB_NAME wrk --latency -t$WORKLOAD -c$WORKLOAD -d$DURATION -s $script http://127.0.0.1:8080
 
     # Kill Graalvisor
     pkill -9 -f polyglot-proxy
