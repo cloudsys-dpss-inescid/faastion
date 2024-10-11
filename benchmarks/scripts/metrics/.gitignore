@@ -1,4 +1,2 @@
 /.luarocks
-/logs
-/results
-
+/experiments
