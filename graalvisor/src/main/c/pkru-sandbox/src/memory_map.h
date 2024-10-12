@@ -68,7 +68,7 @@ void set_isolate_function(IsolateFunction *function);
 
 IsolateFunction *get_isolate_function();
 
-IsolateFunction *get_app_function(char *functionName);
+IsolateFunction *get_app_function(const char *functionName);
 
 void insert_app_function(const char *functionName, IsolateFunction *function);
 

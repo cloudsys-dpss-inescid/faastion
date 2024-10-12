@@ -344,7 +344,7 @@ void remove_app_function(const char *functionName) {
     } 
 }
 
-IsolateFunction *get_app_function(char *functionName) {
+IsolateFunction *get_app_function(const char *functionName) {
     Bucket *currentBucket = get_bucket(functionName);
     return currentBucket ? currentBucket->function : NULL;
 }
