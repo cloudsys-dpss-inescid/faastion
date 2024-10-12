@@ -94,7 +94,7 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_createIsolateFunction(JNIEnv *env, jobject thisObj, jstring functionName) {
     IsolateFunction *function;
     const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
-    if (get_isolate_function(function_name) == NULL) {
+    if (get_app_function(function_name) == NULL) {
         function = create_isolate_function();
         insert_app_function(function_name, function);
         set_isolate_function(function);
