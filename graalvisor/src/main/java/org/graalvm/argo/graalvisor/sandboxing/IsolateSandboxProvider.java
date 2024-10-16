@@ -15,8 +15,6 @@ public class IsolateSandboxProvider extends SandboxProvider {
 
     private GraalVisorAPI graalvisorAPI;
     private boolean LPI;
-    private long numProcessFunctions = 0;
-    private long numIsolateFunctions = 0;
     
 
     public IsolateSandboxProvider(PolyglotFunction function) {
@@ -44,8 +42,6 @@ public class IsolateSandboxProvider extends SandboxProvider {
             qualifiedFunction = getFunction();
             numIsolateFunctions++;
         }
-
-        System.out.println("isolates: " + numIsolateFunctions + ", processes: " + numProcessFunctions);
 
         return qualifiedFunction;
     }
