@@ -191,7 +191,8 @@ public class SubstrateVMProxy extends RuntimeProxy {
         if (warmup) {
             res = function.getSandboxProvider().warmupProvider(arguments);
         } else if (cached) {
-            res = getFunctionPipeline(function).invokeInCachedSandbox(arguments);
+            PolyglotFunction qualifiedFunction = function.getSandboxProvider().getQualifiedFuncion();
+            res = getFunctionPipeline(qualifiedFunction).invokeInCachedSandbox(arguments);
         } else {
             SandboxHandle shandle = prepareSandbox(function);
             res = shandle.invokeSandbox(arguments);

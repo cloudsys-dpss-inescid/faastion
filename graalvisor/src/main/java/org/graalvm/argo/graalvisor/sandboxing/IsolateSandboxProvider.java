@@ -1,5 +1,8 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
+import org.graalvm.argo.graalvisor.Main;
+import org.graalvm.argo.graalvisor.RuntimeProxy;
+
 import java.io.IOException;
 
 import org.graalvm.argo.graalvisor.function.NativeFunction;
@@ -11,13 +14,40 @@ import com.oracle.svm.graalvisor.api.GraalVisorAPI;
 public class IsolateSandboxProvider extends SandboxProvider {
 
     private GraalVisorAPI graalvisorAPI;
+    private boolean LPI;
+    private long numProcessFunctions = 0;
+    private long numIsolateFunctions = 0;
+    
 
     public IsolateSandboxProvider(PolyglotFunction function) {
         super(function);
+        String enableLPI = System.getenv("LPI");
+        LPI = enableLPI == null ? false : enableLPI.equals("true");
     }
 
     public GraalVisorAPI getGraalvisorAPI() {
         return this.graalvisorAPI;
+    }
+
+    @Override
+    public PolyglotFunction getQualifiedFuncion() {
+        String processFunctionName;
+        PolyglotFunction qualifiedFunction = null;
+
+        if (LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
+            processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
+            qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
+            numProcessFunctions++;
+        }
+
+        if (qualifiedFunction == null) {
+            qualifiedFunction = getFunction();
+            numIsolateFunctions++;
+        }
+
+        System.out.println("isolates: " + numIsolateFunctions + ", processes: " + numProcessFunctions);
+
+        return qualifiedFunction;
     }
 
     @Override
