@@ -33,6 +33,16 @@ function register_function {
     fi
 }
 
+function register_gv_aes_encryption {
+    APP_LANG=java
+    APP_NAME=gv-aes-encryption
+    APP_MAIN=com.jni.AESEncryption
+
+    LIB_NAME="aes"
+
+    register_function
+}
+
 function register_gv_filehashing {
     APP_LANG=java
     APP_NAME=gv-file-hashing
@@ -250,10 +260,10 @@ trap 'cleanup_resources' SIGINT
 export SANDBOX=isolate
 
 workloads=(1 2 4 8 16 32)
-benchmarks=(gv_native_hw gv_native_matmul gv_native_factors gv_filehashing)
+benchmarks=(gv_native_factors gv_filehashing gv_aes_encryption)
 
-warmup_duration=(1 1 30 30)
-wrk_duration=(1 1 60 60)
+warmup_duration=(30 30 30)
+wrk_duration=(60 60 60)
 total_duration=0
 for i in ${!wrk_duration[@]}
 do
