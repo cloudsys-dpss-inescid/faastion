@@ -15,16 +15,21 @@ NC='\033[0m' # No Color
 
 function register_function {
     headers='Content-Type: application/json'
-    base_url="127.0.0.1:8080/register?entryPoint=$APP_MAIN&language=$APP_LANG&sandbox=$SANDBOX"
+    base_url="127.0.0.1:8080/register?entryPoint=$APP_MAIN&language=$APP_LANG"
 
-    if [ "$approach" != "faastion" ]; then
-        curl -s -X POST "$base_url&name=$LIB_NAME" -H "$headers" \
-            --data-binary @"$ARGO_HOME/benchmarks/src/$APP_LANG/$APP_NAME/build/lib$LIB_NAME.so" &> /dev/null
-    else
+    if [ "$approach" = "faastion" ] || [ "$approach" = "faastion_lpi" ]; then
         for idx in $(seq 1 $WORKLOAD); do
-            curl -s -X POST "$base_url&name=$LIB_NAME$idx" -H "$headers" \
+            curl -s -X POST "$base_url&name=$LIB_NAME$idx&sandbox=$SANDBOX" -H "$headers" \
                 --data-binary @"$ARGO_HOME/benchmarks/src/$APP_LANG/$APP_NAME/build/lib$LIB_NAME$idx.so" &> /dev/null
         done
+    else
+        curl -s -X POST "$base_url&name=$LIB_NAME&sandbox=$SANDBOX" -H "$headers" \
+            --data-binary @"$ARGO_HOME/benchmarks/src/$APP_LANG/$APP_NAME/build/lib$LIB_NAME.so" &> /dev/null
+    fi
+
+    if [ "$approach" = "faastion_lpi" ]; then
+        curl -s -X POST "$base_url&name=$LIB_NAME&sandbox=process" -H "$headers" \
+            --data-binary @"$ARGO_HOME/benchmarks/src/$APP_LANG/$APP_NAME/build/lib$LIB_NAME.so" &> /dev/null
     fi
 }
 
@@ -187,6 +192,12 @@ function execute_faastion {
     execute
 }
 
+function execute_faastion_lpi {
+    export LPI=true
+    execute
+    unset LPI
+}
+
 function execute_faastlane {
     export faastlane=true
     execute
@@ -248,7 +259,7 @@ for i in ${!wrk_duration[@]}
 do
     time_warmup=${warmup_duration[$i]}
     time_wrk=${wrk_duration[$i]}
-    total_duration=$(echo "scale=4; $total_duration + (($time_warmup + $time_wrk + 1) * ${#workloads[@]} * 4 / 60)" | bc)
+    total_duration=$(echo "scale=4; $total_duration + (($time_warmup + $time_wrk + 1) * ${#workloads[@]} * 5 / 60)" | bc)
 done
 echo "Estimated benchmarks time ~= $total_duration mins"
 
@@ -257,7 +268,7 @@ do
     setup
     for WORKLOAD in "${workloads[@]}"
     do
-        for approach in isolate faastlane faastion process
+        for approach in isolate faastlane faastion faastion_lpi process
         do
             echo -e "${GREEN}###################################################"
             echo -e "       Measuring metrics for $approach - $WORKLOAD      "
