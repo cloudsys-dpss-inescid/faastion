@@ -13,6 +13,7 @@
 // static MemoryRegionNode* head = NULL;
 
 static HashTable *hashTable = NULL;
+static atomic_int active_waiting_count;
 
 static __thread IsolateFunction *isolate_function = NULL;
 
@@ -244,10 +245,23 @@ void leave_function_domain(IsolateFunction *function) {
     int current = function->current_domain;
     function->jni_threads -= 1;
     if (function->jni_threads == 0) {
+        domain_usage_add(-1);
         swap_domain_function(function->current_domain, function, NULL);
         function->current_domain = 0;
     }
     pthread_mutex_unlock(&function->mutex);
+}
+
+void start_active_waiting_count() {
+    atomic_init(&active_waiting_count, 0);
+}
+
+void reset_active_waiting_count() {
+    atomic_store(&active_waiting_count, 0);
+}
+
+int get_active_waiting_count() {
+    return (int)atomic_load(&active_waiting_count);
 }
 
 int enter_function_domain(IsolateFunction *function) {
@@ -255,6 +269,7 @@ int enter_function_domain(IsolateFunction *function) {
     pthread_mutex_lock(&function->mutex);
     domain = function->current_domain;
     while (domain == 0 && (domain = book_available_domain(function)) == 0) {
+        atomic_fetch_add(&active_waiting_count, 1);
         usleep(100);
     }
     function->current_domain = domain;

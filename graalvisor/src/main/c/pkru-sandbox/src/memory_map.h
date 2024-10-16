@@ -76,6 +76,12 @@ void remove_app_function(const char *functionName);
 
 void free_hash_table();
 
+void start_active_waiting_count();
+
+void reset_active_waiting_count();
+
+int get_active_waiting_count();
+
 /**
  * @brief Create a new MemoryRegionNode.
  * 
