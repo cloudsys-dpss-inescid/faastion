@@ -74,33 +74,23 @@ function start_svm {
     export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:$LD_LIBRARY_PATH
     # export LD_PRELOAD=$GRAALVISOR_HOME/build/libs/libpreload.so
     # Start Graalvisor
-    GLIBC_TUNABLES="glibc.rtld.nns=16" $GRAALVISOR_HOME/build/native-image/polyglot-proxy &
-    wait
+    GLIBC_TUNABLES="glibc.rtld.nns=16" $GRAALVISOR_HOME/build/native-image/polyglot-proxy &> "$LOGS_HOME/$approach/$WORKLOAD-lambda.log" &
+    PID=$!
     # unset LD_PRELOAD
 }
 
 function log_resources {
-    PID=$1
     OFILE_RSS=$RESULTS_HOME/$approach/memory/$WORKLOAD-footprint.csv
-
     rm $OFILE_RSS &> /dev/null
-        while kill -0 $PID &> /dev/null; do
-                # The idea for memory is that we traverse the entire pid subprocess tree
-                # and memory memory utilization. We sum all individual memory and return.
-                s_mem=0
-                timestamp=$(date -u +"%s%3N")
-                for p in $(pstree -p $PID | grep -o '([0-9]\+)' | grep -o '[0-9]\+')
-                do
-                    p_mem=$(ps -q $p -o rss=)
-                    s_mem=$((s_mem + p_mem))
-                done
-                echo "$s_mem,$timestamp" >> $OFILE_RSS
-                sleep .100
-        done
+    while kill -0 $PID &> /dev/null; do
+        timestamp=$(date -u +"%s%3N")
+        s_mem=$(ps -p $PID --ppid $PID -o rss= | awk '{sum+=$1} END {print sum}')
+        echo "$s_mem,$timestamp" >> $OFILE_RSS
+        sleep .100
+    done
 }
 
-function benchmark {
-    
+function run_wrk {
     if [ "$approach" = "faastion" ]; then
         script="faastion.lua"
     else
@@ -108,13 +98,40 @@ function benchmark {
     fi
 
     env function_name=$LIB_NAME wrk --latency -t$WORKLOAD -c$WORKLOAD -d$DURATION -s $script http://127.0.0.1:8080 &> "$output"
+}
+
+function benchmark {
+    output="$RESULTS_HOME/$approach/debug/$WORKLOAD-wrk_output.txt"
+
+    if [ "$benchmark_name" = "gv_native_factors" ]; then
+        DURATION="1m"
+    elif [ "$benchmark_name" = "gv_filehashing" ]; then
+        DURATION="1m"
+    else
+        DURATION="1s"
+    fi
+
+    run_wrk $WORKLOAD $DURATION
 
     # Kill Graalvisor
     pkill -9 -f polyglot-proxy
 }
 
+function warmup {
+    output="/dev/null"
+
+    if [ "$benchmark_name" = "gv_native_factors" ]; then
+        DURATION="30s"
+    elif [ "$benchmark_name" = "gv_filehashing" ]; then
+        DURATION="30s"
+    else
+        DURATION="1s"
+    fi
+
+    run_wrk
+}
+
 function capture {
-    output="$RESULTS_HOME/$approach/debug/$WORKLOAD-wrk_output.txt"
     # Execute wrk and capture the output
     benchmark
 
@@ -125,10 +142,10 @@ function capture {
     top99=$(less $output | grep "99%" | awk 'END {print $2}')
 
     # Extract the average latency
-    avg_latency=$(less $output | grep "Latency" | awk '{print $2}')
+    avg_latency=$(less $output | grep "Latency" | awk 'NR==1 {print $2}')
 
     # Extract the standard deviation of latency
-    stddev_latency=$(less $output | grep "Latency" | awk '{print $3}')
+    stddev_latency=$(less $output | grep "Latency" | awk 'NR==1 {print $3}')
 
     # Extract the throughput (requests per second)
     throughput=$(less $output | grep "Requests/sec" | awk '{print $2}')
@@ -147,14 +164,15 @@ function capture {
 function execute {
     
     # Start Graalvisor
-    start_svm &> "$LOGS_HOME/$approach/$WORKLOAD-lambda.log" &
-    PID=$(echo -n "$!")
+    start_svm
 
     # Log Resources (memory and CPU)
-    log_resources $PID &
+    log_resources &
 
     # Register applications
     register_$benchmark_name
+
+    warmup
     
     # Run Benchmarking tool
     capture
@@ -221,18 +239,22 @@ trap 'cleanup_resources' SIGINT
 export SANDBOX=isolate
 
 workloads=(1 2 4 8 16 32)
-for benchmark_name in gv_native_hw gv_native_matmul gv_native_factors gv_filehashing
+benchmarks=(gv_native_hw gv_native_matmul gv_native_factors gv_filehashing)
+
+warmup_duration=(1 1 30 30)
+wrk_duration=(1 1 60 60)
+total_duration=0
+for i in ${!wrk_duration[@]}
+do
+    time_warmup=${warmup_duration[$i]}
+    time_wrk=${wrk_duration[$i]}
+    total_duration=$(echo "scale=4; $total_duration + (($time_warmup + $time_wrk + 1) * ${#workloads[@]} * 4 / 60)" | bc)
+done
+echo "Estimated benchmarks time ~= $total_duration mins"
+
+for benchmark_name in ${benchmarks[@]}
 do
     setup
-
-    if [ "$benchmark_name" = "gv_native_factors" ]; then
-        DURATION="10s"
-    elif [ "$benchmark_name" = "gv_filehashing" ]; then
-        DURATION="15s"
-    else
-        DURATION="1s"
-    fi
-
     for WORKLOAD in "${workloads[@]}"
     do
         for approach in isolate faastlane faastion process
@@ -249,8 +271,6 @@ done
 
 # Generate plots
 # python3 metrics.py
-echo "Experiment: $experiment_name"
-
 
 # Clean resources when finished
 cleanup_resources
