@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
 base_dir = sys.argv[1]
 plots_dir = "plots"
 
-benchmarks = ['gv_native_factors']
+benchmarks = ['gv_native_factors', 'gv_filehashing']
 
 approaches = ['faastion_lpi', 'faastion']
 
