@@ -329,6 +329,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				className.startsWith("java.") ||
 				className.startsWith("sun.") ||
 				className.startsWith("jdk.") ||
-				className.startsWith("org.");
+				className.startsWith("org.") ||
+				className.startsWith("byte[]");
 	}
 }

@@ -16,6 +16,10 @@ public abstract class SandboxProvider {
         return this.function;
     }
 
+    public PolyglotFunction getQualifiedFuncion() {
+        return this.function;
+    }
+
     public abstract String getName();
 
     public abstract void loadProvider() throws IOException;

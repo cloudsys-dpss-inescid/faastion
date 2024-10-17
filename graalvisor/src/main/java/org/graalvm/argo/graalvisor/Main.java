@@ -1,6 +1,9 @@
 package org.graalvm.argo.graalvisor;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 
 import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface;
 
@@ -14,7 +17,7 @@ public abstract class Main {
     public static boolean LAZY_ISOLATION_SUPPORTED = false;
     public static boolean MEM_ISOLATION_ENABLED = false;
     public static boolean MEM_ISOLATION_SUPPORTED = false;
-
+    public static int ACTIVE_WAIT_CAP;
 
     public static void main(String[] args) throws Exception {
         String lambda_port = System.getenv("lambda_port");
@@ -62,10 +65,56 @@ public abstract class Main {
 
         int port = Integer.parseInt(lambda_port);
 
+        String cap = System.getenv("ACTIVE_WAIT_CAP");
+        ACTIVE_WAIT_CAP = cap == null ? 8 : Integer.parseInt(cap);
+
         if (System.getProperty("java.vm.name").equals("Substrate VM")) {
             // Initialize our native sandbox interface.
             NativeSandboxInterface.ginit();
-           new SubstrateVMProxy(port).start();
+
+            new Thread(() -> {
+                String poll = System.getenv("ACTIVE_WAIT_POLL");
+                long millis = poll == null ? 1000 : Long.parseLong(poll);
+                while (true) {
+                    try {
+                        Thread.sleep(millis);
+                        NativeSandboxInterface.resetActiveWaitingCount(0);
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                    
+                }
+            }).start();
+
+            new Thread(() -> {
+                String poll = System.getenv("DOMAIN_USAGE_POLL");
+                long millis = poll == null ? 100 : Long.parseLong(poll);
+                
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream("domain_usage.txt");
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+
+                int domainUsage;
+                String line;
+                while (true) {
+                    try {
+                        Thread.sleep(millis);
+                        domainUsage = NativeSandboxInterface.getDomainUsage();
+                        line = String.valueOf(domainUsage) + "\n";
+                        fos.write(line.getBytes());
+                    } catch (InterruptedException e) {
+                        continue;
+                    } catch (IOException e) {
+                        continue;
+                    }
+                }
+            }).start();
+
+            new SubstrateVMProxy(port).start();
         } else {
            new HotSpotProxy(port).start();
         }

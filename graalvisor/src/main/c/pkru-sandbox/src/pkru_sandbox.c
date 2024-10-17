@@ -350,6 +350,8 @@ int pkru_sandbox_init()
 
     init_hash_table(4096);
 
+    start_active_waiting_count();
+
     // Get domains ready for populating
     if (initialize_all_domains()) {
         fprintf(stderr, "error: failed initializing domains\n");

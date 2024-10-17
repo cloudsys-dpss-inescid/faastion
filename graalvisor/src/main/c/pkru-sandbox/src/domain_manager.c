@@ -19,7 +19,16 @@ res = (res = (a)) ? res : (res = (b)) ? res : (c);\
 // Global array of domains
 Domain *domains[DOMAINS];
 static int PAGE_SIZE;
+static int domain_usage;
 
+
+int get_domain_usage() {
+    return domain_usage;
+}
+
+void domain_usage_add(int n) {
+    domain_usage += n;
+}
 
 void set_primary_domain_function(int domain, IsolateFunction *function) {
     domains[domain]->primary_function = function;
@@ -64,6 +73,7 @@ int book_any_domain(IsolateFunction *function) {
         if (swap_domain_function(i, NULL, function)) {
             pthread_mutex_lock(&domains[i]->prev_function_lock);
             prev_function = domains[i]->prev_function;
+            domain_usage_add(1);
             if (prev_function) {
                 protect_app_regions(prev_function, 0);
             }
@@ -81,6 +91,7 @@ int book_unused_domain(IsolateFunction *function) {
         if (domains[i]->prev_function == NULL && swap_domain_function(i, NULL, function)) {
             pthread_mutex_lock(&domains[i]->prev_function_lock);
             domains[i]->prev_function = function;
+            domain_usage_add(1);
             pthread_mutex_unlock(&domains[i]->prev_function_lock);
             protect_app_regions(function, i);
             return i;
@@ -99,6 +110,7 @@ int book_previous_domain(IsolateFunction *function) {
     {
         pthread_mutex_lock(&domains[domain]->prev_function_lock);
         domains[domain]->prev_function = function;
+        domain_usage_add(1);
         pthread_mutex_unlock(&domains[domain]->prev_function_lock);
         return domain;
     }

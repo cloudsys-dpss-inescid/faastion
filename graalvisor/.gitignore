@@ -14,3 +14,5 @@
 
 # Ignore Gradle build output directory
 build/
+
+domain_usage.txt

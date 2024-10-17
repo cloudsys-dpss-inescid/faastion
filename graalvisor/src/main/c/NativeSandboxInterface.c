@@ -107,3 +107,16 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     remove_app_function(function_name);
     (*env)->ReleaseStringUTFChars(env, functionName, function_name);
 }
+
+JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_resetActiveWaitingCount(JNIEnv *env, jobject thisObj, int active_waiting_threshold) {
+    if (get_active_waiting_count() > active_waiting_threshold) {
+        reset_active_waiting_count();
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_getDomainUsage(JNIEnv *env, jobject thisObj) {
+    return get_domain_usage();
+}
