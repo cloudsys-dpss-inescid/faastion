@@ -10,6 +10,7 @@ if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
 base_dir = sys.argv[1]
+plots_dir = "plots"
 
 benchmarks = ['gv_filehashing' ]
 
@@ -46,7 +47,11 @@ for benchmark in benchmarks:
     plt.xticks(index + bar_width * (len(approaches) - 1) / 2, concurrency_levels)  # Center x-ticks under bars
     plt.legend()  # Show a legend for the approaches
 
-    plt.savefig(f'{benchmark}_avg_latency.png')
+    output_dir = os.path.join(plots_dir, benchmark)
+    output_file = os.path.join(output_dir, 'avg_latency.png')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(output_file)
     plt.close()
 
 print("Plots generated.")
