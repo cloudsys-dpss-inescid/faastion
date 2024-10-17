@@ -106,7 +106,7 @@ function log_resources {
 }
 
 function run_wrk {
-    if [ "$approach" = "faastion" ]; then
+    if [ "$approach" = "faastion" ] || [ "$approach" = "faastion_lpi" ]; then
         script="faastion.lua"
     else
         script="native.lua"
@@ -121,6 +121,8 @@ function benchmark {
     if [ "$benchmark_name" = "gv_native_factors" ]; then
         DURATION="1m"
     elif [ "$benchmark_name" = "gv_filehashing" ]; then
+        DURATION="1m"
+    elif [ "$benchmark_name" = "gv_aes_encryption" ]; then
         DURATION="1m"
     else
         DURATION="1s"
@@ -138,6 +140,8 @@ function warmup {
     if [ "$benchmark_name" = "gv_native_factors" ]; then
         DURATION="30s"
     elif [ "$benchmark_name" = "gv_filehashing" ]; then
+        DURATION="30s"
+    elif [ "$benchmark_name" = "gv_aes_encryption" ]; then
         DURATION="30s"
     else
         DURATION="1s"
@@ -174,6 +178,8 @@ function capture {
     echo $top75             >> "$latency_home/75p.txt"
     echo $top90             >> "$latency_home/90p.txt"
     echo $top99             >> "$latency_home/99p.txt"
+
+    mv domain_usage.txt     $RESULTS_HOME/$approach/domain_usage/$WORKLOAD-domains.txt
 }
 
 function execute {
@@ -227,9 +233,9 @@ function setup {
     LOGS_HOME=$EXPERIMENT_HOME/$benchmark_name/logs
     RESULTS_HOME=$EXPERIMENT_HOME/$benchmark_name/results
 
-    directories=("isolate" "process" "faastlane" "faastion")
+    directories=("isolate" "process" "faastlane" "faastion" "faastion_lpi")
     for dir in "${directories[@]}"; do
-        mkdir -p "${RESULTS_HOME}/${dir}/debug" "${RESULTS_HOME}/${dir}/memory" "${RESULTS_HOME}/${dir}/latency" "${LOGS_HOME}/${dir}"
+        mkdir -p "${RESULTS_HOME}/${dir}/debug" "${RESULTS_HOME}/${dir}/memory" "${RESULTS_HOME}/${dir}/latency" "${RESULTS_HOME}/${dir}/domain_usage" "${LOGS_HOME}/${dir}"
     done
 }
 
