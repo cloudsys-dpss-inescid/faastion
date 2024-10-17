@@ -21,7 +21,7 @@ colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
 def read_latency_data(filepath):
     with open(filepath, 'r') as f:
         latencies = [float(line.strip()[:-2]) for line in f.readlines()]
-    print(latencies)
+    # print(latencies)
     return latencies
 
 for benchmark in benchmarks:
