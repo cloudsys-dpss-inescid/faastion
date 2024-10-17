@@ -19,11 +19,15 @@ function gv_filehashing {
 	BENCHMARK_DIR="$BENCHMARKS_HOME/src/java/gv-file-hashing"
 }
 
+function gv_aes_encryption {
+        BENCHMARK_DIR="$BENCHMARKS_HOME/src/java/gv-aes-encryption"
+}
+
 if [ -z $CONCURRENCY_LEVEL ]; then
 	export CONCURRENCY_LEVEL=32
 fi
 
-benchmarks=(gv_native_hw gv_native_matmul gv_native_factors gv_filehashing)
+benchmarks=(gv_native_factors gv_filehashing)
 build_duration=$(echo "scale=2; ${#benchmarks[@]} * 30 / 60" | bc)
 total_duration=$(echo "scale=2; ($CONCURRENCY_LEVEL + 1) * $build_duration" | bc)
 echo "Estimated build time ~= $total_duration mins"
@@ -34,3 +38,8 @@ do
 	./build_script.sh
 	cd -
 done
+
+gv_aes_encryption
+cd "$BENCHMARK_DIR"
+./build_script.sh
+cd -
