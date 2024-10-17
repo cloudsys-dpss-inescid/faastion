@@ -53,8 +53,6 @@ int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction 
 
 int get_domain_usage();
 
-void domain_usage_add(int n);
-
 /**
  * @brief Find and book an available domain for a thread.
  * 

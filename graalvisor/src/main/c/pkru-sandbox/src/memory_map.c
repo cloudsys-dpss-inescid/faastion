@@ -245,7 +245,6 @@ void leave_function_domain(IsolateFunction *function) {
     int current = function->current_domain;
     function->jni_threads -= 1;
     if (function->jni_threads == 0) {
-        domain_usage_add(-1);
         swap_domain_function(function->current_domain, function, NULL);
         function->current_domain = 0;
     }
