@@ -1,13 +1,10 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
+import java.lang.System;
+
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -17,13 +14,9 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.Modifier;
 import javassist.NotFoundException;
-import javassist.bytecode.BadBytecode;
-import javassist.bytecode.SignatureAttribute;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-import java.lang.System;
-import java.nio.file.Files;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
