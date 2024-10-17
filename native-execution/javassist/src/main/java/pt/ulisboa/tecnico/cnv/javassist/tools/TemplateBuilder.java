@@ -1,12 +1,9 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
 import java.util.List;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.StringWriter;
 import java.io.IOException;
-
-import javassist.CtBehavior;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;

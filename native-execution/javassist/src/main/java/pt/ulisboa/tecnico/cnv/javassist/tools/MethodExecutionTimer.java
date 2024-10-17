@@ -1,7 +1,6 @@
 package pt.ulisboa.tecnico.cnv.javassist.tools;
 
 import java.util.List;
-
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.CtMethod;
@@ -12,6 +11,9 @@ import javassist.expr.MethodCall;
 
 public class MethodExecutionTimer extends AbstractJavassistTool {
 
+    static int totalNativeCalls = 0;
+    static int actualNativeCalls = 0;
+
     public MethodExecutionTimer(List<String> packageNameList, String writeDestination) {
         super(packageNameList, writeDestination);
     }
@@ -20,6 +22,7 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
     protected void transform(CtBehavior behavior) throws Exception {
         super.transform(behavior);
 
+        // Now instrument the method to count native method calls
         behavior.instrument(new ExprEditor() {
             public void edit(MethodCall m) throws CannotCompileException {
                 CtMethod calleeMethod;
@@ -31,33 +34,42 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
                 } catch (NotFoundException e) {
                     String methodName = m.getMethodName();
                     String className = m.getClassName();
-                    System.out.println(String.format("Warning unable to check modifier for %s:%s", className, methodName));
+                    System.out.println(String.format("Warning: unable to check modifier for %s:%s", className, methodName));
                     return;
                 }
 
+                // Check if the method is native
                 if (mod != -1 && Modifier.isNative(mod)) {
-                    String callerClassName = m.getEnclosingClass().getName();
-                    String callerMethodName = m.where().getName();
+                    totalNativeCalls++;
                     String calleeMethodName = calleeMethod.getName();
                     String calleeClassName = calleeMethod.getDeclaringClass().getName();
+                    
+                    // Exclude system library calls
                     if (calleeClassName.startsWith("java.") ||
-                            calleeClassName.startsWith("javax.") ||
-                            calleeClassName.startsWith("jdk.") ||
-                            calleeClassName.startsWith("com.sun.")) {
-                        System.out.println(String.format("Ignoring method call %s:%s -> %s:%s", callerClassName, callerMethodName, calleeClassName, calleeMethodName));
+                    calleeClassName.startsWith("javax.") ||
+                    calleeClassName.startsWith("jdk.") ||
+                    calleeClassName.startsWith("org.") ||
+                    calleeClassName.startsWith("sun.") ||
+                    calleeClassName.startsWith("com.sun.")) {
                         return;
                     }
-
+                    
+                    actualNativeCalls++;
+                    // Measure the execution time of the native method
                     String timerName = "timer_" + calleeMethodName;
-                    m.replace("{ long " + timerName + " = System.nanoTime(); " +
-                            "try { $_ = $proceed($$); } finally { " +
+                    m.replace("{ " +
+                        "long " + timerName + " = System.nanoTime(); " +
+                        "try { $_ = $proceed($$); } finally { " +
                             "long endTime = System.nanoTime();" +
                             "System.out.println(\"" + timerName + " took \" + " +
-                            "(endTime - " + timerName + ") + \" ns\"); }}");
-
-                    System.out.println(String.format("Wrapped method call %s:%s -> %s:%s", callerClassName, callerMethodName, calleeClassName, calleeMethodName));
+                            "(endTime - " + timerName + ") + \" ns\"); " +
+                    "}}");
                 }
             }
         });
+    }
+
+    public void printNativeCallCounts() {
+        System.out.println("Actual/total Native Calls: " + actualNativeCalls + "/" + totalNativeCalls);
     }
 }

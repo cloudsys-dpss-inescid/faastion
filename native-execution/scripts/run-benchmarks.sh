@@ -4,11 +4,11 @@ function DIR {
     echo "$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 }
 
-JAVA_AGENT=$(DIR)/javassist/target/JavassistWrapper-1.0-jar-with-dependencies.jar
+JAVA_AGENT=$(DIR)/../javassist/target/JavassistWrapper-1.0-jar-with-dependencies.jar
 TOOL="MethodExecutionTimer"
 
 function build_javassist_agent {
-    cd $(DIR)/javassist
+    cd $(DIR)/../javassist
     mvn package
     cd - &> /dev/null
 }
@@ -23,8 +23,7 @@ build_javassist_agent
 
 rm -rf $(DIR)/results
 
-for benchmark in aesencryption zipcompression imagemanipulation 
-	#helloworld filehashing httprequest shopcart petclinic classify
+for benchmark in aesencryption imagemanipulation factorization matrixmultiplication
 do
     build_benchmark
 
@@ -43,8 +42,10 @@ do
     $(DIR)/../../native-benchmark.py -t 1 -c "java -cp ${class_path} -javaagent:${JAVA_AGENT}=${TOOL}:${packages}:output ${entrypoint}" &> native-benchmark.log
 
     # Capture statistics.
-    cat native-benchmark.log | grep "Average percentage of native execution" | awk '{print $6}' >> ../percentages.dat
-    cat native-benchmark.log | grep "Number of transitions per second" | awk '{print $6}'       >> ../transitions.dat
+    cat native-benchmark.log | grep "Average percentage of native execution" | awk '{print $6}'    >> ../percentages.dat
+    cat native-benchmark.log | grep "Number of transitions per second" | awk '{print $6}'          >> ../transitions.dat
+    cat native-benchmark.log | grep "Average untrusted native calls percentage" | awk '{print $6}' >> ../untrusted.dat
+    cat native-benchmark.log | grep "Actual/Total" | awk '{print $2}' >> ../actual-total.dat
     echo "$benchmark" >> ../benchmarks.dat
     cd - &> /dev/null
     echo "Running $benchmark... done!"

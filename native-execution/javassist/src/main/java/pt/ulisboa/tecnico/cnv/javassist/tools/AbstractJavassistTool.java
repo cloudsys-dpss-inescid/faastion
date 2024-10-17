@@ -21,6 +21,10 @@ public abstract class AbstractJavassistTool implements ClassFileTransformer {
     }
 
     protected void transform(CtBehavior behavior) throws Exception {
+        printNativeCallCounts();
+    }
+
+    public void printNativeCallCounts() {
     }
 
     protected void transform(CtClass clazz) throws Exception {
