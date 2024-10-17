@@ -58,7 +58,7 @@ for benchmark in benchmarks:
     plt.tight_layout()
 
     output_dir = os.path.join(plots_dir, benchmark)
-    output_file = os.path.join(output_dir, 'max_memory.png')
+    output_file = os.path.join(output_dir, 'max_memory.pdf')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     plt.savefig(output_file)
