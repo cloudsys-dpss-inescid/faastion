@@ -11,8 +11,9 @@ if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
 base_dir = sys.argv[1]
+plots_dir = "plots"
 
-benchmarks = ['gv_native_factors' ]
+benchmarks = ['gv_native_factors']
 
 approaches = ['faastion_lpi', 'faastion']
 
@@ -55,7 +56,11 @@ for benchmark in benchmarks:
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig(f'{benchmark}_domain_usage.png')
+    output_dir = os.path.join(plots_dir, benchmark)
+    output_file = os.path.join(output_dir, 'domain_usage.png')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(output_file)
     plt.close()
 
 print("Plots generated.")
