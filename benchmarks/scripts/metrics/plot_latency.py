@@ -12,7 +12,7 @@ if len(sys.argv) < 2:
 base_dir = sys.argv[1]
 plots_dir = "plots"
 
-benchmarks = ['gv_filehashing' ]
+benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption']
 
 approaches = ['isolate', 'faastion_lpi', 'faastion', 'faastlane', 'process']
 
@@ -33,7 +33,7 @@ for benchmark in benchmarks:
     index = np.arange(len(concurrency_levels)) * spacing_factor  # Base x locations for bars with spacing
 
     for i, approach in enumerate(approaches):
-        latency_file = os.path.join(base_dir, benchmark, 'results', approach, 'latency', '90p.txt')
+        latency_file = os.path.join(base_dir, benchmark, 'results', approach, 'latency', 'avg_latency.txt')
 
         if os.path.exists(latency_file):
             latencies = read_latency_data(latency_file)
@@ -43,7 +43,7 @@ for benchmark in benchmarks:
 
     plt.xlabel('Concurrency Level')
     plt.ylabel('Average Latency (ms)')
-    plt.title(f'Avergae Latency vs Concurrency - {benchmark}')
+    plt.title(f'Average Latency vs Concurrency - {benchmark}')
     plt.xticks(index + bar_width * (len(approaches) - 1) / 2, concurrency_levels)  # Center x-ticks under bars
     plt.legend()  # Show a legend for the approaches
 
