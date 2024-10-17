@@ -12,6 +12,7 @@ if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
 base_dir = sys.argv[1]
+plots_dir = "plots"
 
 benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption']
 
@@ -56,7 +57,11 @@ for benchmark in benchmarks:
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig(f'{benchmark}_max_memory_barplot.png')
+    output_dir = os.path.join(plots_dir, benchmark)
+    output_file = os.path.join(output_dir, 'max_memory.png')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(output_file)
     plt.close()
 
 print("Memory bar plots generated.")
