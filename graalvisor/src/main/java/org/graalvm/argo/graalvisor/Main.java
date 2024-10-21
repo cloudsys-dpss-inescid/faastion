@@ -17,7 +17,9 @@ public abstract class Main {
     public static boolean LAZY_ISOLATION_SUPPORTED = false;
     public static boolean MEM_ISOLATION_ENABLED = false;
     public static boolean MEM_ISOLATION_SUPPORTED = false;
+
     public static int ACTIVE_WAIT_CAP;
+    public static boolean LPI;
 
     public static void main(String[] args) throws Exception {
         String lambda_port = System.getenv("lambda_port");
@@ -67,6 +69,9 @@ public abstract class Main {
 
         String cap = System.getenv("ACTIVE_WAIT_CAP");
         ACTIVE_WAIT_CAP = cap == null ? 8 : Integer.parseInt(cap);
+
+        String enableLPI = System.getenv("LPI");
+        LPI = enableLPI == null ? false : enableLPI.equals("true");
 
         if (System.getProperty("java.vm.name").equals("Substrate VM")) {
             // Initialize our native sandbox interface.

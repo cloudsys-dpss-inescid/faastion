@@ -14,13 +14,9 @@ import com.oracle.svm.graalvisor.api.GraalVisorAPI;
 public class IsolateSandboxProvider extends SandboxProvider {
 
     private GraalVisorAPI graalvisorAPI;
-    private boolean LPI;
-    
 
     public IsolateSandboxProvider(PolyglotFunction function) {
         super(function);
-        String enableLPI = System.getenv("LPI");
-        LPI = enableLPI == null ? false : enableLPI.equals("true");
     }
 
     public GraalVisorAPI getGraalvisorAPI() {
@@ -32,7 +28,7 @@ public class IsolateSandboxProvider extends SandboxProvider {
         String processFunctionName;
         PolyglotFunction qualifiedFunction = null;
 
-        if (LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
+        if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
             processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
             qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
         }

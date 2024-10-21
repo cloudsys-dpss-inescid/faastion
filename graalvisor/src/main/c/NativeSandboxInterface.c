@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <spawn.h>
+#include <sys/wait.h>
 
 #include "memory_map.h"
 #include "pkru_sandbox.h"
@@ -119,4 +121,24 @@ JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSan
 
 JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_getDomainUsage(JNIEnv *env, jobject thisObj) {
     return get_domain_usage();
+}
+
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_invokeProcessSandbox(JNIEnv *env, jobject thisObj, jstring filenameString) {
+    int ret;
+    pid_t child_pid;
+    const char *filename = (*env)->GetStringUTFChars(env, filenameString, NULL);
+    char *argv[] = {
+        (char *)filename,
+        NULL
+    };
+
+    if ((ret = posix_spawn(&child_pid, filename, NULL, NULL, argv, environ)) != 0){
+		fprintf(stderr, "posix_spawn failed %d", ret);
+		goto out;
+	}
+
+    waitpid(child_pid, NULL, 0);
+out:
+    (*env)->ReleaseStringUTFChars(env, filenameString, filename);
+    return;
 }

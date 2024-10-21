@@ -1,5 +1,7 @@
 package org.graalvm.argo.graalvisor;
 
+import java.util.HashMap;
+
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -10,6 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
 import org.graalvm.argo.graalvisor.sandboxing.SandboxHandle;
+import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface; 
+import org.graalvm.argo.graalvisor.function.NativeFunction;
 
 /**
  * A runtime proxy that runs requests on Native image-based sandboxes.
@@ -55,12 +59,24 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
         private void processRequest(SandboxHandle shandle, Request req) {
             synchronized (req) {
-                // Get input from request, invoke function in isolate, fill output.
-                try {
-                    req.setOutput(shandle.invokeSandbox(req.getInput()));
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
+                    HashMap<String, Object> output = new HashMap<>();
+                    String filename = System.getenv("ARGO_HOME")
+                        .concat("/graalvisor/build/libs/")
+                        .concat(pipeline.getFunction().getName().replaceAll("[\\d.]", ""))
+                        .concat("-proc");
+                    NativeSandboxInterface.invokeProcessSandbox(filename);
+                    req.setOutput(output.toString());
+                } else {
+                    // Get input from request, invoke function in isolate, fill output.
+                    try {
+                        req.setOutput(shandle.invokeSandbox(req.getInput()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+
                 // Notify the frontend thread about the result being ready.
                 req.notify();
             }
@@ -191,8 +207,8 @@ public class SubstrateVMProxy extends RuntimeProxy {
         if (warmup) {
             res = function.getSandboxProvider().warmupProvider(arguments);
         } else if (cached) {
-            PolyglotFunction qualifiedFunction = function.getSandboxProvider().getQualifiedFuncion();
-            res = getFunctionPipeline(qualifiedFunction).invokeInCachedSandbox(arguments);
+            // PolyglotFunction qualifiedFunction = function.getSandboxProvider().getQualifiedFuncion();
+            res = getFunctionPipeline(function).invokeInCachedSandbox(arguments);
         } else {
             SandboxHandle shandle = prepareSandbox(function);
             res = shandle.invokeSandbox(arguments);

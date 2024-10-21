@@ -25,4 +25,6 @@ public class NativeSandboxInterface {
     public static native boolean resetActiveWaitingCount(int active_waiting_threshold);
 
     public static native int getDomainUsage();
+
+    public static native void invokeProcessSandbox(String filename);
 }
