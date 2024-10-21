@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-concurrency_levels = [1, 2, 4, 8, 16, 32]
-domain_files = ['1-domains.txt', '2-domains.txt', '4-domains.txt', '8-domains.txt', '16-domains.txt', '32-domains.txt']
+concurrency_levels = [1, 2, 4, 8, 16, 32, 48, 64]
+domain_files = [str(workload) + '-domains.txt' for workload in concurrency_levels]
 
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
 base_dir = sys.argv[1]
 plots_dir = "plots"
 
-benchmarks = ['gv_native_factors', 'gv_filehashing']
+benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
 
 approaches = ['faastion_lpi', 'faastion']
 

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-concurrency_levels = [1, 2, 4, 8, 16, 32]
+concurrency_levels = [1, 2, 4, 8, 16, 32, 48, 64]
 
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
@@ -14,7 +14,7 @@ if len(sys.argv) < 2:
 base_dir = sys.argv[1]
 plots_dir = "plots"
 
-benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption']
+benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
 
 approaches = ['isolate', 'faastion_lpi', 'faastion', 'faastlane', 'process']
 
@@ -23,8 +23,7 @@ colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
 
 def read_latency_data(filepath):
     with open(filepath, 'r') as f:
-        latencies = [float(line.strip()) for line in f.readlines()]
-    # print(latencies)
+        latencies = [float(line.strip()) for line in f.readlines()][:len(concurrency_levels)]
     return latencies
 
 for benchmark in benchmarks:

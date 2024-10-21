@@ -7,8 +7,8 @@ import pandas as pd
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
-concurrency_levels = [1, 2, 4, 8, 16, 32]
-memory_files = ['1-footprint.csv', '2-footprint.csv', '4-footprint.csv', '8-footprint.csv', '16-footprint.csv', '32-footprint.csv']
+concurrency_levels = [1, 2, 4, 8, 16, 32, 48, 64]
+memory_files = [str(workload) + '-footprint.csv' for workload in concurrency_levels]
 
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
@@ -16,7 +16,7 @@ if len(sys.argv) < 2:
 base_dir = sys.argv[1]
 plots_dir = "plots"
 
-benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption']
+benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
 
 approaches = ['isolate', 'faastion_lpi', 'faastion', 'faastlane', 'process']
 
@@ -26,7 +26,7 @@ colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
 def read_max_memory(filepath):
     if os.path.exists(filepath):
         df = pd.read_csv(filepath, header=None)
-        max_memory = df[0].max()
+        max_memory = df[0].quantile(0.99)
         return max_memory
     return None
 
