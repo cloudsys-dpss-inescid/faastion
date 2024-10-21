@@ -18,6 +18,23 @@ SNIPPETS_DIR="$DIR/build/snippets"
 
 CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
 
+function build_native_binary {
+	NI_BIN_OPTS="com.jni.Factorization"
+	cd build
+
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	$JAVA_HOME/bin/native-image \
+			--no-fallback \
+			-cp $CLASS_PATH:libs/factors-1.0-all.jar \
+			-Djava.library.path=$LD_LIBRARY_PATH \
+			-H:ConfigurationFileDirectories=../ni-agent-config \
+			-H:+ReportExceptionStackTraces \
+			$NI_BIN_OPTS \
+			-H:Name=$GRAALVISOR_HOME/build/libs/$BENCHMARK_NAME-proc
+
+	cd -
+}
+
 function build_ni {
 	cd build
 
@@ -118,6 +135,8 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
+build_native_binary
+
 build_native_library
 
 build_vanila_image
@@ -132,4 +151,4 @@ for i in $(seq 1 $CONCURRENCY_LEVEL); do
 	build_snippets
 	build_faastion_image
 done
-exit 
+exit
