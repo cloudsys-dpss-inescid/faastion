@@ -13,10 +13,28 @@ CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
 SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
 
-BENCHMARK_NAME="aes"
+BENCHMARK_NAME="nataes"
 SNIPPETS_DIR="$DIR/build/snippets"
 
 CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
+
+function build_native_binary {
+	NI_BIN_OPTS="com.jni.AESEncryption"
+	cd build
+
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	$JAVA_HOME/bin/native-image \
+			--no-fallback \
+			--enable-url-protocols=http \
+			-cp $CLASS_PATH:libs/aes-1.0-all.jar \
+			-Djava.library.path=$LD_LIBRARY_PATH \
+			-H:ConfigurationFileDirectories=../ni-agent-config \
+			-H:+ReportExceptionStackTraces \
+			$NI_BIN_OPTS \
+			-H:Name=$GRAALVISOR_HOME/build/libs/$BENCHMARK_NAME-proc
+
+	cd -
+}
 
 function build_ni {
 	cd build
@@ -24,6 +42,7 @@ function build_ni {
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
+			--enable-url-protocols=http \
 			-cp $CLASS_PATH:libs/aes-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 			-DGraalVisorGuest=true \
 			-Djava.library.path=$LD_LIBRARY_PATH \
@@ -118,15 +137,20 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
+build_native_binary
+
 build_native_library
 
 build_vanila_image
 
-CONCURRENCY_LEVEL=32
+if [ -z $CONCURRENCY_LEVEL ]; then
+	CONCURRENCY_LEVEL=32
+fi
+
 for i in $(seq 1 $CONCURRENCY_LEVEL); do
 	FUNCTION_ID="$BENCHMARK_NAME${i}"
 	manipulate_bytecode
 	build_snippets
 	build_faastion_image
 done
-exit 0
+exit
