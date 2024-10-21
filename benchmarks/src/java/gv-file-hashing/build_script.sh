@@ -26,7 +26,7 @@ function build_native_binary {
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			--enable-url-protocols=http \
-			-cp $CLASS_PATH:libs/factors-1.0-all.jar \
+			-cp $CLASS_PATH:libs/filehashing-1.0-all.jar \
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \

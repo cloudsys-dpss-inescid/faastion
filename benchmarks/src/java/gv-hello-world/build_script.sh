@@ -25,7 +25,7 @@ function build_native_binary {
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
-			-cp $CLASS_PATH:libs/factors-1.0-all.jar \
+			-cp $CLASS_PATH:libs/hello-world-1.0-all.jar \
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
