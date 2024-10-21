@@ -19,7 +19,7 @@ SNIPPETS_DIR="$DIR/build/snippets"
 CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
 
 function build_native_binary {
-	NI_BIN_OPTS="com.jni.Factorization"
+	NI_BIN_OPTS="com.jni.AESEncryption"
 	cd build
 
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
