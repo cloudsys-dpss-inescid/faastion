@@ -24,7 +24,7 @@ public class HttpRequest {
 
     public static HashMap<String, Object> main(Map<String, Object> args) {
         HashMap<String, Object> output = new HashMap<>();
-        output.put("size", downloadBytes("http://127.0.0.1:8000/snap.png").length);
+        output.put("size", downloadBytes("http://127.0.0.1:8000/index.html").length);
         return output;
     }
 
