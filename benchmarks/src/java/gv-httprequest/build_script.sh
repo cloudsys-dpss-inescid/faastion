@@ -2,21 +2,44 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-# GCC
-CC=gcc
-# Musl GCC
-export PATH=$ARGO_HOME/resources/x86_64-linux-musl-native/bin:$PATH
-CC=x86_64-linux-musl-cc
-LIBC_OPTION="--libc=musl"
+GRAALVISOR_HOME=$ARGO_HOME/graalvisor
 
-function run_hotspot {
-        $JAVA_HOME/bin/java \
-                -cp build/libs/httprequest-1.0-all.jar \
-                com.httprequest.HttpRequest
+JAVA_AGENT="$JAVASSIST_HOME/target/JavassistWrapper-1.0-jar-with-dependencies.jar"
+
+JNI_INCLUDE="-I$DEF_JAVA_HOME/include -I$DEF_JAVA_HOME/include/linux"
+ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
+
+CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
+CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
+
+BENCHMARK_NAME="httprequest"
+SNIPPETS_DIR="$DIR/build/snippets"
+
+CURRENT_LIBRARY_PATH=$LD_LIBRARY_PATH
+
+function build_native_binary {
+	NI_BIN_OPTS="com.httprequest.HttpRequest"
+	cd build
+
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	$JAVA_HOME/bin/native-image \
+			--no-fallback \
+			--enable-url-protocols=http \
+			-cp $CLASS_PATH:libs/httprequest-1.0-all.jar \
+			-Djava.library.path=$LD_LIBRARY_PATH \
+			-H:ConfigurationFileDirectories=../ni-agent-config \
+			-H:+ReportExceptionStackTraces \
+			$NI_BIN_OPTS \
+			-H:Name=$GRAALVISOR_HOME/build/libs/$BENCHMARK_NAME-proc
+
+	cd -
 }
 
 function build_ni {
 	cd build
+	
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 		--no-fallback \
 		--enable-url-protocols=http \
@@ -24,22 +47,22 @@ function build_ni {
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 		--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
-		$LIBC_OPTION \
 		-H:ConfigurationFileDirectories=../ni-agent-config \
 		-H:+ReportExceptionStackTraces \
 		$NI_BIN_OPTS \
-		-H:Name=libhttprequest
+		-H:Name=lib$FUNCTION_ID
+
+	cd -
 }
 
-function build_ni_standalone {
-	NI_BIN_OPTS="com.httprequest.HttpRequest"
-	build_ni
-}
-
-function build_ni_sharedlibrary {
+function build_vanila_image {
 	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/java/main"
+	FUNCTION_ID="$BENCHMARK_NAME"
+
 	build_ni
 }
+
 
 if [ -z "$ARGO_HOME" ]
 then
@@ -62,12 +85,15 @@ cd $DIR &> /dev/null
 # Build.
 ./gradlew clean shadowJar assemble
 
-TARGET=$1
-if [ ! -z "$TARGET" ]
-then
-	$TARGET
-exit 0
-else
-	build_ni_sharedlibrary
-	exit 0
+build_native_binary
+
+build_vanila_image
+
+if [ -z $CONCURRENCY_LEVEL ]; then
+	CONCURRENCY_LEVEL=32
 fi
+
+for i in $(seq 1 $CONCURRENCY_LEVEL); do
+	cp build/lib$BENCHMARK_NAME.so build/lib$BENCHMARK_NAME${i}.so
+done
+exit
