@@ -63,12 +63,42 @@ function register_gv_native_factors {
     register_function
 }
 
+function register_gv_factorization {
+    APP_LANG=java
+    APP_NAME=gv-factorization
+    APP_MAIN=com.factorization.Factorization
+
+    LIB_NAME="manfactors"
+
+    register_function
+}
+
 function register_gv_native_matmul {
     APP_LANG=java
     APP_NAME=gv-native-matmul
     APP_MAIN=com.jni.MatrixMultiplication
 
     LIB_NAME="matmul"
+
+    register_function
+}
+
+function register_gv_httprequest {
+    APP_LANG=java
+    APP_NAME=gv-httprequest
+    APP_MAIN=com.httprequest.HttpRequest
+
+    LIB_NAME="httprequest"
+
+    register_function
+}
+
+function register_gv_matrixmul {
+    APP_LANG=java
+    APP_NAME=gv-matrixmul
+    APP_MAIN=com.matrix_mul.MatrixMul
+
+    LIB_NAME="manmatrixmatmul"
 
     register_function
 }
@@ -83,13 +113,23 @@ function register_gv_native_hw {
     register_function
 }
 
+function register_gv_hello_world {
+    APP_LANG=java
+    APP_NAME=gv-hello-world
+    APP_MAIN=com.hello_world.HelloWorld
+
+    LIB_NAME="helloworld"
+
+    register_function
+}
+
 function start_svm {
     export lambda_timestamp="$(date +%s%N | cut -b1-13)"
     export lambda_port="8080"
     export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:$LD_LIBRARY_PATH
     # export LD_PRELOAD=$GRAALVISOR_HOME/build/libs/libpreload.so
     # Start Graalvisor
-    GLIBC_TUNABLES="glibc.rtld.nns=16" $GRAALVISOR_HOME/build/native-image/polyglot-proxy &> "$LOGS_HOME/$approach/$WORKLOAD-lambda.log" &
+    GLIBC_TUNABLES="glibc.rtld.nns=16" $GRAALVISOR_HOME/build/native-image/polyglot-proxy &> /dev/null &
     PID=$!
     # unset LD_PRELOAD
 }
@@ -117,17 +157,7 @@ function run_wrk {
 
 function benchmark {
     output="$RESULTS_HOME/$approach/debug/$WORKLOAD-wrk_output.txt"
-
-    if [ "$benchmark_name" = "gv_native_factors" ]; then
-        DURATION="1m"
-    elif [ "$benchmark_name" = "gv_filehashing" ]; then
-        DURATION="1m"
-    elif [ "$benchmark_name" = "gv_aes_encryption" ]; then
-        DURATION="1m"
-    else
-        DURATION="1s"
-    fi
-
+    DURATION="${wrk_duration[$BENCH_ID]}s"
     run_wrk $WORKLOAD $DURATION
 
     # Kill Graalvisor
@@ -136,17 +166,7 @@ function benchmark {
 
 function warmup {
     output="/dev/null"
-
-    if [ "$benchmark_name" = "gv_native_factors" ]; then
-        DURATION="30s"
-    elif [ "$benchmark_name" = "gv_filehashing" ]; then
-        DURATION="30s"
-    elif [ "$benchmark_name" = "gv_aes_encryption" ]; then
-        DURATION="30s"
-    else
-        DURATION="1s"
-    fi
-
+    DURATION="${warmup_duration[$BENCH_ID]}s"
     run_wrk
 }
 
@@ -235,7 +255,7 @@ function setup {
 
     directories=("isolate" "process" "faastlane" "faastion" "faastion_lpi")
     for dir in "${directories[@]}"; do
-        mkdir -p "${RESULTS_HOME}/${dir}/debug" "${RESULTS_HOME}/${dir}/memory" "${RESULTS_HOME}/${dir}/latency" "${RESULTS_HOME}/${dir}/domain_usage" "${LOGS_HOME}/${dir}"
+        mkdir -p "${RESULTS_HOME}/${dir}/debug" "${RESULTS_HOME}/${dir}/memory" "${RESULTS_HOME}/${dir}/latency" "${RESULTS_HOME}/${dir}/domain_usage"
     done
 }
 
@@ -265,11 +285,11 @@ trap 'cleanup_resources' SIGINT
 
 export SANDBOX=isolate
 
-workloads=(1 2 4 8 16 32)
-benchmarks=(gv_native_factors gv_filehashing gv_aes_encryption)
+workloads=(1 2 4 8 16 32 48 64)
+benchmarks=(gv_native_hw gv_native_factors gv_filehashing gv_aes_encryption gv_hello_world gv_httprequest gv_matrixmul gv_factorization gv_native_matmul)
 
-warmup_duration=(30 30 30)
-wrk_duration=(60 60 60)
+warmup_duration=( 1 10 10 10 1 2 1 10 1)
+wrk_duration=(    3 50 50 50 3 8 3 50 3)
 total_duration=0
 for i in ${!wrk_duration[@]}
 do
@@ -279,8 +299,9 @@ do
 done
 echo "Estimated benchmarks time ~= $total_duration mins"
 
-for benchmark_name in ${benchmarks[@]}
+for BENCH_ID in ${!benchmarks[@]}
 do
+    benchmark_name="${benchmarks[$BENCH_ID]}"
     setup
     for WORKLOAD in "${workloads[@]}"
     do
