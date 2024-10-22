@@ -7,8 +7,8 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class MatrixMul {
 
-    private static final int ROWS = 3;
-    private static final int COLS = 3;
+    private static final int ROWS = 10;
+    private static final int COLS = 10;
 
 
     public static int[][] allocateMatrix() {
@@ -18,7 +18,7 @@ public class MatrixMul {
     public static void matrixGenerator(int[][] matrix) {
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
-                matrix[i][j] = 10000;
+                matrix[i][j] = 1000;
             }
         }
     }

@@ -7,21 +7,24 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class Factorization {
 
-    public static HashMap<String, Object> main(Map<String, Object> input) {
-	int number = 100000;
-        HashMap<String, Object> output = new HashMap<>();
-        if (number > 0) {
-            System.out.print("1 " + number + " ");
-        }
+    private static final int MAX_FACTORS = 500;
 
-        for (int i = 2; i <= Math.sqrt(number); i++) {
-            if (number % i == 0) {
-                System.out.print(i + " ");
-                if (i != number / i) {
-                    System.out.print((number / i) + " ");
-                }
+    public static HashMap<String, Object> main(Map<String, Object> input) {
+        HashMap<String, Object> output = new HashMap<>();
+
+        int[] num_factors = new int[MAX_FACTORS];
+        int count = 0;
+	    int number = 10000000;
+
+        for (int i = 1; i <= number; i++) {
+            if (count == MAX_FACTORS) {
+                break;
+            }
+            if ((number % i) == 0) {
+                num_factors[count++] = i;
             }
         }
+
         return output;
     }
 
