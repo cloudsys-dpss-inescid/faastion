@@ -1,16 +1,5 @@
-Thumbs.db
-.DS_Store
+# Ignore Gradle project-specific cache directory
 .gradle
-build/
-bin/
-target/
-out/
-.idea
-*.iml
-*.ipr
-*.iws
-.project
-.settings
-.classpath
-.factorypath
 
+# Ignore Gradle build output directory
+build
