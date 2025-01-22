@@ -3,6 +3,7 @@
 .classpath
 .settings
 .vscode
+*.txt
 
 # Ignore java binary files
 *.class
