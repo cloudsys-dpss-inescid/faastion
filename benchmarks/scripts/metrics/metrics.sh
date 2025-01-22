@@ -288,14 +288,16 @@ export SANDBOX=isolate
 workloads=(1 2 4 8 16 32 48 64)
 benchmarks=(gv_native_hw gv_native_factors gv_filehashing gv_aes_encryption gv_hello_world gv_httprequest gv_matrixmul gv_factorization gv_native_matmul)
 
-warmup_duration=( 1 10 10 10 1 2 1 10 1)
-wrk_duration=(    3 50 50 50 3 8 3 50 3)
+# warmup_duration=( 1 10 10 10 1 2 1 10 1)
+# wrk_duration=(    3 50 50 50 3 8 3 50 3)
+warmup_duration=(4 4 4 4 8 8 8 8 4)
+wrk_duration=(2 2 2 2 4 4 4 4 2)
 total_duration=0
 for i in ${!wrk_duration[@]}
 do
     time_warmup=${warmup_duration[$i]}
     time_wrk=${wrk_duration[$i]}
-    total_duration=$(echo "scale=4; $total_duration + (($time_warmup + $time_wrk + 1) * ${#workloads[@]} * 5 / 60)" | bc)
+    total_duration=$(echo "scale=4; $total_duration + (($time_warmup + $time_wrk + 1) * ${#workloads[@]} * 4 / 60)" | bc)
 done
 echo "Estimated benchmarks time ~= $total_duration mins"
 
@@ -305,7 +307,7 @@ do
     setup
     for WORKLOAD in "${workloads[@]}"
     do
-        for approach in isolate faastlane faastion faastion_lpi process
+        for approach in isolate faastion faastion_lpi process # faastlane
         do
             echo -e "${GREEN}###################################################"
             echo -e "       Measuring metrics for $approach - $WORKLOAD      "
