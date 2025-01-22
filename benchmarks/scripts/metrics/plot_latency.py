@@ -13,17 +13,31 @@ if len(sys.argv) < 2:
 
 base_dir = sys.argv[1]
 plots_dir = "plots"
+latency_unit = ""
 
 benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
 
-approaches = ['isolate', 'faastion_lpi', 'faastion', 'faastlane', 'process']
+approaches = ['isolate', 'faastion_lpi', 'faastion', 'process']
 
 cmap = plt.get_cmap('viridis')
 colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
 
+
+def get_unit_latency(latency):
+    global latency_unit
+    unit = latency[-2:] 
+    res = float(latency[:-2]) if unit == "ms" or unit == "us" else float(latency[:-1])
+    if unit != latency_unit:
+        res *= 1000
+    return res
+
 def read_latency_data(filepath):
+    global latency_unit
     with open(filepath, 'r') as f:
-        latencies = [float(line.strip()[:-2]) for line in f.readlines()][:len(concurrency_levels)]
+        latencies = [line.strip() for line in f.readlines()][:len(concurrency_levels)]
+        if latency_unit == "":
+            latency_unit = latencies[0][-2:]
+        latencies = [get_unit_latency(latency) for latency in latencies]
     return latencies
 
 for benchmark in benchmarks:
@@ -34,7 +48,7 @@ for benchmark in benchmarks:
     index = np.arange(len(concurrency_levels)) * spacing_factor  # Base x locations for bars with spacing
 
     for i, approach in enumerate(approaches):
-        latency_file = os.path.join(base_dir, benchmark, 'results', approach, 'latency', 'avg_latency.txt')
+        latency_file = os.path.join(base_dir, benchmark, 'results', approach, 'latency', '90p.txt')
 
         if os.path.exists(latency_file):
             latencies = read_latency_data(latency_file)
@@ -43,13 +57,13 @@ for benchmark in benchmarks:
             print(f"Missing file: {latency_file}")
 
     plt.xlabel('Concurrency Level')
-    plt.ylabel('Average Latency (ms)')
-    plt.title(f'Average Latency vs Concurrency - {benchmark}')
+    plt.ylabel(f'Average Latency ({latency_unit})')
+    plt.title(f'90 Percentile vs Concurrency - {benchmark}')
     plt.xticks(index + bar_width * (len(approaches) - 1) / 2, concurrency_levels)  # Center x-ticks under bars
     plt.legend()  # Show a legend for the approaches
 
     output_dir = os.path.join(plots_dir, benchmark)
-    output_file = os.path.join(output_dir, 'avg_latency.pdf')
+    output_file = os.path.join(output_dir, '90p.pdf')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     plt.savefig(output_file)
