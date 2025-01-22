@@ -107,6 +107,8 @@ void nativeMethodInterface(int pkey) {
 JNIEXPORT $returnType JNICALL $callGate($params) {
     SNI_DBM("[s]: Getting available domain...");
 
+    print_systime();
+
     int domain;
     request_t * request;
     IsolateFunction *function;
@@ -170,6 +172,8 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     pthread_mutex_unlock(request_lock);
 
     leave_function_domain(function);
+
+    print_systime();
 
     return;
 }

@@ -22,6 +22,7 @@
 #include <sched.h>
 #include <linux/sched.h>
 #include <malloc.h>
+#include <time.h>
 
 
 
@@ -32,6 +33,21 @@ static worker_t worker_threads[DOMAINS];
 static monitor_t monitor_threads[DOMAINS];
 
 static struct seccomp_notif_sizes seccomp_sizes;
+
+static FILE *latency_breakdown_file;
+
+#ifdef PRINT_TIMER
+void print_systime() {
+    static char timestamp[18];
+    static struct timespec tnow = {0,};
+    clock_gettime(CLOCK_MONOTONIC, &tnow);
+    long systime = tnow.tv_sec * 1.0e9 + tnow.tv_nsec;
+    int bytes = snprintf(timestamp, 18, "%ld\n", systime);
+    fwrite(timestamp, sizeof(char), bytes, latency_breakdown_file);
+}
+#else
+void print_systime() {}
+#endif
 
 pthread_mutex_t *get_request_lock(int domain) {
     return &(worker_threads[domain].request_lock);
@@ -255,11 +271,13 @@ void* jni_monitor(void* arg)
 }
 
 void notify_worker(int domain) {
+    print_systime();
     sem_post(&(worker_threads[domain].request));
 }
 
 void wait_worker(int domain) {
     sem_wait(&(worker_threads[domain].response));
+    print_systime();
 }
 
 int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int), void *argv[], int argc)
@@ -330,11 +348,13 @@ void* worker(void* arg)
     request_t* arena_request = (request_t*) get_domain_arena(pkey);
     for (;;) {
         sem_wait(request);
+        print_systime();
         // fprintf(stderr, "Worker thread for domain %d notify\n", pkey);
 
         // calling native function generated in javassist 
         arena_request->fun(pkey);
 
+        print_systime();
         sem_post(response);
     }
     return NULL;
@@ -351,6 +371,14 @@ int pkru_sandbox_init()
     init_hash_table(4096);
 
     start_active_waiting_count();
+
+#ifdef PRINT_TIMER
+    latency_breakdown_file = fopen("latency_breakdown.txt", "w");
+    if (latency_breakdown_file == NULL) {
+        fprintf(stderr, "error: failed to create latency breakdown file\n");
+        return -1;
+    }
+#endif
 
     // Get domains ready for populating
     if (initialize_all_domains()) {

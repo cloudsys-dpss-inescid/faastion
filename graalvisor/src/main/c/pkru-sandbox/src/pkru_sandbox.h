@@ -175,4 +175,6 @@ void notify_worker(int domain);
 
 void wait_worker(int domain);
 
+void print_systime();
+
 #endif // PKRU_SANDBOX_H
