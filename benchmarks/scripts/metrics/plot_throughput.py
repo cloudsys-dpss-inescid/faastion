@@ -16,7 +16,7 @@ plots_dir = "plots"
 
 benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
 
-approaches = ['isolate', 'faastion_lpi', 'faastion', 'faastlane', 'process']
+approaches = ['isolate', 'faastion_lpi', 'faastion', 'process']
 
 cmap = plt.get_cmap('viridis')
 colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
