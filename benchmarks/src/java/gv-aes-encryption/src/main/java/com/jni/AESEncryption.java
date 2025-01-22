@@ -34,27 +34,33 @@ public class AESEncryption {
             boolean fileExists = (new File(filePath)).exists();
             URLConnection conn = new URL(url).openConnection();
             is = conn.getInputStream();
+            ignore = new FileOutputStream("/dev/null");
 
             if (!fileExists) {
                 fos = new FileOutputStream(filePath);
             }
 
-            ignore = new FileOutputStream("/dev/null");
-
             byte[] buffer = new byte[4096];
-            List<Byte> fileBytes = new ArrayList<>();
+            byte[] encodedBuffer = new byte[4096];
+
             int bytesRead;
+            byte b;
+            long aux;
             while ((bytesRead = is.read(buffer)) != -1) {
                 if (fileExists) {
                     ignore.write(buffer, 0, bytesRead);
                 } else {
                     fos.write(buffer, 0, bytesRead);
                 }
-                fileBytes.addAll(Arrays.asList(ArrayUtils.toObject(buffer)));
+
+                for (int i = 0; i < bytesRead; i++) {
+                    b = buffer[i];
+                    aux = (long) b;
+                    aux = (aux + 5) * 13;
+                    encodedBuffer[i] = (byte)(aux % 255);
+                }
+                ignore.write(encodedBuffer, 0, bytesRead);
             }
-            byte[] encodedBytes = 
-                Base64.getEncoder().encode(ArrayUtils.toPrimitive(fileBytes.toArray(new Byte[0])));
-            System.out.println(new String(encodedBytes));
             return true;
         } catch (IOException e) {
             e.printStackTrace();
