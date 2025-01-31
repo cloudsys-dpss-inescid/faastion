@@ -49,6 +49,7 @@ void cancel_domain_booking(IsolateFunction *function) {
     if (domains[domain]->prev_function == function) {
         protect_app_regions(function, 0);
         domains[domain]->prev_function = NULL;
+        domains[domain]->primary_function = NULL;
     }
     pthread_mutex_unlock(&domains[domain]->prev_function_lock);
 }
