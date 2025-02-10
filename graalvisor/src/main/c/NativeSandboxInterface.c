@@ -83,8 +83,8 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     IsolateFunction *function;
     pthread_t thread;
 
-    function = create_isolate_function();
-    set_isolate_function(function);
+    function = create_pkru_sandbox();
+    set_cached_pkru_sandbox(function);
     hash_table_insert(proc_tbl, gettid(), function);
     
     pthread_create(&thread, NULL, jvm_monitor, (void *)function);

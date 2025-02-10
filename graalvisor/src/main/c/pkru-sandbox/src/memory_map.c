@@ -210,7 +210,7 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
     else
         domain = pkey;
 
-    IsolateFunction *primary_function = get_primary_domain_function(domain);
+    IsolateFunction *primary_function = get_primary_pkru_sandbox(domain);
     if (primary_function) {
         // FIXME: (temporary workaround)
         return;

@@ -41,6 +41,7 @@ static void handle_syscalls(int pkey) {
     struct seccomp_notif_resp *resp = new_seccomp_notif_resp();
     int fd = monitor_threads[pkey].seccomp_fd;
 
+    IsolateFunction *function;
     long long unsigned int *args;
     for(;;) {
         if (receive_notification(fd, req, resp))
@@ -48,6 +49,7 @@ static void handle_syscalls(int pkey) {
 
         resp->id = req->id;
         args = req->data.args;
+        function = get_pkru_sandbox(pkey);
         switch (req->data.nr) {
         case __NR_mmap:
             resp->val = syscall(__NR_mmap, args[0], args[1], args[2], args[3], args[4], args[5]);
@@ -63,8 +65,7 @@ static void handle_syscalls(int pkey) {
                     fprintf(stderr, "error: failed to mprotect %p for %lu bytes\n",
                         (void*) resp->val, (size_t) args[1]);
                 else
-                    insert_app_region(get_domain_function(pkey),
-                        (void*) resp->val, (size_t) args[1], (int) args[2]);
+                    insert_app_region(function, (void*) resp->val, (size_t) args[1], (int) args[2]);
             }                
             break;
         case __NR_munmap:
@@ -72,23 +73,22 @@ static void handle_syscalls(int pkey) {
             resp->error = resp->val < 0 ? -errno : 0;
             resp->flags = 0;
             if (errno == 0)
-                remove_app_region(get_domain_function(pkey), (void *)args[0], (size_t)args[1]);
+                remove_app_region(function, (void *)args[0], (size_t)args[1]);
             break;
         case __NR_mprotect:
             resp->val = syscall(__NR_mprotect, args[0], args[1], args[2], args[3], args[4], args[5]);
             resp->error = resp->val < 0 ? -errno : 0;
             resp->flags = 0;
             if (errno == 0)
-                protect_app_region(get_domain_function(pkey),
-                    (void *)args[0], (size_t)args[1], (int)args[2]);
+                protect_app_region(function, (void *)args[0], (size_t)args[1], (int)args[2]);
             break;
         case __NR_clone3:
         case __NR_clone:
-            clone_function_thread(get_domain_function(pkey));
+            increment_sandbox_threads(function);
             resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
             break;
         case __NR_exit:
-            join_function_thread(get_domain_function(pkey));
+            decrement_sandbox_threads(function);
             resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
             break;
         default:

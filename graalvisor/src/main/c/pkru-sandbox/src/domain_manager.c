@@ -26,11 +26,11 @@ int get_domain_usage() {
     return domain_usage;
 }
 
-void set_primary_domain_function(int domain, IsolateFunction *function) {
+void set_primary_pkru_sandbox(int domain, IsolateFunction *function) {
     domains[domain]->primary_function = function;
 }
 
-IsolateFunction *get_primary_domain_function(int domain) {
+IsolateFunction *get_primary_pkru_sandbox(int domain) {
     return (IsolateFunction *)domains[domain]->primary_function;
 }
 
@@ -39,7 +39,7 @@ void* get_domain_arena(int pkey)
     return domains[pkey]->arena;
 }
 
-IsolateFunction *get_domain_function(int domain) {
+IsolateFunction *get_pkru_sandbox(int domain) {
     return (IsolateFunction *)domains[domain]->function;
 }
 
@@ -54,7 +54,7 @@ void cancel_domain_booking(IsolateFunction *function) {
     pthread_mutex_unlock(&domains[domain]->prev_function_lock);
 }
 
-int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function) {
+int swap_sandbox_domain(int domain, IsolateFunction *expected, IsolateFunction *function) {
     if (domain == 0)
         return 0;
 
@@ -67,7 +67,7 @@ int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction 
 int book_any_domain(IsolateFunction *function) {
     IsolateFunction *prev_function;
     for (int i = 2; i < DOMAINS; i++) {
-        if (swap_domain_function(i, NULL, function)) {
+        if (swap_sandbox_domain(i, NULL, function)) {
             pthread_mutex_lock(&domains[i]->prev_function_lock);
             prev_function = domains[i]->prev_function;
             domain_usage++;
@@ -85,7 +85,7 @@ int book_any_domain(IsolateFunction *function) {
 
 int book_unused_domain(IsolateFunction *function) {
     for (int i = 2; i < DOMAINS; i++) {
-        if (domains[i]->prev_function == NULL && swap_domain_function(i, NULL, function)) {
+        if (domains[i]->prev_function == NULL && swap_sandbox_domain(i, NULL, function)) {
             pthread_mutex_lock(&domains[i]->prev_function_lock);
             domains[i]->prev_function = function;
             domain_usage++;
@@ -103,7 +103,7 @@ int book_previous_domain(IsolateFunction *function) {
         return 0;
 
     if (domains[domain]->prev_function == function &&
-        swap_domain_function(domain, NULL, function))
+        swap_sandbox_domain(domain, NULL, function))
     {
         pthread_mutex_lock(&domains[domain]->prev_function_lock);
         domains[domain]->prev_function = function;

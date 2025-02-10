@@ -51,21 +51,22 @@ void protect_app_region(IsolateFunction *function, void *address, size_t size, i
 
 void remove_app_region(IsolateFunction *function, void *address, size_t size);
 
-void leave_function_domain(IsolateFunction *function);
+void leave_sandbox_domain(IsolateFunction *function);
 
-int enter_function_domain(IsolateFunction *function);
+int enter_sandbox_domain(IsolateFunction *function);
 
-void clone_function_thread(IsolateFunction *function);
+void increment_sandbox_threads(IsolateFunction *function);
 
-void join_function_thread(IsolateFunction *function);
+void decrement_sandbox_threads(IsolateFunction *function);
 
-IsolateFunction *create_isolate_function();
+IsolateFunction *create_pkru_sandbox();
 
-void destroy_isolate_function(IsolateFunction *function);
+void set_cached_pkru_sandbox(IsolateFunction *function);
 
-void set_isolate_function(IsolateFunction *function);
+IsolateFunction *get_cached_pkru_sandbox();
 
-IsolateFunction *get_isolate_function();
+void destroy_pkru_sandbox(IsolateFunction *function);
+
 
 void start_active_waiting_count();
 

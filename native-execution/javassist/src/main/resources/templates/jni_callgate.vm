@@ -43,7 +43,7 @@ void *get_handle(IsolateFunction *function) {
 
 #ifdef REMOVE_NNS_LIMIT
     int domain = function->current_domain;
-    IsolateFunction *primary_function = get_primary_domain_function(domain);
+    IsolateFunction *primary_function = get_primary_pkru_sandbox(domain);
     printf("primary function: %p\n", primary_function);
     if (primary_function) {
         return primary_function->dl_handle;
@@ -60,7 +60,7 @@ void *get_handle(IsolateFunction *function) {
     }
 
 #ifdef REMOVE_NNS_LIMIT
-    set_primary_domain_function(domain, function);
+    set_primary_pkru_sandbox(domain, function);
 #endif
 
     return function->dl_handle;
@@ -88,7 +88,7 @@ int load_native_method(IsolateFunction *function) {
 
 void nativeMethodInterface(int pkey) {
     printf("enter native method interface\n");
-    IsolateFunction *function = get_domain_function(pkey);
+    IsolateFunction *function = get_pkru_sandbox(pkey);
     if (load_native_method(function))
         exit(EXIT_FAILURE);
 
@@ -124,11 +124,13 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     [[maybe_unused]] size_t size;
     [[maybe_unused]] void *aux;
 
-    function = get_isolate_function();
-    if (!function)
+    function = get_cached_pkru_sandbox();
+    if (!function) {
         function = (IsolateFunction *)hash_table_lookup(proc_tbl, gettid());
+        set_cached_pkru_sandbox(function);
+    }
     
-    domain = enter_function_domain(function);
+    domain = enter_sandbox_domain(function);
 
     // Acquire worker lock
     pthread_mutex_t* request_lock = get_request_lock(domain); 
@@ -178,7 +180,7 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 	// return ret; // TODO: implement correct return value
     pthread_mutex_unlock(request_lock);
 
-    leave_function_domain(function);
+    leave_sandbox_domain(function);
 
     print_systime();
 

@@ -10,10 +10,6 @@
 #include "domain_manager.h"
 
 
-// Domain IDs from 0 to 15.
-#define DOMAINS 16
-#define DEFAULT_DOMAIN 0
-#define LOADER_DOMAIN 1
 #define MAX_ARGS 8
 
 // TODO - have a table for constant conversion.

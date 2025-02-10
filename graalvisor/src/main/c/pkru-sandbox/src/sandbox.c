@@ -7,7 +7,7 @@
 
 static __thread IsolateFunction *isolate_function = NULL;
 
-IsolateFunction *create_isolate_function() {
+IsolateFunction *create_pkru_sandbox() {
     IsolateFunction *function = (IsolateFunction *)malloc(sizeof(IsolateFunction));
     if (!function) {
         fprintf(stderr, "Could not allocate isolate function\n");
@@ -23,15 +23,15 @@ IsolateFunction *create_isolate_function() {
     return function;
 }
 
-void set_isolate_function(IsolateFunction *function) {
+void set_cached_pkru_sandbox(IsolateFunction *function) {
     isolate_function = function;
 }
 
-IsolateFunction *get_isolate_function() {
+IsolateFunction *get_cached_pkru_sandbox() {
     return isolate_function;
 }
 
-void destroy_isolate_function(IsolateFunction *function) {
+void destroy_pkru_sandbox(IsolateFunction *function) {
     cancel_domain_booking(function);
     if (dlclose(function->dl_handle)) {
         fprintf(stderr, "dlclose error\n");

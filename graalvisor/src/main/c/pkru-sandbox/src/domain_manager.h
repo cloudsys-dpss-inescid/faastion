@@ -4,6 +4,10 @@
 #include <stdatomic.h>
 #include "memory_map.h"
 
+// Domain IDs from 0 to 15.
+#define DOMAINS 16
+#define DEFAULT_DOMAIN 0
+#define LOADER_DOMAIN 1
 
 /**
  * @brief Structure representing a memory protection domain
@@ -41,15 +45,15 @@ int initialize_domain(int pkey);
  */
 int initialize_all_domains();
 
-void set_primary_domain_function(int domain, IsolateFunction *function);
+void set_primary_pkru_sandbox(int domain, IsolateFunction *function);
 
-IsolateFunction *get_primary_domain_function(int domain);
+IsolateFunction *get_primary_pkru_sandbox(int domain);
 
-IsolateFunction *get_domain_function(int domain);
+IsolateFunction *get_pkru_sandbox(int domain);
 
 void cancel_domain_booking(IsolateFunction *function);
 
-int swap_domain_function(int domain, IsolateFunction *expected, IsolateFunction *function);
+int swap_sandbox_domain(int domain, IsolateFunction *expected, IsolateFunction *function);
 
 int get_domain_usage();
 
@@ -67,5 +71,7 @@ int book_available_domain(IsolateFunction *function);
  * for all domains. It should be called when the domains are no longer needed.
  */
 void cleanup_domains();
+
+extern Domain *domains[DOMAINS];
 
 #endif // DOMAIN_MANAGER_H
