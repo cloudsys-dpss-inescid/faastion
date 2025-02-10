@@ -43,25 +43,6 @@ public abstract class Main {
 
         System.out.println(String.format("Graalvisor listening on port %s.", lambda_port));
 
-        if (lambda_isolation != null && lambda_isolation.equals("lazy")) {
-            LAZY_ISOLATION_ENABLED = true;
-            if (NativeSandboxInterface.isLazyIsolationSupported()) {
-                LAZY_ISOLATION_SUPPORTED = true;
-            }
-            else {
-                System.out.println("Warning: graalvisor was compiled without lazy isolation support.");
-            }
-        }
-
-        if (lambda_mem_isolation != null && lambda_mem_isolation.equals("true")) {
-            MEM_ISOLATION_ENABLED = true;
-            if (NativeSandboxInterface.isMemIsolationSupported()) {
-                MEM_ISOLATION_SUPPORTED = true;
-            }
-            else {
-                System.out.println("Warning: graalvisor was compiled without memory isolation support.");
-            }
-        }
         // Create the directory where function code will be placed.
         new File(APP_DIR).mkdirs();
 
