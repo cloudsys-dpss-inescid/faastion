@@ -1,21 +1,11 @@
 #define _GNU_SOURCE
 
-#include "domain_manager.h"
 #include "memory_map.h"
+#include "domain_manager.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#include <string.h>
-#include <dlfcn.h>
-
-
-// Head of the linked list
-// static MemoryRegionNode* head = NULL;
-
-static HashTable *hashTable = NULL;
-static atomic_int active_waiting_count;
-
-static __thread IsolateFunction *isolate_function = NULL;
 
 MemoryRegionNode* create_memory_region_node(void* address, size_t size, int prot) {
     MemoryRegionNode* newNode = (MemoryRegionNode*)malloc(sizeof(MemoryRegionNode));
@@ -164,6 +154,33 @@ void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
 //     }
 // }
 
+void free_memory_region_list(MemoryRegionNode *head) {
+    MemoryRegionNode *current = head;
+    MemoryRegionNode *nextNode;
+
+    while (current != NULL) {
+        nextNode = current->next;
+        free(current);
+        current = nextNode;
+    }
+}
+
+void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot) {
+    if (function == NULL)
+        return;
+    size_t bytes_left = protect_memory_region_node(function->regions, address, size, prot);
+    if (bytes_left) {
+        address = (void *)((char *)address + size - bytes_left);
+        append_memory_region_node(&function->regions, address, bytes_left, prot);
+    }
+}
+
+void remove_app_region(IsolateFunction *function, void *address, size_t size) {
+    if (function == NULL)
+        return;
+    delete_memory_region_node(function->regions, address, size);
+}
+
 void protect_memory_regions(MemoryRegionNode *head, int pkey) {
     MemoryRegionNode* current = head;
     while (current != NULL) {
@@ -178,205 +195,6 @@ void protect_memory_regions(MemoryRegionNode *head, int pkey) {
         }
         current = current->next;
     }
-}
-
-void free_memory_region_list(MemoryRegionNode *head) {
-    MemoryRegionNode *current = head;
-    MemoryRegionNode *nextNode;
-
-    while (current != NULL) {
-        nextNode = current->next;
-        free(current);
-        current = nextNode;
-    }
-}
-
-IsolateFunction *create_isolate_function() {
-    IsolateFunction *function = (IsolateFunction *)malloc(sizeof(IsolateFunction));
-    if (!function) {
-        fprintf(stderr, "Could not allocate isolate function\n");
-        exit(1);
-    }
-    pthread_mutex_init(&function->mutex, NULL);
-    function->dl_handle = NULL;
-    function->regions = NULL;
-    function->jni_threads = 0;
-    function->current_domain = 0;
-    function->prev_domain = 0;
-    return function;
-}
-
-void set_isolate_function(IsolateFunction *function) {
-    isolate_function = function;
-}
-
-IsolateFunction *get_isolate_function() {
-    return isolate_function;
-}
-
-// FIXME: what happens if clone operation is not successful?
-void clone_function_thread(IsolateFunction *function) {
-    if (function == NULL)
-        return;
-    pthread_mutex_lock(&function->mutex);
-    function->jni_threads += 1;
-    pthread_mutex_unlock(&function->mutex);
-}
-
-// FIXME: what happens if thread exits via signal
-void join_function_thread(IsolateFunction *function) {
-    if (function == NULL)
-        return;
-    leave_function_domain(function);
-}
-
-void destroy_isolate_function(IsolateFunction *function) {
-    cancel_domain_booking(function);
-    if (dlclose(function->dl_handle)) {
-        fprintf(stderr, "dlclose error\n");
-    }
-    free_memory_region_list(function->regions);
-    pthread_mutex_destroy(&function->mutex);
-    free(function);
-}
-
-void leave_function_domain(IsolateFunction *function) {
-    pthread_mutex_lock(&function->mutex);
-    int current = function->current_domain;
-    function->jni_threads -= 1;
-    if (function->jni_threads == 0) {
-        swap_domain_function(function->current_domain, function, NULL);
-        function->current_domain = 0;
-    }
-    pthread_mutex_unlock(&function->mutex);
-}
-
-void start_active_waiting_count() {
-    atomic_init(&active_waiting_count, 0);
-}
-
-void reset_active_waiting_count() {
-    atomic_store(&active_waiting_count, 0);
-}
-
-int get_active_waiting_count() {
-    return (int)atomic_load(&active_waiting_count);
-}
-
-int enter_function_domain(IsolateFunction *function) {
-    int domain;
-    pthread_mutex_lock(&function->mutex);
-    domain = function->current_domain;
-    while (domain == 0 && (domain = book_available_domain(function)) == 0) {
-        atomic_fetch_add(&active_waiting_count, 1);
-        usleep(100);
-    }
-    function->current_domain = domain;
-    function->prev_domain = domain;
-    function->jni_threads += 1;
-    pthread_mutex_unlock(&function->mutex);
-    return domain;
-}
-
-unsigned int hash_string(const char *str) {
-    unsigned long hash = 5381;
-    int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; // hash * 33 + c
-    return hash % hashTable->size;
-}
-
-unsigned int hash_int(int num) {
-    unsigned long hash = (num * 2654435761);
-    return (unsigned int)(hash & (hashTable->size - 1));
-}
-
-// Function to create a hash table
-void init_hash_table(int size) {
-    hashTable = (HashTable *)malloc(sizeof(HashTable));
-    if (!hashTable) {
-        fprintf(stderr, "Could not allocate hashTable\n");
-        exit(1);
-    }
-
-    int i;
-    float aux = (float)size;
-    for (i = 1; aux > 2; i++) {
-        aux /= 2;
-    }
-    size = 1 << i;
-
-    hashTable->size = size;
-    hashTable->buckets = (Bucket **)calloc(size, sizeof(Bucket));
-    if (!hashTable->buckets) {
-        free(hashTable);
-        exit(1);
-    }
-}
-
-Bucket *get_bucket(const char *functionName) {
-    Bucket *currentBucket = hashTable->buckets[hash_string(functionName)];
-    while (currentBucket != NULL &&
-        currentBucket->functionName != NULL &&
-        strcmp(currentBucket->functionName, functionName) != 0)
-    {
-        currentBucket = currentBucket->next;
-    }
-    return currentBucket;
-}
-
-void insert_app_function(const char *functionName, IsolateFunction *function) {
-    Bucket **head = &hashTable->buckets[hash_string(functionName)];
-    Bucket *currentBucket = get_bucket(functionName);
-    if (currentBucket == NULL) {
-        currentBucket = (Bucket *)malloc(sizeof(Bucket));
-        currentBucket->functionName = strdup(functionName);
-        currentBucket->function = function;
-        currentBucket->next = *head;
-        *head = currentBucket;
-    }
-}
-
-void remove_app_function(const char *functionName) {
-    Bucket **head = &hashTable->buckets[hash_string(functionName)];
-    Bucket *currentBucket = *head;
-    Bucket *previousBucket = NULL;
-    while (currentBucket != NULL) {
-        if (currentBucket->functionName == NULL || strcmp(currentBucket->functionName, functionName) != 0) {
-            previousBucket = currentBucket;
-            currentBucket = currentBucket->next;
-            continue;
-        } else if (currentBucket == *head) {
-            *head = currentBucket->next;
-        } else {
-            previousBucket->next = currentBucket->next;
-        }
-        destroy_isolate_function(currentBucket->function);
-        free(currentBucket->functionName);
-        free(currentBucket);
-        break;
-    } 
-}
-
-IsolateFunction *get_app_function(const char *functionName) {
-    Bucket *currentBucket = get_bucket(functionName);
-    return currentBucket ? currentBucket->function : NULL;
-}
-
-void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot) {
-    if (function == NULL)
-        return;
-    size_t bytes_left = protect_memory_region_node(function->regions, address, size, prot);
-    if (bytes_left) {
-        address = (void *)((char *)address + size - bytes_left);
-        append_memory_region_node(&function->regions, address, bytes_left, prot);
-    }
-}
-
-void protect_app_region(IsolateFunction *function, void *address, size_t size, int prot) {
-    if (function == NULL)
-        return;
-    protect_memory_region_node(function->regions, address, size, prot);
 }
 
 void protect_app_regions(IsolateFunction *function, int pkey) {
@@ -404,26 +222,8 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
     protect_memory_regions(function->regions, pkey);
 }
 
-void remove_app_region(IsolateFunction *function, void *address, size_t size) {
+void protect_app_region(IsolateFunction *function, void *address, size_t size, int prot) {
     if (function == NULL)
         return;
-    delete_memory_region_node(function->regions, address, size);
-}
-
-void free_hash_table() {
-    for (int i = 0; i < hashTable->size; i++) {
-        Bucket *currentBucket = hashTable->buckets[i];
-        Bucket *nextBucket;
-
-        while (currentBucket != NULL) {
-            nextBucket = currentBucket->next;
-            destroy_isolate_function(currentBucket->function);
-            free(currentBucket->functionName);
-            free(currentBucket);
-            currentBucket = nextBucket;
-        }
-    }
-
-    free(hashTable->buckets);
-    free(hashTable);
+    protect_memory_region_node(function->regions, address, size, prot);
 }
