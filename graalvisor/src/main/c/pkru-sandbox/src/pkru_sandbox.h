@@ -115,20 +115,6 @@ void protect_library(const char* library, int pkey);
 void cleanup_and_exit(void);
 
 /**
- * @brief Install a seccomp filter and return the seccomp file descriptor.
- * 
- * @return int The seccomp file descriptor.
- */
-int install_seccomp_filter(void);
-
-/**
- * @brief Handle system calls for a given protection key.
- * 
- * @param pkey The protection key to handle.
- */
-void handle_syscalls(int pkey);
-
-/**
  * @brief Monitor thread function to supervise system calls for a domain.
  * 
  * @param arg Pointer to the domain's protection key.
@@ -177,6 +163,16 @@ void wait_worker(int domain);
 
 void print_systime();
 
+void* jni_monitor(void* arg);
+
 void* jvm_monitor(void* arg);
+
+int install_jni_filter();
+
+int install_jvm_filter();
+
+extern worker_t worker_threads[DOMAINS];
+
+extern monitor_t monitor_threads[DOMAINS];
 
 #endif // PKRU_SANDBOX_H
