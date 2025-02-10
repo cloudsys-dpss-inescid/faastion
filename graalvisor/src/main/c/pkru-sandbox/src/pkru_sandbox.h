@@ -68,10 +68,6 @@
   })
 #endif
 
-
-/**
- * @brief Request structure for the worker thread.
- */
 typedef struct request {
     void (*fun)(int);             /** Function pointer for the request. */
     void *args[MAX_ARGS];         /** Arguments for the function. */
@@ -83,9 +79,6 @@ typedef struct request {
     jobject obj;
 } request_t;
 
-/**
- * @brief Structure representing a Worker of a domain.
- */
 typedef struct worker {
     pthread_t thread;         /** Worker thread for the domain. */
     sem_t request;
@@ -93,86 +86,29 @@ typedef struct worker {
     pthread_mutex_t request_lock;
 } worker_t;
 
-/**
- * @brief Structure representing a Monitor of a domain.
- */
 typedef struct monitor {
     pthread_t thread;         /** Monitor thread for supervising the domain. */
     int seccomp_fd;           /** Seccomp file descriptor. */
 } monitor_t;
 
-/**
- * @brief Function to protect memory regions associated with a given library.
- * 
- * @param library The name of the library.
- * @param pkey The protection key to apply.
- */
-void protect_library(const char* library, int pkey);
 
-/**
- * @brief Cleanup resources and exit the program.
- */
+int pkru_sandbox_init();
 void cleanup_and_exit(void);
 
-/**
- * @brief Monitor thread function to supervise system calls for a domain.
- * 
- * @param arg Pointer to the domain's protection key.
- */
-void* monitor(void* arg);
-
-/**
- * @brief Execute a function within a specific domain (sandboxed).
- * 
- * @param domain The domain number to execute within.
- * @param ret Pointer to the function's return value.
- * @param ret_size Pointer to the size of the return value.
- * @param fun The function to be executed.
- * @param arg The argument passed to the function.
- * @param arg_size The size of the argument passed.
- * @return int Status code of the execution.
- */
-int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int), void *arg[], int argc);
-
-/**
- * @brief Worker thread function to execute domain tasks.
- * 
- * @param arg Pointer to the domain's protection key.
- */
-void* worker(void* arg);
-
-/**
- * @brief Wrapper function for launching worker threads.
- * 
- * @param arg Pointer to the domain's protection key.
- */
-void* worker_wrapper(void* arg);
-
-/**
- * @brief Initialize the PKRU sandbox and its associated domains, workers, and monitors.
- * 
- * @return int 0 on success, -1 on error.
- */
-int pkru_sandbox_init();
+void *worker(void* arg);
 
 pthread_mutex_t *get_request_lock(int pkey);
-
 void notify_worker(int domain);
-
 void wait_worker(int domain);
 
 void print_systime();
 
-void* jni_monitor(void* arg);
-
-void* jvm_monitor(void* arg);
-
+void *jni_monitor(void* arg);
+void *jvm_monitor(void* arg);
 int install_jni_filter();
-
 int install_jvm_filter();
 
 extern worker_t worker_threads[DOMAINS];
-
 extern monitor_t monitor_threads[DOMAINS];
 
 #endif // PKRU_SANDBOX_H

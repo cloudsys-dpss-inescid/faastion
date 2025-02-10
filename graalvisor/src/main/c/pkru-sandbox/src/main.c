@@ -51,7 +51,7 @@ pthread_mutex_t *get_request_lock(int domain) {
     return &(worker_threads[domain].request_lock);
 }
 
-void protect_library(const char* library, int pkey)
+static void protect_library(const char* library, int pkey)
 {
     FILE* mapsFile = fopen("/proc/self/maps", "r");
     if (!mapsFile) {
@@ -139,7 +139,7 @@ int pkru_sandbox_init()
         }
 
         if (pthread_create(&(worker_threads[i].thread), NULL, worker, (void*)(intptr_t) i) != 0) {
-            fprintf(stderr, "error: failed creating worker_wrapper thread for domain %d\n", i);
+            fprintf(stderr, "error: failed creating worker thread for domain %d\n", i);
             return -1;
         }
     }

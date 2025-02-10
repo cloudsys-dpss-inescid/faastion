@@ -21,7 +21,7 @@ function build_pkru_sandbox {
 	if [ $major_version -ge 5 ] && [ $minor_version -ge 10 ]; then
 	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
 	    	$CC -g -DREMOVE_NNS_LIMIT -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
-        	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/pkru_sandbox.o $PKRU_DIR/pkru_sandbox.c
+        	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/main.o $PKRU_DIR/main.c
             $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/hash_table.o $PKRU_DIR/hash_table.c
             $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/sandbox.o $PKRU_DIR/sandbox.c
             $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/book_keeper.o $PKRU_DIR/book_keeper.c
@@ -30,7 +30,7 @@ function build_pkru_sandbox {
             $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/jni_monitor.o $PKRU_DIR/jni_monitor.c
             $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/jvm_monitor.o $PKRU_DIR/jvm_monitor.c
             $CC $CFLAGS -o $LIB_DIR/libpkru.so $LIB_DIR/domain_manager.o $LIB_DIR/memory_map.o \
-                $LIB_DIR/pkru_sandbox.o $LIB_DIR/hash_table.o $LIB_DIR/sandbox.o $LIB_DIR/book_keeper.o \
+                $LIB_DIR/main.o $LIB_DIR/hash_table.o $LIB_DIR/sandbox.o $LIB_DIR/book_keeper.o \
                 $LIB_DIR/seccomp.o $LIB_DIR/worker.o $LIB_DIR/jni_monitor.o $LIB_DIR/jvm_monitor.o
 
             LINKER_OPTIONS_PKRU_ISO="-H:NativeLinkerOption=$LIB_DIR/libpkru.so"
