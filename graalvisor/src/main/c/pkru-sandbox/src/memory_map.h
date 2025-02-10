@@ -28,11 +28,12 @@ typedef struct {
     int current_domain;             
     int prev_domain;
     int jni_threads;
+    volatile int notif_fd;
     MemoryRegionNode *regions;
 } IsolateFunction;
 
 typedef struct Bucket {
-    char *functionName;
+    pid_t tid;
     IsolateFunction *function;
     struct Bucket *next;
 } Bucket;
@@ -41,8 +42,6 @@ typedef struct {
     int size;
     Bucket **buckets;
 } HashTable;
-
-void init_hash_table(int size);
 
 void protect_app_regions(IsolateFunction *function, int pkey);
 
@@ -67,14 +66,6 @@ void destroy_isolate_function(IsolateFunction *function);
 void set_isolate_function(IsolateFunction *function);
 
 IsolateFunction *get_isolate_function();
-
-IsolateFunction *get_app_function(const char *functionName);
-
-void insert_app_function(const char *functionName, IsolateFunction *function);
-
-void remove_app_function(const char *functionName);
-
-void free_hash_table();
 
 void start_active_waiting_count();
 

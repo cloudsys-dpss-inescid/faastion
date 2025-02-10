@@ -177,4 +177,6 @@ void wait_worker(int domain);
 
 void print_systime();
 
+void* jvm_monitor(void* arg);
+
 #endif // PKRU_SANDBOX_H

@@ -6,14 +6,32 @@
 #include <sys/types.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#include <sys/syscall.h>
 
 #include "memory_map.h"
 #include "pkru_sandbox.h"
+#include "hash_table.h"
+#include "seccomp.h"
 
 #include "org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface.h"
 
 #define PIPE_READ_END  0
 #define PIPE_WRITE_END 1
+
+struct sock_filter default_domain_filter[] = {
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, arch))),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, AUDIT_ARCH_X86_64, 1, 0),
+    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL),
+
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
+        
+    // BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, sysno, 1, 0),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_gettid, 0, 1),
+    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_USER_NOTIF),
+
+    // default rule
+    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW),
+};
 
 void close_parent_fds(int childWrite, int parentRead) {
     // TODO - we should try to get a sense for the used file descriptors.
@@ -27,22 +45,6 @@ void close_parent_fds(int childWrite, int parentRead) {
 void reset_parent_signal_handlers() {
     signal(SIGTERM, SIG_DFL);
     signal(SIGINT, SIG_DFL);
-}
-
-JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_isLazyIsolationSupported(JNIEnv *env, jobject thisObj) {
-    return 0;
-}
-
-JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_isMemIsolationSupported(JNIEnv *env, jobject thisObj) {
-    return 0;
-}
-
-JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_setupMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
-
-}
-
-JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardownMemIsolation(JNIEnv *env, jobject thisObj, jstring functionName) {
-
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_ginit(JNIEnv *env, jobject thisObj) {
@@ -93,21 +95,22 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     
 }
 
-JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_createIsolateFunction(JNIEnv *env, jobject thisObj, jstring functionName) {
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_createIsolateFunction(JNIEnv *env, jobject thisObj) {
     IsolateFunction *function;
-    const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
-    if (get_app_function(function_name) == NULL) {
-        function = create_isolate_function();
-        insert_app_function(function_name, function);
-        set_isolate_function(function);
-    }
-    (*env)->ReleaseStringUTFChars(env, functionName, function_name);
+    pthread_t thread;
+
+    function = create_isolate_function();
+    set_isolate_function(function);
+    hash_table_insert(proc_tbl, gettid(), function);
+    
+    pthread_create(&thread, NULL, jvm_monitor, (void *)function);
+    
+    function->notif_fd = install_seccomp_filter(default_domain_filter);
+    pthread_detach(thread);
 }
 
-JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_destroyIsolateFunction(JNIEnv *env, jobject thisObj, jstring functionName) {
-    const char *function_name = (*env)->GetStringUTFChars(env, functionName, NULL);
-    remove_app_function(function_name);
-    (*env)->ReleaseStringUTFChars(env, functionName, function_name);
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_destroyIsolateFunction(JNIEnv *env, jobject thisObj) {
+    hash_table_remove(proc_tbl, gettid(), NULL);
 }
 
 JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_resetActiveWaitingCount(JNIEnv *env, jobject thisObj, int active_waiting_threshold) {

@@ -31,17 +31,20 @@ $include <jni.h>
 $include <memory_map.h>
 $include <pkru_sandbox.h>
 $include <domain_manager.h>
+$include <hash_table.h>
 
 $include "$headerFilename"
 
 $returnType (*_native_method)($paramTypes); // accessible in default domain only
 
 void *get_handle(IsolateFunction *function) {
+    printf("enter get handle\n");
     static char *error;
 
 #ifdef REMOVE_NNS_LIMIT
     int domain = function->current_domain;
     IsolateFunction *primary_function = get_primary_domain_function(domain);
+    printf("primary function: %p\n", primary_function);
     if (primary_function) {
         return primary_function->dl_handle;
     }
@@ -64,11 +67,14 @@ void *get_handle(IsolateFunction *function) {
 }
 
 int load_native_method(IsolateFunction *function) {
+    printf("enter load native method\n");
     static char *error;
     void *dl_handle;
     
     if ((dl_handle = get_handle(function)) == NULL)
         return -1;
+
+    printf("dl_handle: %p\n", dl_handle);
 
     dlerror();
     _native_method = dlsym(dl_handle, "$nativeMethod");    
@@ -81,9 +87,12 @@ int load_native_method(IsolateFunction *function) {
 }
 
 void nativeMethodInterface(int pkey) {
+    printf("enter native method interface\n");
     IsolateFunction *function = get_domain_function(pkey);
     if (load_native_method(function))
         exit(EXIT_FAILURE);
+
+    printf("global native method symbol: %p\n", _native_method);
 
     request_t* request = (request_t*) get_domain_arena(pkey);
     $returnType (*native_method)($paramTypes) = _native_method; // accessible in worker domain
@@ -116,10 +125,8 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     [[maybe_unused]] void *aux;
 
     function = get_isolate_function();
-    if (function == NULL) {
-        function = get_app_function("$functionID");
-        set_isolate_function(function);
-    }
+    if (!function)
+        function = (IsolateFunction *)hash_table_lookup(proc_tbl, gettid());
     
     domain = enter_function_domain(function);
 

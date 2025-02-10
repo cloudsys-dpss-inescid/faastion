@@ -43,12 +43,11 @@ public class IsolateSandboxProvider extends SandboxProvider {
     @Override
     public void loadProvider() throws IOException {
         this.graalvisorAPI = new GraalVisorAPI(((NativeFunction) getFunction()).getPath());
-        // NativeSandboxInterface.createIsolateFunction(((NativeFunction) getFunction()).getName());
     }
 
     @Override
     public SandboxHandle createSandbox() {
-        NativeSandboxInterface.createIsolateFunction(((NativeFunction) getFunction()).getName());
+        NativeSandboxInterface.createIsolateFunction();
         IsolateThread isolateThread = graalvisorAPI.createIsolate();
         return new IsolateSandboxHandle(this, isolateThread);
     }
@@ -57,13 +56,12 @@ public class IsolateSandboxProvider extends SandboxProvider {
     public void destroySandbox(SandboxHandle shandle) {
         IsolateSandboxHandle ipshandle = (IsolateSandboxHandle) shandle;
         graalvisorAPI.tearDownIsolate((IsolateThread) ipshandle.getIsolateThread());
-        NativeSandboxInterface.destroyIsolateFunction(((NativeFunction) getFunction()).getName());
+        NativeSandboxInterface.destroyIsolateFunction();
     }
 
     @Override
     public void unloadProvider() throws IOException {
         graalvisorAPI.close();
-        // NativeSandboxInterface.destroyIsolateFunction(((NativeFunction) getFunction()).getName());
     }
 
     @Override

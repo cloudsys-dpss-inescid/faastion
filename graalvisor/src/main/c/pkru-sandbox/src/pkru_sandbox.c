@@ -2,6 +2,8 @@
 
 #include "pkru_sandbox.h"
 #include "memory_map.h"
+#include "hash_table.h"
+#include "seccomp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,9 +11,6 @@
 #include <syscall.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
-#include <linux/filter.h>
-#include <linux/seccomp.h>
-#include <linux/audit.h>
 #include <sys/ioctl.h>
 #include <stddef.h>
 #include <errno.h>
@@ -23,6 +22,7 @@
 #include <linux/sched.h>
 #include <malloc.h>
 #include <time.h>
+#include <sys/wait.h>
 
 
 
@@ -31,8 +31,6 @@ static worker_t worker_threads[DOMAINS];
 
 // Threads that will be supervising domains.
 static monitor_t monitor_threads[DOMAINS];
-
-static struct seccomp_notif_sizes seccomp_sizes;
 
 static FILE *latency_breakdown_file;
 
@@ -88,6 +86,7 @@ void protect_library(const char* library, int pkey)
     fclose(mapsFile);
 }
 
+// FIXME: kernel resets pkru to 0x55555554 during signal handling
 void handler(int signo)
 {
     cleanup_and_exit();
@@ -95,11 +94,10 @@ void handler(int signo)
 
 void cleanup_and_exit()
 {
-    cleanup_domains();
-    free_hash_table();
+    // cleanup_domains();
     // TODO - Kill workers
     // TODO - Kill monitors
-    exit(1);
+    exit(0);
 }
 
 struct sock_filter worker_domain_filter[] = {
@@ -121,80 +119,12 @@ struct sock_filter worker_domain_filter[] = {
     BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW),
 };
 
-struct sock_filter default_domain_filter[] = {
-    BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, arch))),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, AUDIT_ARCH_X86_64, 1, 0),
-    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL),
-
-    BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
-        
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone3, 1, 0),
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone, 0, 1),
-    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_USER_NOTIF),
-
-    // default rule
-    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW),
-};
-
-int _install_seccomp_filter(struct sock_filter filter[], int instructions)
-{
-    struct sock_fprog prog = {
-        .len = (unsigned short)(instructions / sizeof(struct sock_filter)),
-        .filter = filter,
-    };
-
-    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-        fprintf(stderr, "error: failed to prctl(NO_NEW_PRIVS)");
-        cleanup_and_exit();
-    }
-
-    int fd = syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_NEW_LISTENER, &prog);
-    if (fd < 0) {
-        fprintf(stderr, "error: failed to seccomp(SECCOMP_SET_MODE_FILTER)");
-        cleanup_and_exit();
-    }
-
-    return fd;
-}
-
-#define install_seccomp_filter(filter) _install_seccomp_filter(filter, sizeof(filter))
-
-int receive_notification(int fd, struct seccomp_notif *req, struct seccomp_notif_resp *resp) {
-    memset(req, 0, seccomp_sizes.seccomp_notif);
-    if (ioctl(fd, SECCOMP_IOCTL_NOTIF_RECV, req) == -1) {
-        perror("error: failed to ioctl(SECCOMP_IOCTL_NOTIF_RECV)");
-        return -1;
-    }
-    memset(resp, 0, seccomp_sizes.seccomp_notif_resp);
-    return 0;
-}
-
-int send_response(int fd, struct seccomp_notif *req, struct seccomp_notif_resp *resp) {
-    if (ioctl(fd, SECCOMP_IOCTL_NOTIF_ID_VALID, &req->id) == -1 ) {
-        perror("error: failed to ioctl(SECCOMP_IOCTL_NOTIF_ID_VALID)");
-        return -1;
-    }
-
-    if (ioctl(fd, SECCOMP_IOCTL_NOTIF_SEND, resp) == -1) {
-        perror("error: failed to ioctl(SECCOMP_IOCTL_NOTIF_SEND)");
-        return -1;
-    }
-
-    return 0;
-}
-
 void handle_jni_syscalls(int pkey) {
-    int fd;
-    IsolateFunction *function;
+    struct seccomp_notif *req = new_seccomp_notif();
+    struct seccomp_notif_resp *resp = new_seccomp_notif_resp();
+    int fd = monitor_threads[pkey].seccomp_fd;
+
     long long unsigned int *args;
-
-    struct seccomp_notif *req;
-    struct seccomp_notif_resp *resp;
-
-    fd = monitor_threads[pkey].seccomp_fd;
-    req = (struct seccomp_notif*)malloc(seccomp_sizes.seccomp_notif);
-    resp = (struct seccomp_notif_resp*)malloc(seccomp_sizes.seccomp_notif_resp);
-    
     for(;;) {
         if (receive_notification(fd, req, resp))
             continue;
@@ -259,6 +189,36 @@ void handle_jni_syscalls(int pkey) {
     free(resp);
 }
 
+void handle_jvm_syscalls(IsolateFunction *function) {
+    struct seccomp_notif *req = new_seccomp_notif();
+    struct seccomp_notif_resp *resp = new_seccomp_notif_resp();
+    int fd = function->notif_fd;
+
+    for(;;) {
+        if (receive_notification(fd, req, resp))
+            continue;
+
+        resp->id = req->id;
+        resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+        switch (req->data.nr) {
+        case __NR_gettid:
+            if (hash_table_lookup(proc_tbl, req->pid) == NULL)
+                hash_table_insert(proc_tbl, req->pid, function);
+            break;
+        default:
+            fprintf(stderr, "warning: unhandled syscall %d!\n", req->data.nr);
+            break;
+        }
+
+        if (send_response(fd, req, resp))
+            continue;
+    }
+
+    close(fd);
+    free(req);
+    free(resp);
+}
+
 void* jni_monitor(void* arg)
 {
     int pkey = (int) ((long) arg);
@@ -267,6 +227,16 @@ void* jni_monitor(void* arg)
     while (monitor_threads[pkey].seccomp_fd == 0) ;
 
     handle_jni_syscalls(pkey);
+    return NULL;
+}
+
+void* jvm_monitor(void* arg)
+{
+    IsolateFunction *function = (IsolateFunction *)arg;
+    // Wait until seccomp_fd is set
+    while (function->notif_fd == 0) ;
+
+    handle_jvm_syscalls(function);
     return NULL;
 }
 
@@ -363,12 +333,12 @@ void* worker(void* arg)
 int pkru_sandbox_init()
 {
     // Register the SIGINT handler
-    if (signal(SIGINT, handler) == SIG_ERR) {
-        fprintf(stderr, "error: Unable to catch SIGINT\n");
-        return -1;
-    }
+    // if (signal(SIGINT, handler) == SIG_ERR) {
+    //     fprintf(stderr, "error: Unable to catch SIGINT\n");
+    //     return -1;
+    // }
 
-    init_hash_table(4096);
+    proc_tbl = new_hash_table(4096);
 
     start_active_waiting_count();
 
@@ -389,10 +359,7 @@ int pkru_sandbox_init()
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
 
-    if (syscall(SYS_seccomp, SECCOMP_GET_NOTIF_SIZES, 0, &seccomp_sizes) < 0) {
-        fprintf(stderr, "error: failed to seccomp(SECCOMP_GET_NOTIF_SIZES)");
-        return -1;
-    }
+    seccomp_init();
 
     // Launch worker threads.
     for (int i = 1; i < DOMAINS; i++) {
