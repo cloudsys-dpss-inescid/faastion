@@ -92,6 +92,7 @@ int pkru_sandbox_init();
 void cleanup_and_exit(void);
 
 void *worker(void* arg);
+void *worker_wrapper(void *arg);
 
 pthread_mutex_t *get_request_lock(int pkey);
 void notify_worker(int domain);

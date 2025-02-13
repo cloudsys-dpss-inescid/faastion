@@ -96,3 +96,14 @@ void* worker(void* arg)
     }
     return NULL;
 }
+
+void* worker_wrapper(void* arg)
+{
+    int pkey = (int) ((long) arg);
+    monitor_threads[pkey].seccomp_fd = install_jni_filter();
+    if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
+        fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
+        cleanup_and_exit();
+    }
+    return NULL;
+}
