@@ -7,45 +7,10 @@ GRAALVISOR_JAR=$DIR/build/libs/graalvisor-1.0-all.jar
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-CC=gcc
-
-function build_pkru_sandbox {
-	release=$(uname -r)
-	major_version=${release%%.*}
-	release=${release#*.}
-	minor_version=${release%%.*}
-
-    JNI_INCLUDE="-I$DEF_JAVA_HOME/include -I$DEF_JAVA_HOME/include/linux"
-	CFLAGS="-Wall -g -fno-inline -fPIC -shared"
-
-	if [ $major_version -ge 5 ] && [ $minor_version -ge 10 ]; then
-	    	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/domain_manager.o $PKRU_DIR/domain_manager.c
-	    	$CC -g -DREMOVE_NNS_LIMIT -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/memory_map.o $PKRU_DIR/memory_map.c
-        	$CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/main.o $PKRU_DIR/main.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/hash_table.o $PKRU_DIR/hash_table.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/sandbox.o $PKRU_DIR/sandbox.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/book_keeper.o $PKRU_DIR/book_keeper.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/seccomp.o $PKRU_DIR/seccomp.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/worker.o $PKRU_DIR/worker.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/jni_monitor.o $PKRU_DIR/jni_monitor.c
-            $CC -g -c $JNI_INCLUDE -I"$PKRU_DIR" -fPIC -o $LIB_DIR/jvm_monitor.o $PKRU_DIR/jvm_monitor.c
-            $CC $CFLAGS -o $LIB_DIR/libpkru.so $LIB_DIR/domain_manager.o $LIB_DIR/memory_map.o \
-                $LIB_DIR/main.o $LIB_DIR/hash_table.o $LIB_DIR/sandbox.o $LIB_DIR/book_keeper.o \
-                $LIB_DIR/seccomp.o $LIB_DIR/worker.o $LIB_DIR/jni_monitor.o $LIB_DIR/jvm_monitor.o
-
-            LINKER_OPTIONS_PKRU_ISO="-H:NativeLinkerOption=$LIB_DIR/libpkru.so"
-    fi
-}
-
 function build_nsi {
-	HEADER_DIR=$DIR/build/generated/sources/headers/java/main
-	C_DIR=$DIR/src/main/c
-    PKRU_DIR=$DIR/src/main/c/pkru-sandbox/src
 	LIB_DIR=$DIR/build/libs
-    build_pkru_sandbox
-	$CC -c -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -I"$HEADER_DIR" \
-        -I"$PKRU_DIR" -o $LIB_DIR/NativeSandboxInterface.o $C_DIR/NativeSandboxInterface.c
-	ar rcs $LIB_DIR/libNativeSandboxInterface.a $LIB_DIR/NativeSandboxInterface.o
+    LINKER_OPTIONS_PKRU_ISO="-H:NativeLinkerOption=$LIB_DIR/libpkru.so"
+    make -C $DIR/src/main/c/ all
 }
 
 function build_ni {
