@@ -1,11 +1,16 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
+#include "cr_malloc.h"
 
 #include <stdio.h>
+#include <unistd.h>
 #include <pthread.h>
 
+#include <asm/prctl.h>
+
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 void notify_worker(int domain) {
     print_systime();
@@ -49,31 +54,11 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int)
 
 void* worker(void* arg)
 {
-    void *stackaddr;
-    size_t stacksize;
-    pthread_attr_t attr;
     int pkey = (int) ((long) arg);
-
-    monitor_threads[pkey].seccomp_fd = install_jni_filter();
-    
-    pthread_getattr_np(pthread_self(), &attr);
-    pthread_attr_getstack(&attr, &stackaddr, &stacksize);
-    pkey_mprotect(stackaddr, stacksize, PROT_READ | PROT_WRITE | PROT_EXEC, pkey);
-
-    // FIXME: This requires a more robust solution 
-    // Worker heap allocation was being added to some function memory mappings
-    // Meaning that when said function moves to domain 0, this worker heap becomes unreachable
-    // The malloc operation below forces the worker thread to pre allocate heap
-    // It overcomes part of the problem; however, future heap allocations may still happen
-    {
-        void *heap;
-        if ((heap = malloc(1))) {
-            free(heap);
-        }
-    }
+    register_worker_thread(pkey, syscall(__NR_gettid));
 
     fprintf(stderr, "Worker for domain %d is running...\n", pkey);
-    
+
     sem_t *request = &(worker_threads[pkey].request);
     sem_t *response = &(worker_threads[pkey].response);
     pthread_mutex_t *request_lock = &(worker_threads[pkey].request_lock);
@@ -97,13 +82,18 @@ void* worker(void* arg)
     return NULL;
 }
 
+// This function installs a seccomp filter in the wrapper thread to protect
+// the memory regions allocated in `pthread_create`.
+// This method isolates the stack, TLS, and DTV of the child thread (worker)
 void* worker_wrapper(void* arg)
 {
     int pkey = (int) ((long) arg);
+    register_worker_thread(pkey, syscall(__NR_gettid));
     monitor_threads[pkey].seccomp_fd = install_jni_filter();
     if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
         fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
         cleanup_and_exit();
     }
+    pthread_join(worker_threads[pkey].thread, NULL);
     return NULL;
 }

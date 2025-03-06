@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <syscall.h>
 #include <sys/mman.h>
@@ -138,7 +139,7 @@ int pkru_sandbox_init()
             return -1;
         }
 
-        if (pthread_create(&(worker_threads[i].thread), NULL, worker, (void*)(intptr_t) i) != 0) {
+        if (pthread_create(&(worker_threads[i].thread), NULL, worker_wrapper, (void*)(intptr_t) i) != 0) {
             fprintf(stderr, "error: failed creating worker thread for domain %d\n", i);
             return -1;
         }
