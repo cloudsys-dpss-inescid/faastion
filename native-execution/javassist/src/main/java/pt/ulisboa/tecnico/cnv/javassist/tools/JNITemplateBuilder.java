@@ -84,6 +84,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	private String functionID;
 	private String templateDir;
 	private String nativeLibName;
+	private String loaderLib;
 
 	public JNITemplateBuilder(List<String> packageNameList, String writeDestination) {
 		super(packageNameList, writeDestination);
@@ -94,6 +95,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.concat("/graalvisor/build/libs/lib")
 				.concat(System.getenv("BENCHMARK_NAME"))
 				.concat("-jni.so");
+		loaderLib = System.getenv("ARGO_HOME")
+				.concat("/graalvisor/build/libs/libloader.so");
 
 		// default variables to escape the preprocessor directives in C
 		setTemplateVariable("include", "#include");
@@ -233,6 +236,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.toArray();
 		}
 
+		setTemplateVariable("loaderLib", loaderLib);
 		setTemplateVariable("functionID", functionID);
 		setTemplateVariable("nativeLibName", nativeLibName);
 		setTemplateVariable("jniTypes", jniTypes);

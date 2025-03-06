@@ -32,14 +32,73 @@ $include <memory_map.h>
 $include <pkru_sandbox.h>
 $include <domain_manager.h>
 $include <hash_table.h>
+$include <cr_malloc.h>
 
 $include "$headerFilename"
 
 $returnType (*_native_method)($paramTypes); // accessible in default domain only
+static __thread void *(*DLL_open)(const char *) = NULL;
+static __thread void *(*DLL_sym)(void *, const char *) = NULL;
+
+int open_loader(unsigned int domain) {
+    char *error;
+
+    dlerror();
+    void *dl_handle = dlmopen(LM_ID_NEWLM, "$loaderLib", RTLD_LAZY);
+    if ((error = dlerror()) != NULL) {
+        fprintf(stdout, "Could not load library: $loaderLib: %s\n", error);
+        return -1;   
+    }
+
+    dlerror();
+    void (*DLL_init)(void) = dlsym(dl_handle, "DLL_init");    
+    if ((error = dlerror()) != NULL) {
+        fprintf(stdout, "Failed to find the symbol: DLL_init: %s\n", error);
+        return -1;
+    }
+
+    dlerror();
+    DLL_open = dlsym(dl_handle, "DLL_open");    
+    if ((error = dlerror()) != NULL) {
+        fprintf(stdout, "Failed to find the symbol: DLL_open: %s\n", error);
+        return -1;
+    }
+
+    dlerror();
+    DLL_sym = dlsym(dl_handle, "DLL_sym");    
+    if ((error = dlerror()) != NULL) {
+        fprintf(stdout, "Failed to find the symbol: DLL_sym: %s\n", error);
+        return -1;
+    }
+
+    DLL_init();
+
+    int (*DLL_get_mspace_count)(void) = DLL_sym(dl_handle, "get_mspace_count");
+    if (!DLL_get_mspace_count)
+        return -1;
+
+    int mspaces = DLL_get_mspace_count();
+    printf("mspaces: %d\n", mspaces);
+
+    void (*DLL_set_mspace)(unsigned int, void *) = DLL_sym(dl_handle, "set_mspace");
+    if (!DLL_set_mspace)
+        return -1;
+
+    void (*DLL_register_worker_thread)(unsigned int, unsigned int) = DLL_sym(dl_handle, "register_worker_thread");
+    if (!DLL_register_worker_thread)
+        return -1;
+
+    DLL_set_mspace(domain, get_mspace(domain));
+    DLL_register_worker_thread(domain, gettid());
+
+    mspaces = DLL_get_mspace_count();
+    printf("mspaces: %d\n", mspaces);
+
+    return 0;
+}
 
 void *get_handle(IsolateFunction *function) {
     printf("enter get handle\n");
-    static char *error;
 
 #ifdef REMOVE_NNS_LIMIT
     int domain = function->current_domain;
@@ -50,17 +109,17 @@ void *get_handle(IsolateFunction *function) {
     }
 #endif
 
-    if (function->dl_handle == NULL) {
-        dlerror();
-        function->dl_handle = dlmopen(LM_ID_NEWLM, "$nativeLibName", RTLD_LAZY);
-        if ((error = dlerror()) != NULL) {
-            fprintf(stdout, "Could not load library: $nativeLibName: %s\n", error);
-            return NULL;   
-        }
+    if (function->dl_handle != NULL) {
+        return function->dl_handle;
+    } else if (open_loader(domain)) {
+        return NULL;
+    } else {
+        function->dl_handle = DLL_open("$nativeLibName");
     }
 
 #ifdef REMOVE_NNS_LIMIT
-    set_primary_pkru_sandbox(domain, function);
+    if (function->dl_handle)
+        set_primary_pkru_sandbox(domain, function);
 #endif
 
     return function->dl_handle;
@@ -68,7 +127,6 @@ void *get_handle(IsolateFunction *function) {
 
 int load_native_method(IsolateFunction *function) {
     printf("enter load native method\n");
-    static char *error;
     void *dl_handle;
     
     if ((dl_handle = get_handle(function)) == NULL)
@@ -76,12 +134,9 @@ int load_native_method(IsolateFunction *function) {
 
     printf("dl_handle: %p\n", dl_handle);
 
-    dlerror();
-    _native_method = dlsym(dl_handle, "$nativeMethod");    
-    if ((error = dlerror()) != NULL) {
-        fprintf(stdout, "Failed to find the symbol: $nativeMethod: %s\n", error);
+    _native_method = DLL_sym(dl_handle, "$nativeMethod");    
+    if (!_native_method)
         return -1;
-    }
 
     return 0;
 }
