@@ -11,7 +11,7 @@ ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
 CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox -I$GRAALVISOR_HOME/src/main/c/dlmalloc"
 
 BENCHMARK_NAME="factors"
 SNIPPETS_DIR="$DIR/build/snippets"
@@ -57,14 +57,17 @@ function build_ni {
 function build_faastion_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/output"
+	FUNCTION_ID="$BENCHMARK_NAME"
 
+	manipulate_bytecode
+	build_snippets
 	build_ni
 }
 
 function build_vanila_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
 
 	build_ni
 }
@@ -135,20 +138,12 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-build_native_binary
+build_native_binary # for LPI
 
-build_native_library
+build_native_library # compile jni code
 
-build_vanila_image
+build_vanila_image # to benchmark vanila
 
-if [ -z $CONCURRENCY_LEVEL ]; then
-	CONCURRENCY_LEVEL=32
-fi
+build_faastion_image # to benchmark faastion
 
-for i in $(seq 1 $CONCURRENCY_LEVEL); do
-	FUNCTION_ID="$BENCHMARK_NAME${i}"
-	manipulate_bytecode
-	build_snippets
-	build_faastion_image
-done
-exit
+exit 0
