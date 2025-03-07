@@ -55,12 +55,12 @@ function build_ni {
 }
 
 function build_faastion_image {
-	NI_BIN_OPTS="--shared"
-	CLASS_PATH="$DIR/output"
 	FUNCTION_ID="$BENCHMARK_NAME"
-
 	manipulate_bytecode
 	build_snippets
+
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
 	build_ni
 }
 

@@ -57,12 +57,12 @@ function build_ni {
 }
 
 function build_faastion_image {
-	NI_BIN_OPTS="--shared"
-	CLASS_PATH="$DIR/output"
 	FUNCTION_ID="$BENCHMARK_NAME"
-
 	manipulate_bytecode
 	build_snippets
+
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
 	build_ni
 }
 
@@ -98,7 +98,7 @@ function manipulate_bytecode {
 	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-printHello.so
 
 	mkdir -p $DIR/build/snippets
-	
+
 	export BENCHMARK_NAME="$BENCHMARK_NAME"
 	export SNIPPETS_DIR="$SNIPPETS_DIR"
 	export FUNCTION_ID="$FUNCTION_ID"
