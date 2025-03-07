@@ -52,21 +52,24 @@ function build_ni {
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
 			-H:Name=lib$FUNCTION_ID
-	
+
 	cd -
 }
 
 function build_faastion_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/output"
+	FUNCTION_ID="$BENCHMARK_NAME"
 
+	manipulate_bytecode
+	build_snippets
 	build_ni
 }
 
 function build_vanila_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
 
 	build_ni
 }
@@ -146,20 +149,12 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-build_native_binary
+build_native_binary # for LPI
 
-build_native_library
+build_native_library # compile jni code
 
-build_vanila_image
+build_vanila_image # to benchmark vanila
 
-if [ -z $CONCURRENCY_LEVEL ]; then
-	CONCURRENCY_LEVEL=32
-fi
+build_faastion_image # to benchmark faastion
 
-for i in $(seq 1 $CONCURRENCY_LEVEL); do
-	FUNCTION_ID="$BENCHMARK_NAME${i}"
-	manipulate_bytecode
-	build_snippets
-	build_faastion_image
-done
 exit 0
