@@ -72,11 +72,11 @@ public class FileHashing {
     }
 
     public static HashMap<String, Object> main(Map<String, Object> args) {
-	HashMap<String, Object> output = new HashMap<>();
+	    HashMap<String, Object> output = new HashMap<>();
 
-	String url = "http://127.0.0.1:8000/snap.png";
-    String filePath = "/tmp/snap.png";
-	boolean success = downloadFile(url, filePath);
+        String url = "http://127.0.0.1:8000/snap.png";
+        String filePath = "/tmp/snap.png";
+        boolean success = downloadFile(url, filePath);
 
         if (success) {
             hash();
