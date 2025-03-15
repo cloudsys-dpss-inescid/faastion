@@ -1,6 +1,11 @@
 #ifndef __PKRU_H__
 #define __PKRU_H__
 
+// Domain IDs from 0 to 15.
+#define DOMAINS 16
+#define DEFAULT_DOMAIN 0
+#define LOADER_DOMAIN 1
+
 // TODO - have a table for constant conversion.
 // Domain to PKRU conversion table.
 #define DOMAIN_TO_PKRU(domain) (\

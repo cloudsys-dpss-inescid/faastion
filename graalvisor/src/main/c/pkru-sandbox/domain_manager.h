@@ -3,11 +3,7 @@
 
 #include <stdatomic.h>
 #include "memory_map.h"
-
-// Domain IDs from 0 to 15.
-#define DOMAINS 16
-#define DEFAULT_DOMAIN 0
-#define LOADER_DOMAIN 1
+#include "pkru.h"
 
 /**
  * @brief Structure representing a memory protection domain
