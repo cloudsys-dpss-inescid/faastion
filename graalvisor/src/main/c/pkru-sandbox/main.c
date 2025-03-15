@@ -48,6 +48,36 @@ void print_systime() {
 void print_systime() {}
 #endif
 
+typedef void (*dl_init_t)(int, char **, char **);
+
+static void (*original_run_constructor)(dl_init_t, int, char **, char **) = NULL;
+
+void run_constructor(dl_init_t constructor, int argc, char **argv, char **env) {
+    unsigned int pkey;
+    unsigned int pkru;
+    unsigned int unprivileged_domain;
+    void (*fn)(dl_init_t, int, char **, char **);
+
+    if (original_run_constructor == NULL) {
+        original_run_constructor = dlsym(RTLD_NEXT, "run_constructor");
+    }
+
+    pkru = __rdpkru();
+    pkey = worker_domain();
+    fn = original_run_constructor;
+    char **vargv = {NULL};
+    char **venv = {NULL};
+    if (pkey && is_running_untrusted()) {
+        argc = 0;
+        argv = vargv;
+        env = venv;
+        unprivileged_domain = DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN);
+        __wrpkrumem(unprivileged_domain);
+    }
+    fn(constructor, argc, argv, env);
+    __wrpkrumem(pkru);
+}
+
 pthread_mutex_t *get_request_lock(int domain) {
     return &(worker_threads[domain].request_lock);
 }
