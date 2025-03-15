@@ -33,7 +33,9 @@ function build_ni {
         --initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
         $LIBC_OPTION \
         $LINKER_OPTIONS_PKRU_ISO \
-        -H:CLibraryPath=$LIB_DIR \
+        -H:CLibraryPath=$LIBC_HOME/lib,$LIB_DIR \
+        -H:LinkerRPath=$LIBC_HOME/lib \
+        -H:NativeLinkerOption="-Wl,--dynamic-linker=$LIBC_HOME/lib/ld-linux-x86-64.so.2" \
 	$JAVA_17_OPTS \
         --features=org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterfaceFeature \
         -DGraalVisorHost \
@@ -58,6 +60,12 @@ fi
 if [ -z "$ARGO_HOME" ]
 then
     echo "Please set ARGO_HOME first. It should point to a checkout of github.com/graalvm/argo."
+    exit 1
+fi
+
+if [ -z "$LIBC_HOME" ]
+then
+    echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
     exit 1
 fi
 
