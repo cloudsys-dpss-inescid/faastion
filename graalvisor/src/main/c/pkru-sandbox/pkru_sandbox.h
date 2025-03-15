@@ -46,6 +46,9 @@ void *worker_wrapper(void *arg);
 pthread_mutex_t *get_request_lock(int pkey);
 void notify_worker(int domain);
 void wait_worker(int domain);
+int worker_domain();
+void set_running_untrusted(int val);
+int is_running_untrusted();
 
 void print_systime();
 

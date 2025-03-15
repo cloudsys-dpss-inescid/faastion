@@ -12,6 +12,9 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 
+static __thread int _worker_domain = 0;
+static __thread int _running_untrusted = 0;
+
 void notify_worker(int domain) {
     print_systime();
     sem_post(&(worker_threads[domain].request));
@@ -20,6 +23,18 @@ void notify_worker(int domain) {
 void wait_worker(int domain) {
     sem_wait(&(worker_threads[domain].response));
     print_systime();
+}
+
+int worker_domain() {
+    return _worker_domain;
+}
+
+void set_running_untrusted(int val) {
+    _running_untrusted = val;
+}
+
+int is_running_untrusted() {
+    return _running_untrusted;
 }
 
 int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int), void *argv[], int argc)
@@ -56,6 +71,7 @@ void* worker(void* arg)
 {
     int pkey = (int) ((long) arg);
     register_worker_thread(pkey, syscall(__NR_gettid));
+    _worker_domain = pkey;
 
     fprintf(stderr, "Worker for domain %d is running...\n", pkey);
 
