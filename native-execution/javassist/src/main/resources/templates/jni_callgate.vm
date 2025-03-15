@@ -114,6 +114,7 @@ void *get_handle(IsolateFunction *function) {
     } else if (open_loader(domain)) {
         return NULL;
     } else {
+        set_running_untrusted(1);
         function->dl_handle = DLL_open("$nativeLibName");
     }
 
