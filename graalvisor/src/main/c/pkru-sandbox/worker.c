@@ -104,7 +104,7 @@ void* worker(void* arg)
 void* worker_wrapper(void* arg)
 {
     int pkey = (int) ((long) arg);
-    register_worker_thread(pkey, syscall(__NR_gettid));
+    register_wrapper_thread(pkey, syscall(__NR_gettid));
     monitor_threads[pkey].seccomp_fd = install_jni_filter();
     if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
         fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);

@@ -25,9 +25,14 @@ static int mspace_count = 0;
 //        We probably want the new thread to execute in the same memory domain and to
 //        allocate memory in the same mspace as the parent!
 static unsigned long worker_threads[16] = {0};
+static unsigned long wrapper_threads[16] = {0};
 
 void register_worker_thread(unsigned int pkey, unsigned int tid) {
     worker_threads[pkey] = tid;
+}
+
+void register_wrapper_thread(unsigned int pkey, unsigned int tid) {
+    wrapper_threads[pkey] = tid;
     mspace_count++;
 }
 
@@ -65,7 +70,7 @@ mspace find_mspace() {
     mspace_id = -1;
     tid = syscall(__NR_gettid);
     for (int i = 0; i < 16; i++) {
-        if (tid == worker_threads[i]) {
+        if (tid == worker_threads[i] || tid == wrapper_threads[i]) {
             mspace_id = i;
             break;
         }

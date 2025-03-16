@@ -13,5 +13,6 @@ int get_mspace_count();
 
 mspace get_mspace(unsigned int pkey);
 void register_worker_thread(unsigned int pkey, unsigned int tid);
+void register_wrapper_thread(unsigned int pkey, unsigned int tid);
 
 #endif
