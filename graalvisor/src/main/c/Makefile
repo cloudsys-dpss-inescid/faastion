@@ -7,7 +7,7 @@ LIB_DIR		= $(ARGO_HOME)/graalvisor/build/libs
 SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
 MALLOC_DIR	= $(SRC_DIR)/dlmalloc
-INCLUDE 	= -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux -I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
+INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux -I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
 
 all:
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc.o $(MALLOC_DIR)/malloc.c

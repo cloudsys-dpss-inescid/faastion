@@ -24,6 +24,7 @@
 #include <malloc.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <link.h>
 
 
 
@@ -76,6 +77,21 @@ void run_constructor(dl_init_t constructor, int argc, char **argv, char **env) {
     }
     fn(constructor, argc, argv, env);
     __wrpkrumem(pkru);
+}
+
+Elf64_Addr run_fixup(void *l, unsigned int reloc_arg) {
+    Elf64_Addr retval;
+    unsigned int privileged_domain;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru();
+    privileged_domain = unprivileged_domain & 0x55555554; 
+    
+    __wrpkru(DEFAULT_DOMAIN);
+    retval = _dl_fixup(l, reloc_arg);
+    __wrpkrumem(unprivileged_domain);
+
+    return retval;
 }
 
 pthread_mutex_t *get_request_lock(int domain) {
