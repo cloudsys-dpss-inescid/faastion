@@ -58,9 +58,11 @@ public class ZIPCompression {
         }
     }
 
-    public static HashMap<String, Object> main(Map<String, Object> args) {
+    public static HashMap<String, Object> main(Map<String, Object> input) {
+        HashMap<String, Object> output = new HashMap<>();
+
         String url = "http://127.0.0.1:8000/snap.png";
-        String filePath = "~/snap.png";
+        String filePath = "/tmp/snap.png";
         boolean success = downloadFile(url, filePath);
 
         if (success) {

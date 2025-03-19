@@ -11,33 +11,36 @@ ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
 CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE -I/usr/include/"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
-SFLAGS_PROC="$CFLAGS_PROC -O0 -fno-inline $ERIM_INCLUDE -I$GRAALVISOR_HOME/src/main/c/memisolation/src"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox -I$GRAALVISOR_HOME/src/main/c/dlmalloc"
 
 BENCHMARK_NAME="zip"
 SNIPPETS_DIR="$DIR/build/snippets"
 
-function run_hotspot {
-	rm -rf config-dir
-	CLASS_PATH="classes/java/main"
-
+function build_native_binary {
+	NI_BIN_OPTS="com.jni.ZIPCompression"
 	cd build
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
-	$JAVA_HOME/bin/java \
-			-Djava.awt.headless=true \
-			-agentlib:native-image-agent=config-output-dir=config-dir/ \
+
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	$JAVA_HOME/bin/native-image \
+			--no-fallback \
+			--enable-url-protocols=http \
 			-cp $CLASS_PATH:libs/zip-1.0-all.jar \
 			-Djava.library.path=$LD_LIBRARY_PATH \
-			com.jni.ZIPCompression
+			-H:ConfigurationFileDirectories=../ni-agent-config \
+			-H:+ReportExceptionStackTraces \
+			$NI_BIN_OPTS \
+			-H:Name=$GRAALVISOR_HOME/build/libs/$BENCHMARK_NAME-proc
+
+	cd -
 }
 
 function build_ni {
-	CLASS_PATH="classes/java/main"
-
 	cd build
+
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
+			--enable-url-protocols=http \
 			-cp $CLASS_PATH:libs/zip-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 			-DGraalVisorGuest=true \
 			-Djava.library.path=$LD_LIBRARY_PATH \
@@ -46,16 +49,26 @@ function build_ni {
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
-			-H:Name=lib$BENCHMARK_NAME
+			-H:Name=lib$FUNCTION_ID
+	
+	cd -
 }
 
-function build_ni_standalone {
-	NI_BIN_OPTS="com.jni.ZIPCompression"
+function build_faastion_image {
+	FUNCTION_ID="$BENCHMARK_NAME"
+	manipulate_bytecode
+	build_snippets
+
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
 	build_ni
 }
 
-function build_ni_sharedlibrary {
+function build_vanila_image {
 	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/java/main"
+	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
+
 	build_ni
 }
 
@@ -64,32 +77,36 @@ function build_java_agent {
 }
 
 function build_native_library {
-	musl-gcc -static $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/ZIPCompression.c
+	gcc $CFLAGS -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/ZIPCompression.c -lz
 }
 
 function build_snippets {
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
-	for file in "$SNIPPETS_DIR"/*.c; do
-		name=$(basename "$file" .c)
-		gcc $SFLAGS_PROC -o $GRAALVISOR_HOME/build/libs/$name-proc $file -L$GRAALVISOR_HOME/build/libs -lmemiso -Wl,-rpath,$GRAALVISOR_HOME/build/libs
-		gcc $SFLAGS -o $GRAALVISOR_HOME/build/libs/lib$name.so $file -L$GRAALVISOR_HOME/build/libs -lmemiso
-	done
+	pathname=$(ls "$SNIPPETS_DIR"/*.c)
+	file=${pathname##*/}
+	name=${file%.*}
+	gcc $SFLAGS -DREMOVE_NNS_LIMIT -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
 }
 
 function manipulate_bytecode {
 	CLASS_PATH="build/classes/java/main"
 	ENTRYPOINT="com.jni.ZIPCompression"
-	TOOL="NativeRedirection"
+	TOOL="JNITemplateBuilder"
 	
+	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-compress.so
+
 	mkdir -p $DIR/build/snippets
-	
+
 	export BENCHMARK_NAME="$BENCHMARK_NAME"
 	export SNIPPETS_DIR="$SNIPPETS_DIR"
+	export FUNCTION_ID="$FUNCTION_ID"
 	export ENV="memisolation"
+
 	$DEF_JAVA_HOME/bin/java \
 			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL::$CLASS_PATH \
+			-javaagent:$JAVA_AGENT=$TOOL::output \
 			$ENTRYPOINT
+
+	echo "check snippets"
 }
 
 
@@ -123,21 +140,12 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-# Build native lib.
-build_native_library
+build_native_binary # for LPI
 
-# Manipulate app's bytecode.
-manipulate_bytecode
+build_native_library # compile jni code
 
-# Build generated snippets.
-build_snippets
+build_vanila_image # to benchmark vanila
 
-TARGET=$1
-if [ ! -z "$TARGET" ]
-then
-	$TARGET
+build_faastion_image # to benchmark faastion
+
 exit 0
-else
-	build_ni_sharedlibrary
-	exit 0
-fi
