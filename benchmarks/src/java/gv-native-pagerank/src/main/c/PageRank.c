@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <igraph.h>
-#include <sys/time.h>
 
 #include "com_jni_PageRank.h"
 
@@ -18,10 +17,6 @@ JNIEXPORT void JNICALL Java_com_jni_PageRank_pagerank(JNIEnv *env, jobject obj) 
         igraph_t graph;
         igraph_vector_t res;
         igraph_arpack_options_t arpack_opts;
-
-	struct timeval t;
-	gettimeofday(&t, NULL);
-	printf("%f\n", (t.tv_sec*1.0 + t.tv_usec/1000000.0));
 
         igraph_rng_seed(igraph_rng_default(), 42);
         igraph_arpack_options_init(&arpack_opts);
