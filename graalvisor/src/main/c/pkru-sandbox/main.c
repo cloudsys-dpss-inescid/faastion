@@ -127,7 +127,7 @@ static void protect_library(const char* library, int pkey)
         size_t size = finish - start;
 
         pkey_mprotect(address, size, prot_flags, pkey);
-        // fprintf(stdout, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
+        fprintf(stdout, "Moving %p (%ld) to domain %d: %s", address, size, pkey, line);
     }
 
     fclose(mapsFile);
@@ -175,6 +175,8 @@ int pkru_sandbox_init()
 
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
+    // Move vsyscall variables to domain 1 so that it can be shared.
+    protect_library("[vvar]", LOADER_DOMAIN);
 
     seccomp_init();
 
