@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.jni.PageRank",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
+}
+]
