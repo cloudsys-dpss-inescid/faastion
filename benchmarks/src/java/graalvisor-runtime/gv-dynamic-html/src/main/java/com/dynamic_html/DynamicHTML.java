@@ -31,23 +31,6 @@ public class DynamicHTML {
     private static final int SMALL_INPUT = 1000;
     private static final int LARGE_INPUT = 100000;
 
-    String username;
-    String cur_time;
-    List<String> random_numbers;
-
-    public DynamicHTML() {}
-
-    public DynamicHTML(String name, int size) {
-        username = name;
-
-        cur_time = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
-            .format(new Date());
-
-        random_numbers = new Random().ints(size, 0, 101)
-            .mapToObj(n -> String.valueOf(n))
-            .collect(Collectors.toList());
-    }
-
     public static boolean downloadFile(String url, String filePath) {
         InputStream is = null;
         FileOutputStream fos = null;
@@ -87,8 +70,15 @@ public class DynamicHTML {
     public static void renderTemplate(String name, int size) {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(filePath);
+        Map<String, Object> contents = new HashMap();
+        contents.put("username", name);
+        contents.put("cur_time", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+                        .format(new Date()));
+        contents.put("random_numbers", new Random().ints(size, 0, 101)
+                        .mapToObj(n -> String.valueOf(n))
+                        .collect(Collectors.toList()));
         try {
-            mustache.execute(new PrintWriter(System.out), new DynamicHTML(name, size)).flush();
+            mustache.execute(new PrintWriter(System.out), contents).flush();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
