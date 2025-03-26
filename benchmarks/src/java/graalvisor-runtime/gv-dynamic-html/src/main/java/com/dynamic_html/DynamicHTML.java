@@ -67,7 +67,7 @@ public class DynamicHTML {
         }
     }
 
-    public static void renderTemplate(String name, int size) {
+    public static boolean renderTemplate(String name, int size) {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(filePath);
         Map<String, Object> contents = new HashMap();
@@ -81,8 +81,9 @@ public class DynamicHTML {
             mustache.execute(new PrintWriter(System.out), contents).flush();
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
+            return false;
         }
+        return true;
     }
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
@@ -90,7 +91,7 @@ public class DynamicHTML {
 
         boolean success;
         if ((success = downloadFile(url, filePath))) {
-            renderTemplate("testname", LARGE_INPUT);
+            success = renderTemplate("testname", LARGE_INPUT);
             deleteFile(filePath);
         }
         output.put("success", success);
