@@ -1,0 +1,198 @@
+[
+{
+  "name":"[Lorg.apache.http.Header;"
+},
+{
+  "name":"java.io.Closeable",
+  "queriedMethods":[{"name":"close","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Object",
+  "queriedMethods":[
+    {"name":"equals","parameterTypes":["java.lang.Object"] }, 
+    {"name":"hashCode","parameterTypes":[] }, 
+    {"name":"toString","parameterTypes":[] }
+  ]
+},
+{
+  "name":"java.lang.String"
+},
+{
+  "name":"java.security.AlgorithmParametersSpi"
+},
+{
+  "name":"java.security.KeyStoreSpi"
+},
+{
+  "name":"java.security.MessageDigestSpi"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.util.Locale"
+},
+{
+  "name":"javax.security.auth.x500.X500Principal",
+  "fields":[{"name":"thisX500Name"}],
+  "queriedMethods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
+},
+{
+  "name":"org.apache.commons.logging.LogFactory"
+},
+{
+  "name":"org.apache.commons.logging.impl.Jdk14Logger",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.apache.commons.logging.impl.Log4JLogger"
+},
+{
+  "name":"org.apache.commons.logging.impl.LogFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.logging.impl.WeakHashtable",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.http.Header"
+},
+{
+  "name":"org.apache.http.HttpEntity"
+},
+{
+  "name":"org.apache.http.HttpMessage",
+  "queriedMethods":[
+    {"name":"addHeader","parameterTypes":["java.lang.String","java.lang.String"] }, 
+    {"name":"addHeader","parameterTypes":["org.apache.http.Header"] }, 
+    {"name":"containsHeader","parameterTypes":["java.lang.String"] }, 
+    {"name":"getAllHeaders","parameterTypes":[] }, 
+    {"name":"getFirstHeader","parameterTypes":["java.lang.String"] }, 
+    {"name":"getHeaders","parameterTypes":["java.lang.String"] }, 
+    {"name":"getLastHeader","parameterTypes":["java.lang.String"] }, 
+    {"name":"getParams","parameterTypes":[] }, 
+    {"name":"getProtocolVersion","parameterTypes":[] }, 
+    {"name":"headerIterator","parameterTypes":[] }, 
+    {"name":"headerIterator","parameterTypes":["java.lang.String"] }, 
+    {"name":"removeHeader","parameterTypes":["org.apache.http.Header"] }, 
+    {"name":"removeHeaders","parameterTypes":["java.lang.String"] }, 
+    {"name":"setHeader","parameterTypes":["java.lang.String","java.lang.String"] }, 
+    {"name":"setHeader","parameterTypes":["org.apache.http.Header"] }, 
+    {"name":"setHeaders","parameterTypes":["org.apache.http.Header[]"] }, 
+    {"name":"setParams","parameterTypes":["org.apache.http.params.HttpParams"] }
+  ]
+},
+{
+  "name":"org.apache.http.HttpResponse",
+  "methods":[{"name":"getStatusLine","parameterTypes":[] }],
+  "queriedMethods":[
+    {"name":"getEntity","parameterTypes":[] }, 
+    {"name":"getLocale","parameterTypes":[] }, 
+    {"name":"setEntity","parameterTypes":["org.apache.http.HttpEntity"] }, 
+    {"name":"setLocale","parameterTypes":["java.util.Locale"] }, 
+    {"name":"setReasonPhrase","parameterTypes":["java.lang.String"] }, 
+    {"name":"setStatusCode","parameterTypes":["int"] }, 
+    {"name":"setStatusLine","parameterTypes":["org.apache.http.ProtocolVersion","int"] }, 
+    {"name":"setStatusLine","parameterTypes":["org.apache.http.ProtocolVersion","int","java.lang.String"] }, 
+    {"name":"setStatusLine","parameterTypes":["org.apache.http.StatusLine"] }
+  ]
+},
+{
+  "name":"org.apache.http.ProtocolVersion"
+},
+{
+  "name":"org.apache.http.StatusLine"
+},
+{
+  "name":"org.apache.http.client.methods.CloseableHttpResponse",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.reflect.InvocationHandler"] }]
+},
+{
+  "name":"org.apache.http.params.HttpParams"
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.JavaKeyStore$JKS",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.X509Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$TLSContext",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.x509.AuthorityInfoAccessExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.BasicConstraintsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CRLDistributionPointsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificatePoliciesExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.ExtendedKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.IssuerAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.KeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.NetscapeCertTypeExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.PrivateKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+}
+]
