@@ -17,8 +17,12 @@ import javax.imageio.ImageIO;
 
 public class Classify {
 
-    public static InceptionImageClassifier classifier = null;
-    public static String TMP_IMG_PATH = String.format("/tmp/img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
+    private static final String model_url = "http://127.0.0.1:8000/tensorflow_inception_graph.pb";
+    private static final String labels_url = "http://127.0.0.1:8000/imagenet_comp_graph_label_strings.txt";
+    private static final String image_url = "http://127.0.0.1:8000/eagle.jpg";
+
+    private static InceptionImageClassifier classifier = null;
+    private static String TMP_IMG_PATH = String.format("/tmp/img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
 
     public static byte[] fromInputStream(InputStream is) throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -62,30 +66,29 @@ public class Classify {
         try {
            	if (classifier == null) {
                 classifier = new InceptionImageClassifier();
-                downloadIfNecessary("/tmp/tensorflow_inception_graph.pb", (String)args.get("model_url"));
-                downloadIfNecessary("/tmp/imagenet_comp_graph_label_strings.txt", (String)args.get("labels_url"));
+                downloadIfNecessary("/tmp/tensorflow_inception_graph.pb", model_url);
+                downloadIfNecessary("/tmp/imagenet_comp_graph_label_strings.txt", labels_url);
     			classifier.load_model(new FileInputStream("/tmp/tensorflow_inception_graph.pb"));
     			classifier.load_labels(new FileInputStream(("/tmp/imagenet_comp_graph_label_strings.txt")));
             }
            	
             try (FileOutputStream stream = new FileOutputStream(TMP_IMG_PATH)) {
-                stream.write(downloadBytes((String)args.get("image_url")));
+                stream.write(downloadBytes(image_url));
             }
 
 			output.put("prediction", classifier.predict_image(ImageIO.read(new FileInputStream(TMP_IMG_PATH))));
-		} catch (Throwable e) {
+        } catch (Throwable e) {
 			output.put("exception", e.getMessage());
 			e.printStackTrace();
 		}
+
+        System.out.println(output);
 
         return output;
     }
     
     public static void main(String[] args) throws Exception {
     	HashMap<String, Object> output = new HashMap<>();
-    	output.put("model_url", "http://127.0.0.1:8000/tensorflow_inception_graph.pb");
-    	output.put("labels_url", "http://127.0.0.1:8000/imagenet_comp_graph_label_strings.txt");
-    	output.put("image_url", "http://127.0.0.1:8000/eagle.jpg");
         System.out.println(main(output));
     }
     
