@@ -38,6 +38,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			this.methodName = methodCall.getMethodName();
 			this.gateName = methodName + "callGate";
 			this.gateLib = functionID.concat("-").concat(methodName);
+
+			// System.out.println("Native call gate for method: " + methodName);
 		}
 
 		public CtClass getReturnType() {
@@ -202,7 +204,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				if (m.getClassName().equals("java.lang.System") && m.getMethodName().equals("loadLibrary")) {
 					m.replace(";");
 				}
-				else if (Modifier.isNative(method(m).getModifiers()) && !isInternalClass(m.getClassName())) {
+				else if (isNative(m) && !isInternalClass(m.getClassName())) {
 					CallGate callGate = new CallGate(m);
 					if (addCallGateMethod(behavior.getDeclaringClass(), callGate)) {
 						callGate.createNativeTemplates();
@@ -214,9 +216,17 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		});
 	}
 
-	public void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) {
-		System.out.println("Hello from createHeader");
+	private boolean isNative(MethodCall methodCall) {
+		CtMethod method = null;
+		try {
+			method = methodCall.getMethod();
+			return Modifier.isNative(method.getModifiers());
+		} catch (NotFoundException nfe) {
+			return false;
+		}
+	}
 
+	public void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) {
         setTemplateVariable("headerGuard", "_Included_" + className);
 		setTemplateVariable("returnType", returnJniType);
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
