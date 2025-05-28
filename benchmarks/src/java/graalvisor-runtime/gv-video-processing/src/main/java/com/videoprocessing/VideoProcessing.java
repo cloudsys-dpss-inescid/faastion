@@ -16,6 +16,9 @@ import java.util.HashMap;
 
 public class VideoProcessing {
     
+    private static final String ffmpeg_url = "http://127.0.0.1:8000/ffmpeg";
+    private static final String video_url = "http://127.0.0.1:8000/video.mp4";
+
     public static byte[] downloadBytes(String url) {
         try {
             URLConnection conn = new URL(url).openConnection();
@@ -48,7 +51,7 @@ public class VideoProcessing {
         if (!new File("ffmpeg").exists()) {
             File file = new File("ffmpeg");
             try (FileOutputStream stream = new FileOutputStream(file)) {
-                stream.write(downloadBytes((String)args.get("ffmpeg")));
+                stream.write(downloadBytes(ffmpeg_url));
                 file.setWritable(false);
                 file.setReadable(true);
                 file.setExecutable(true);
@@ -59,7 +62,7 @@ public class VideoProcessing {
         }
         
         try (FileOutputStream stream = new FileOutputStream("video.mp4")) {
-            stream.write(downloadBytes((String)args.get("video")));
+            stream.write(downloadBytes(video_url));
         } catch (Exception e) {
              output.put("output", e.getMessage());
              e.printStackTrace();
@@ -78,8 +81,6 @@ public class VideoProcessing {
 
     public static void main(String[] args) {
         HashMap<String, Object> output = new HashMap<>();
-        output.put("ffmpeg", "http://127.0.0.1:8000/ffmpeg");
-        output.put("video", "http://127.0.0.1:8000/video.mp4");
         output = main(output);
         System.out.println(output);
     }

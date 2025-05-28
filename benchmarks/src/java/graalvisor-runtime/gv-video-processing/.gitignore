@@ -5,7 +5,9 @@ build/
 bin/
 target/
 out/
+ffmpeg
 .idea
+*.mp4
 *.iml
 *.ipr
 *.iws
