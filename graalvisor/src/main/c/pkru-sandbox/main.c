@@ -85,7 +85,7 @@ Elf64_Addr run_fixup(void *l, unsigned int reloc_arg) {
     unsigned int unprivileged_domain;
     
     unprivileged_domain = __rdpkru();
-    privileged_domain = unprivileged_domain & 0x55555554; 
+    privileged_domain = unprivileged_domain & 0x55555554;
     
     __wrpkru(DEFAULT_DOMAIN);
     retval = _dl_fixup(l, reloc_arg);
