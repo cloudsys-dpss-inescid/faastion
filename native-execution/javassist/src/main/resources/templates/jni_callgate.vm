@@ -80,6 +80,10 @@ int open_loader(unsigned int domain) {
     int mspaces = DLL_get_mspace_count();
     printf("mspaces: %d\n", mspaces);
 
+    void (*DLL_set_mspace_lock)(unsigned int, void *) = DLL_sym(dl_handle, "set_mspace_lock");
+    if (!DLL_set_mspace_lock)
+        return -1;
+
     void (*DLL_set_mspace)(unsigned int, void *) = DLL_sym(dl_handle, "set_mspace");
     if (!DLL_set_mspace)
         return -1;
@@ -89,6 +93,7 @@ int open_loader(unsigned int domain) {
         return -1;
 
     DLL_set_mspace(domain, get_mspace(domain));
+    DLL_set_mspace_lock(domain, get_mspace_lock(domain));
     DLL_register_worker_thread(domain, gettid());
 
     mspaces = DLL_get_mspace_count();
