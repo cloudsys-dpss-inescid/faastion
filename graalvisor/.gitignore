@@ -16,5 +16,6 @@
 # Ignore Gradle build output directory
 build/
 
+ffmpeg
 domain_usage.txt
 log_resources.sh
