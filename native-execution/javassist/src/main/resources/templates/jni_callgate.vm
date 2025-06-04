@@ -13,7 +13,7 @@
 #end
 #end
 
-#set( $args = "NULL, NULL" )
+#set( $args = "request->env, request->obj" )
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
 #set( $idx = $foreach.index )
@@ -33,6 +33,7 @@ $include <pkru_sandbox.h>
 $include <domain_manager.h>
 $include <hash_table.h>
 $include <cr_malloc.h>
+$include <jni_wrapper.h>
 
 $include "$headerFilename"
 
@@ -147,18 +148,19 @@ int load_native_method(IsolateFunction *function) {
     return 0;
 }
 
-void nativeMethodInterface(int pkey) {
+void nativeMethodInterface(int domain) {
     printf("enter native method interface\n");
-    IsolateFunction *function = get_pkru_sandbox(pkey);
+    IsolateFunction *function = get_pkru_sandbox(domain);
     if (load_native_method(function))
         exit(EXIT_FAILURE);
 
     printf("global native method symbol: %p\n", _native_method);
 
-    request_t* request = (request_t*) get_domain_arena(pkey);
+    request_t* request = (request_t*) get_domain_arena(domain);
     $returnType (*native_method)($paramTypes) = _native_method; // accessible in worker domain
 
-    __wrpkrumem(DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN));
+    int pku = DOMAIN_TO_PKRU(domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN);
+    __wrpkrumem(pku);
     native_method($args);
     __wrpkru(DEFAULT_DOMAIN);
 
@@ -199,6 +201,10 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     request = (request_t*) get_domain_arena(domain);
     request->fun = nativeMethodInterface;
+    request->env = (JNIEnv *)globalWrapper;
+    request->obj = obj;
+    set_domain_env(domain, env);
+
     aux = (void *)((char *)request + sizeof(request_t));
 
     // Copying the function call argument to arena.
@@ -208,27 +214,16 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
 
     // copy arg$idx
     request->args[$idx] = aux;
-#if( $jniTypes[$idx] != "jstring" )
+#if ( $jniTypes[$idx] != "void" )
     size = $argSizes[$idx];
     request->arg_sizes[$idx] = size;
     memcpy(request->args[$idx], &arg$idx, size);
-#else
-    size = (*env)->GetStringLength(env, arg$idx) * sizeof(short);
-    memcpy(request->args[$idx], (*env)->GetStringChars(env, arg$idx, NULL), size);
-    printf("string size: %ld, content: ", size);
-    for (int i = 0; i < size; i++) {
-        printf("%c", *((char *)request->args[$idx] + i));
-    }
-    printf("\n");
-    fflush(stdout);
+    printf("jstring addr: %p\n", (void *)arg$idx);
+    printf("arg0 value: %p\n", *(($jniTypes[$idx] *)request->args[$idx]));
 #end
     aux = (void *)((char *)aux + size);
 #end
 #end
-
-    // TODO: copy arguments
-    request->env = env;
-    request->obj = obj;
 
     notify_worker(domain);
     wait_worker(domain);
