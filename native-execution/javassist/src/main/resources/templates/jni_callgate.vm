@@ -17,7 +17,7 @@
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
 #set( $idx = $foreach.index )
-#set( $args = "${args}, *(($type *)request->args[${idx}])" )
+#set( $args = "${args}, ($type)request->args[${idx}]" )
 #end
 #end
 
@@ -205,23 +205,16 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     request->obj = obj;
     set_domain_env(domain, env);
 
-    aux = (void *)((char *)request + sizeof(request_t));
-
     // Copying the function call argument to arena.
 #if( $numArgs > 0 )
 #foreach( $_ in [1..$numArgs] )
 #set( $idx = $foreach.index )
 
-    // copy arg$idx
-    request->args[$idx] = aux;
 #if ( $jniTypes[$idx] != "void" )
-    size = $argSizes[$idx];
-    request->arg_sizes[$idx] = size;
-    memcpy(request->args[$idx], &arg$idx, size);
-    printf("jstring addr: %p\n", (void *)arg$idx);
-    printf("arg0 value: %p\n", *(($jniTypes[$idx] *)request->args[$idx]));
+    // copy arg$idx
+    request->args[$idx] = (void *)(unsigned long)arg$idx;
 #end
-    aux = (void *)((char *)aux + size);
+
 #end
 #end
 
