@@ -7,7 +7,9 @@ LIB_DIR		= $(ARGO_HOME)/graalvisor/build/libs
 SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
 MALLOC_DIR	= $(SRC_DIR)/dlmalloc
-INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux -I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
+WRAPPER_DIR = $(SRC_DIR)/jni
+INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux \
+	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
 
 all:
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc.o $(MALLOC_DIR)/malloc.c
@@ -29,11 +31,12 @@ all:
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/worker.o $(PKRU_DIR)/worker.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/jni_monitor.o $(PKRU_DIR)/jni_monitor.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/jvm_monitor.o $(PKRU_DIR)/jvm_monitor.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/jni_wrapper.o $(WRAPPER_DIR)/jni_wrapper.c
 #
 	$(CC) -g -shared -o $(LIB_DIR)/libpkru.so $(LIB_DIR)/domain_manager.o \
 		$(LIB_DIR)/memory_map.o $(LIB_DIR)/main.o $(LIB_DIR)/hash_table.o $(LIB_DIR)/sandbox.o \
 		$(LIB_DIR)/book_keeper.o $(LIB_DIR)/seccomp.o $(LIB_DIR)/worker.o $(LIB_DIR)/jni_monitor.o \
-		$(LIB_DIR)/jvm_monitor.o
+		$(LIB_DIR)/jvm_monitor.o $(LIB_DIR)/jni_wrapper.o
 #
 	$(CC) $(INCLUDE) -c -o $(LIB_DIR)/NativeSandboxInterface.o $(SRC_DIR)/NativeSandboxInterface.c
 	ar rcs $(LIB_DIR)/libNativeSandboxInterface.a $(LIB_DIR)/NativeSandboxInterface.o

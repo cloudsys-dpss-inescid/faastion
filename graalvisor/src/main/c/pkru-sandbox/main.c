@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
+#include "jni_wrapper.h"
 #include "memory_map.h"
 #include "hash_table.h"
 #include "seccomp.h"
@@ -172,6 +173,8 @@ int pkru_sandbox_init()
         fprintf(stderr, "error: failed initializing domains\n");
         return -1;
     }
+
+    init_jni_wrapper();
 
     // Move ld (ld-linux-x86-64.so.2) to domain 1 so that it can be shared.
     protect_library("ld-linux-x86-64", LOADER_DOMAIN);
