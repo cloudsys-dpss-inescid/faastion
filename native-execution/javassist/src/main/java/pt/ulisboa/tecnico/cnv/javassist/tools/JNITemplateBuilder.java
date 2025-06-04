@@ -122,9 +122,20 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			return 4;
 		case "jlong":
 		case "jdouble":
-			return 8;
+		case "jobjectArray":
+		case "jbooleanArray":
+		case "jbyteArray":
+		case "jcharArray":
+		case "jshortArray":
+		case "jintArray":
+		case "jlongArray":
+		case "jfloatArray":
+		case "jdoubleArray":
 		case "jstring":
-			return -1;
+		case "jclass":
+		case "jobject":
+		case "jthrowable":
+			return 8;
 		default:
 			throw new IllegalArgumentException("Unsupported parameter type: " + parameterType);
 		}
