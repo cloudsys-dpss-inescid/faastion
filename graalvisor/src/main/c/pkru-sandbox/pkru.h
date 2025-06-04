@@ -8,25 +8,27 @@
 
 // TODO - have a table for constant conversion.
 // Domain to PKRU conversion table.
-#define DOMAIN_TO_PKRU(domain) (\
-    (domain == 0) ? 0x0 : \
-    (domain == 1) ? 0x55555551 : \
-    (domain == 2) ? 0x55555545 : \
-    (domain == 3) ? 0x55555515 : \
-    (domain == 4) ? 0x55555455 : \
-    (domain == 5) ? 0x55555155 : \
-    (domain == 6) ? 0x55554555 : \
-    (domain == 7) ? 0x55551555 : \
-    (domain == 8) ? 0x55545555 : \
-    (domain == 9) ? 0x55515555 : \
-    (domain == 10) ? 0x55455555 : \
-    (domain == 11) ? 0x55155555 : \
-    (domain == 12) ? 0x54555555 : \
-    (domain == 13) ? 0x51555555 : \
-    (domain == 14) ? 0x45555555 : \
-    (domain == 15) ? 0x15555555 : \
-    -1 \
-)
+static inline int DOMAIN_TO_PKRU(int domain) {
+  switch (domain) {
+    case 0:   return 0x0;
+    case 1:   return 0x55555551;
+    case 2:   return 0x55555545;
+    case 3:   return 0x55555515;
+    case 4:   return 0x55555455;
+    case 5:   return 0x55555155;
+    case 6:   return 0x55554555;
+    case 7:   return 0x55551555;
+    case 8:   return 0x55545555;
+    case 9:   return 0x55515555;
+    case 10:  return 0x55455555;
+    case 11:  return 0x55155555;
+    case 12:  return 0x54555555;
+    case 13:  return 0x51555555;
+    case 14:  return 0x45555555;
+    case 15:  return 0x15555555;
+    default:  return -1;
+  }
+}
 
 #ifndef __wrpkru
 #define __wrpkru(PKRU_ARG)			    \
