@@ -223,7 +223,7 @@ ret Wrapper##function(type var, type2 var2, type3 isCopy) {                     
     __wrpkrumem(privileged_pku);                                                            \
     jsize len = (*(domainEnv[domain]))->get_len(domainEnv[domain], var2);                   \
     ret addr = (*(domainEnv[domain]))->function(domainEnv[domain], var2, NULL);             \
-    ret retval = convert_to_c(addr, len);                                                   \
+    ret retval = convert_to_c(addr, len * sizeof(ret));                                     \
     if (isCopy) *isCopy = JNI_TRUE;                                                         \
     __wrpkrumem(pku);                                                                       \
     return retval;                                                                          \
