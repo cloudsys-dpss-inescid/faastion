@@ -250,19 +250,11 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	public void createSnippet(String[] jniTypes, String returnJniType,
 			String methodName, String className, String gateName)
 	{		
-		int[] argSizes = new int[0];
-		if (jniTypes.length != 0) {
-			argSizes = IntStream.range(0, jniTypes.length)
-				.map(i -> getTypeSize(jniTypes[i]))
-				.toArray();
-		}
-
 		setTemplateVariable("loaderLib", loaderLib);
 		setTemplateVariable("functionID", functionID);
 		setTemplateVariable("nativeLibName", nativeLibName);
 		setTemplateVariable("jniTypes", jniTypes);
 		setTemplateVariable("numArgs", jniTypes.length);
-		setTemplateVariable("argSizes", argSizes);
 		setTemplateVariable("headerFilename", className + ".h");
 		setTemplateVariable("returnType", returnJniType);
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);

@@ -17,7 +17,7 @@
 #if( $numArgs > 0 )
 #foreach( $type in $jniTypes )
 #set( $idx = $foreach.index )
-#set( $args = "${args}, ($type)request->args[${idx}]" )
+#set( $args = "${args},  *(($type *)request->args[${idx}])" )
 #end
 #end
 
@@ -97,9 +97,6 @@ int open_loader(unsigned int domain) {
     DLL_set_mspace_lock(domain, get_mspace_lock(domain));
     DLL_register_worker_thread(domain, gettid());
 
-    mspaces = DLL_get_mspace_count();
-    printf("mspaces: %d\n", mspaces);
-
     return 0;
 }
 
@@ -161,10 +158,14 @@ void nativeMethodInterface(int domain) {
 
     int pku = DOMAIN_TO_PKRU(domain) & DOMAIN_TO_PKRU(LOADER_DOMAIN);
     __wrpkrumem(pku);
+#if ( $returnType == "void" )
     native_method($args);
     __wrpkru(DEFAULT_DOMAIN);
-
-    // TODO: implement correct return value
+#else
+    $returnType retval = native_method($args);
+    __wrpkru(DEFAULT_DOMAIN);
+    memcpy(request->ret, &retval, sizeof($returnType));
+#end
 }
 
 /*
@@ -203,35 +204,36 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     request->fun = nativeMethodInterface;
     request->env = (JNIEnv *)globalWrapper;
     request->obj = obj;
-    set_domain_env(domain, env);
 
-    // Copying the function call argument to arena.
+    aux = (void *)((char *)request + sizeof(request_t));
 #if( $numArgs > 0 )
 #foreach( $_ in [1..$numArgs] )
 #set( $idx = $foreach.index )
-
 #if ( $jniTypes[$idx] != "void" )
-    // copy arg$idx
-    request->args[$idx] = (void *)(unsigned long)arg$idx;
+    size = sizeof(arg$idx);
+    request->args[$idx] = aux;
+    memcpy(request->args[$idx], &arg$idx, size);
+    aux = (void *)((char *)aux + size);
+#end
+#end
 #end
 
-#end
+#if ( $returnType != "void" )
+    request->ret = aux;
 #end
 
+    set_domain_env(domain, env);
     notify_worker(domain);
     wait_worker(domain);
-    // fprintf(stderr, "User thread notify\n");
-   
-    // Copying return value to arena and setting ret and ret_size pointers.
-    // __attribute__((unused)) void *ret = (void*) (((char*) request->arg) + arg_size);
-    // *ret_size = request->ret_size; // TODO
-    // memcpy(*ret, request->ret, request->ret_size); // TODO
-	// return ret; // TODO: implement correct return value
-    pthread_mutex_unlock(request_lock);
 
+#if ( $returnType != "void" )
+    $returnType retval = *(($returnType *)request->ret);
+#end
+    pthread_mutex_unlock(request_lock);
     leave_sandbox_domain(function);
 
     print_systime();
-
-    return;
+#if ( $returnType != "void" )
+    return retval;
+#end
 }
