@@ -30,16 +30,16 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		private String[] parameters;
 
 		public CallGate(MethodCall methodCall) {
-			CtMethod method = method(methodCall);			
+			CtMethod method = getMethodFromMethodCall(methodCall);			
 			this.returnType = returnType(method);
 			this.parameters = parameterTypes(method);
+			this.methodName = method.getName();
 			this.signature = method.getSignature();
-			this.className = methodCall.getClassName(); 
-			this.methodName = methodCall.getMethodName();
+			this.className = method.getDeclaringClass().getName(); 
 			this.gateName = methodName + "callGate";
 			this.gateLib = functionID.concat("-").concat(methodName);
 
-			// System.out.println("Native call gate for method: " + methodName);
+			System.out.println("Native method call " + className + "." + methodName);
 		}
 
 		public CtClass getReturnType() {
@@ -77,7 +77,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 					.toArray(String[]::new);
 
 			String name = className.replace(".", "_");
-			createHeader(jniTypes, returnJniType, name, gateName);
+			createHeader(jniTypes, returnJniType, methodName, name, gateName);
 			createSnippet(jniTypes, returnJniType, methodName, name, gateName);
 		}
 
@@ -212,10 +212,18 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		behavior.instrument(new ExprEditor() {
 
 			public void edit(MethodCall m) throws CannotCompileException {
-				if (m.getClassName().equals("java.lang.System") && m.getMethodName().equals("loadLibrary")) {
+				CtMethod method = getMethodFromMethodCall(m);
+				String className = method.getDeclaringClass().getName();
+				String methodName = method.getName();
+
+				// System.out.println("Instrument method call: " + className + "." + methodName);
+
+				if (isLoadLibrary(className, methodName)) {
+					System.out.println("Found load library method call");
 					m.replace(";");
-				}
-				else if (isNative(m) && !isInternalClass(m.getClassName())) {
+				} 
+				
+				else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(className)) {
 					CallGate callGate = new CallGate(m);
 					if (addCallGateMethod(behavior.getDeclaringClass(), callGate)) {
 						callGate.createNativeTemplates();
@@ -227,35 +235,50 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		});
 	}
 
-	private boolean isNative(MethodCall methodCall) {
-		CtMethod method = null;
+	private CtMethod getMethodFromMethodCall(MethodCall methodCall) {
+		CtMethod method;
 		try {
 			method = methodCall.getMethod();
-			return Modifier.isNative(method.getModifiers());
 		} catch (NotFoundException nfe) {
-			return false;
+			throw new RuntimeException("Method could not be found");
 		}
+		return method;
 	}
 
-	public void createHeader(String[] jniTypes, String returnJniType, String className, String gateName) {
+	private boolean isLoadLibrary(String className, String methodName) {
+		return className.equals("java.lang.System") && methodName.equals("loadLibrary");
+	}
+
+	private String getHeaderFilename(String methodName, String className) {
+		return className + "_" + methodName + ".h";
+	}
+
+	public void createHeader(String[] jniTypes, String returnJniType,
+			String methodName, String className, String gateName)
+	{
+		String headerFilename = getHeaderFilename(methodName, className);
+
         setTemplateVariable("headerGuard", "_Included_" + className);
 		setTemplateVariable("returnType", returnJniType);
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("jniTypes", jniTypes);
 
-		buildTemplate("templates/jni_header.vm", templateDir, className + ".h");
+		buildTemplate("templates/jni_header.vm", templateDir, headerFilename);
 	}
 
 	public void createSnippet(String[] jniTypes, String returnJniType,
 			String methodName, String className, String gateName)
 	{		
+		String headerFilename = getHeaderFilename(methodName, className);
+
+		setTemplateVariable("methodName", methodName);
 		setTemplateVariable("loaderLib", loaderLib);
 		setTemplateVariable("functionID", functionID);
 		setTemplateVariable("nativeLibName", nativeLibName);
 		setTemplateVariable("jniTypes", jniTypes);
 		setTemplateVariable("numArgs", jniTypes.length);
-		setTemplateVariable("headerFilename", className + ".h");
+		setTemplateVariable("headerFilename", headerFilename);
 		setTemplateVariable("returnType", returnJniType);
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
 		setTemplateVariable("nativeMethod", "Java_" + className + "_" + methodName);
@@ -309,16 +332,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		return true;
 	}
 
-	public CtMethod method(MethodCall methodCall) {
-		CtMethod method;
-		try {
-			method = methodCall.getMethod();
-		} catch (NotFoundException nfe) {
-			throw new RuntimeException("Method could not be found");
-		}
-		return method;
-	}
-
 	public CtClass returnType(CtMethod method) {
 		CtClass returnType;
 		try {
@@ -345,8 +358,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		return className.startsWith("com.sun.") ||
 				className.startsWith("java.") ||
 				className.startsWith("sun.") ||
-				className.startsWith("jdk.") ||
-				className.startsWith("org.") ||
-				className.startsWith("byte[]");
+				className.startsWith("jdk.");
 	}
 }
