@@ -16,6 +16,10 @@ void *_native_method;
 static __thread void *(*DLL_open)(const char *) = NULL;
 static __thread void *(*DLL_sym)(void *, const char *) = NULL;
 
+// These symbols are resolved at runtime via LD_PRELOAD
+__attribute__((weak)) mspace get_mspace(unsigned int pkey);
+__attribute__((weak)) void *get_mspace_lock(unsigned int pkey);
+
 static int open_loader(unsigned int domain) {
     char *error;
 
