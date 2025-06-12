@@ -8,10 +8,13 @@ SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
 MALLOC_DIR	= $(SRC_DIR)/dlmalloc
 WRAPPER_DIR = $(SRC_DIR)/jni
+NATIVE_INTERFACE_DIR = $(SRC_DIR)/native-interface
 INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux \
 	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
 
 all:
+	$(CC) $(CFLAGS) $(INCLUDE) -DLOADER_LIB="\"$(LIB_DIR)/libloader.so\"" -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/jni_handle.o $(NATIVE_INTERFACE_DIR)/jni_handle.c
+
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc.o $(MALLOC_DIR)/malloc.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/cr_malloc.o $(MALLOC_DIR)/cr_malloc.c
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/log.o $(MALLOC_DIR)/log.c
