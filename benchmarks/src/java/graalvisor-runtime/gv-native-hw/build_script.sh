@@ -84,18 +84,14 @@ function build_native_library {
 }
 
 function build_snippets {
-	pathname=$(ls "$SNIPPETS_DIR"/*.c)
-	file=${pathname##*/}
-	name=${file%.*}
-	gcc $SFLAGS -DREMOVE_NNS_LIMIT -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
+	export NATIVE_LIB_NAME=lib${FUNCTION_ID}-pkru.so
+	make
 }
 
 function manipulate_bytecode {
 	CLASS_PATH="build/classes/java/main"
 	ENTRYPOINT="com.jni.HelloJNI"
 	TOOL="JNITemplateBuilder"
-
-	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-printHello.so
 
 	mkdir -p $DIR/build/snippets
 

@@ -37,7 +37,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			this.signature = method.getSignature();
 			this.className = method.getDeclaringClass().getName(); 
 			this.gateName = methodName + "callGate";
-			this.gateLib = functionID.concat("-").concat(methodName);
+			this.gateLib = functionID.concat("-").concat("pkru");
 
 			System.out.println("Native method call " + className + "." + methodName);
 		}
