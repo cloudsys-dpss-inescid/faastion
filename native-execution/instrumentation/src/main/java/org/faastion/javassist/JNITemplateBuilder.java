@@ -21,31 +21,61 @@ import javassist.CtNewMethod;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
-	// public static native void load_native_library(String lib);
+	private final String loadNativeLib = 
+"void load_native_library(String libName);";
 
-	private class LoadWrapperMethod {
-		private final String methodBody =
-"{"																			+
-"   System.out.println(libName);"                                           +
-"   java.io.File file = new java.io.File(libName);"                         +
-"   if (file.isFile()) {"                                                   +
-"       System.loadLibrary(\"" + wrapperLib + "\");"                            +
-"		load_native_library(libName);"										+
-"   }"                                                                      +
+	private class LoadWrapper {
+
+		private final String loadWrapper = 
+"public static void loadWrapper(String pathName) {"							+
+"	if (pathName == null) {"												+
+"		throw new NullPointerException();"									+
+"	}"																		+
+"	System.out.println(pathName);"											+
+"	java.io.File file = new java.io.File(pathName);"						+
+"	if (file.isFile()) {"													+
+"		System.load(\"" + wrapperLib + "\");"								+
+"		load_native_library(pathName);"										+
+"		return;"															+
+"	}"																		+
+"	throw new UnsatisfiedLinkError();"										+
 "}";
 
-		private final String modifiers = "public static void ";
-
-		private final String parameterList = "(String libName)";
+		private final String loadLibraryWrapper = 
+"public static void loadLibraryWrapper(String libName) {"					+
+"	if (libName == null) {"													+
+"		throw new NullPointerException();"									+
+"	}"																		+
+"	System.out.println(libName);"											+
+"	String libraryPath = System.getProperty(\"java.library.path\");"		+
+"	String[] folders = libraryPath.split(\":\");"							+
+"	for (int i = 0; i < folders.length; i++) {"								+
+"		String pathName = folders[i] + \"/lib\" + libName + \".so\";"		+
+"		java.io.File file = new java.io.File(pathName);"					+
+"		if (file.isFile()) {"												+
+"			System.load(\"" + wrapperLib + "\");"							+
+"			load_native_library(pathName);"									+
+"			return;"														+
+"		}"																	+
+"	}"																		+
+"	throw new UnsatisfiedLinkError();"										+
+"}";
 
 		private String methodName;
 
-		public LoadWrapperMethod(String methodName) {
+		public LoadWrapper(String methodName) {
 			this.methodName = methodName;
 		}
 
 		public String toString() {
-			return modifiers + methodName + parameterList + methodBody;
+			switch (methodName) {
+			case "loadWrapper":
+				return loadWrapper;
+			case "loadLibraryWrapper":
+				return loadLibraryWrapper;
+			default:
+				throw new RuntimeException("Invalid load wrapper method");
+			}
 		}
 
 	}
@@ -130,7 +160,10 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.concat("-jni.so");
 		loaderLib = System.getenv("ARGO_HOME")
 				.concat("/graalvisor/build/libs/libloader.so");
-		wrapperLib = System.getenv("BENCHMARK_NAME").concat("-wrapper.so");
+		wrapperLib = System.getenv("ARGO_HOME")
+				.concat("/graalvisor/build/libs/lib")
+				.concat(System.getenv("BENCHMARK_NAME"))
+				.concat("-wrapper.so");
 
 		// default variables to escape the preprocessor directives in C
 		setTemplateVariable("include", "#include");
@@ -268,18 +301,16 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	private void defineLoadWrapper(CtClass clazz, String methodName) throws CannotCompileException {
-		System.out.println("New load wrapper: " + methodName);
+		System.out.println("Load library method call");
 
 		if (!isDeclared(clazz, "load_native_library", "(Ljava/lang/String;)V")) {
-			CtMethod newMethod = CtNewMethod.make(
-					"public static void load_native_library(String libName);",
-					clazz);
+			CtMethod newMethod = CtNewMethod.make(loadNativeLib, clazz);
+			newMethod.setModifiers(Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
 			clazz.addMethod(newMethod);
 		}
 		
 		if (!isDeclared(clazz, methodName, "(Ljava/lang/String;)V")) {
-			String loadWrapperMethod = new LoadWrapperMethod(methodName).toString();
-            CtMethod newMethod = CtNewMethod.make(loadWrapperMethod, clazz);
+            CtMethod newMethod = CtNewMethod.make(new LoadWrapper(methodName).toString(), clazz);
             clazz.addMethod(newMethod);
         }
 	}
