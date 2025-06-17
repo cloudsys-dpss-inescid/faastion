@@ -21,6 +21,35 @@ import javassist.CtNewMethod;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
+	// public static native void load_native_library(String lib);
+
+	private class LoadWrapperMethod {
+		private final String methodBody =
+"{"																			+
+"   System.out.println(libName);"                                           +
+"   java.io.File file = new java.io.File(libName);"                         +
+"   if (file.isFile()) {"                                                   +
+"       System.loadLibrary(\"" + wrapperLib + "\");"                            +
+"		load_native_library(libName);"										+
+"   }"                                                                      +
+"}";
+
+		private final String modifiers = "public static void ";
+
+		private final String parameterList = "(String libName)";
+
+		private String methodName;
+
+		public LoadWrapperMethod(String methodName) {
+			this.methodName = methodName;
+		}
+
+		public String toString() {
+			return modifiers + methodName + parameterList + methodBody;
+		}
+
+	}
+
 	private class CallGate {
 		private CtClass returnType;
 		private String signature;
@@ -88,6 +117,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	private String templateDir;
 	private String nativeLibName;
 	private String loaderLib;
+	private String wrapperLib;
 
 	public JNITemplateBuilder() {
 		super();
@@ -100,6 +130,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 				.concat("-jni.so");
 		loaderLib = System.getenv("ARGO_HOME")
 				.concat("/graalvisor/build/libs/libloader.so");
+		wrapperLib = System.getenv("BENCHMARK_NAME").concat("-wrapper.so");
 
 		// default variables to escape the preprocessor directives in C
 		setTemplateVariable("include", "#include");
@@ -217,29 +248,11 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 				// System.out.println("Instrument method call: " + className + "." + methodName);
 
-				if (isLoadLibrary(className, methodName)) {
-					System.out.println("Found load library method call");
+				if (isLoadMethod(className, methodName)) {
 					CtClass clazz = behavior.getDeclaringClass();
-                    if (!isDeclared(clazz, "loadNativeInterfaceLibrary", "(Ljava/lang/String;)V")) {
-                        CtMethod newMethod = CtNewMethod.make(
-                            "public static void loadNativeInterfaceLibrary(String libName) { System.out.println(\"[load library] \" + libName); System.loadLibrary(libName); }",
-                            clazz);
-                        clazz.addMethod(newMethod);
-                    }
-                    m.replace("loadNativeInterfaceLibrary($1);");
-					// m.replace(";");
-				}
-
-				else if (isLoad(className, methodName)) {
-					System.out.println("Found load method call");
-					CtClass clazz = behavior.getDeclaringClass();
-                    if (!isDeclared(clazz, "loadNativeInterface", "(Ljava/lang/String;)V")) {
-                        CtMethod newMethod = CtNewMethod.make(
-                            "public static void loadNativeInterface(String libName) { System.out.println(\"[load] \" + libName); System.load(libName); }",
-                            clazz);
-                        clazz.addMethod(newMethod);
-                    }
-                    m.replace("loadNativeInterface($1);");
+					String wrapperMethodName = methodName + "Wrapper";
+					defineLoadWrapper(clazz, wrapperMethodName);
+                    m.replace(String.format("%s($1);", wrapperMethodName));
 				}
 				
 				else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(className)) {
@@ -254,6 +267,28 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		});
 	}
 
+	private void defineLoadWrapper(CtClass clazz, String methodName) throws CannotCompileException {
+		System.out.println("New load wrapper: " + methodName);
+
+		if (!isDeclared(clazz, "load_native_library", "(Ljava/lang/String;)V")) {
+			CtMethod newMethod = CtNewMethod.make(
+					"public static void load_native_library(String libName);",
+					clazz);
+			clazz.addMethod(newMethod);
+		}
+		
+		if (!isDeclared(clazz, methodName, "(Ljava/lang/String;)V")) {
+			String loadWrapperMethod = new LoadWrapperMethod(methodName).toString();
+            CtMethod newMethod = CtNewMethod.make(loadWrapperMethod, clazz);
+            clazz.addMethod(newMethod);
+        }
+	}
+
+	private boolean isLoadMethod(String className, String methodName) {
+		return className.equals("java.lang.System") && 
+			(methodName.equals("load") || methodName.equals("loadLibrary"));
+	}
+
 	private CtMethod getMethodFromMethodCall(MethodCall methodCall) {
 		CtMethod method;
 		try {
@@ -262,14 +297,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			throw new RuntimeException("Method could not be found");
 		}
 		return method;
-	}
-
-	private boolean isLoad(String className, String methodName) {
-		return className.equals("java.lang.System") && methodName.equals("load");
-	}
-
-	private boolean isLoadLibrary(String className, String methodName) {
-		return className.equals("java.lang.System") && methodName.equals("loadLibrary");
 	}
 
 	private String getHeaderFilename(String methodName, String className) {
