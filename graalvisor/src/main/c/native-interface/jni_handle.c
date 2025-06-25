@@ -79,40 +79,18 @@ static int open_loader(unsigned int domain) {
     return 0;
 }
 
-static void *get_handle(IsolateFunction *function, const char *filename) {
+// TODO: return list of handles
+static void *get_handle(IsolateFunction *function) {
     printf("enter get handle\n");
-    
-    int domain = function->current_domain;
-#ifdef REMOVE_NNS_LIMIT
-    IsolateFunction *primary_function = get_primary_pkru_sandbox(domain);
-    printf("primary function: %p\n", primary_function);
-    if (primary_function) {
-        return primary_function->dl_handle;
-    }
-#endif
-
-    if (function->dl_handle != NULL) {
-        return function->dl_handle;
-    } else if (open_loader(domain)) {
-        return NULL;
-    } else {
-        set_running_untrusted(1);
-        function->dl_handle = DLL_open(filename);
-    }
-
-#ifdef REMOVE_NNS_LIMIT
-    if (function->dl_handle)
-        set_primary_pkru_sandbox(domain, function);
-#endif
-
     return function->dl_handle;
 }
 
-int load_native_method(IsolateFunction *function, const char *filename, const char *symbol) {
+// TODO: iterate over list of handles to find the symbol
+int load_native_method(IsolateFunction *function, const char *symbol) {
     printf("enter load native method\n");
     void *dl_handle;
     
-    if ((dl_handle = get_handle(function, filename)) == NULL)
+    if ((dl_handle = get_handle(function)) == NULL)
         return -1;
 
     printf("dl_handle: %p\n", dl_handle);
@@ -122,4 +100,40 @@ int load_native_method(IsolateFunction *function, const char *filename, const ch
         return -1;
 
     return 0;
+}
+
+void load_native_library(IsolateFunction *function, const char *filename) {
+    printf("enter load native library\n");
+
+    int domain;
+    
+    domain = function->current_domain;
+#ifdef REMOVE_NNS_LIMIT
+    IsolateFunction *primary_function = get_primary_pkru_sandbox(domain);
+    printf("primary function: %p\n", primary_function);
+    if (primary_function) {
+        return;
+    }
+#endif
+
+    if (DLL_open == NULL) {
+        open_loader(domain);
+    }
+
+    printf("open_loader: success\n");
+
+    set_running_untrusted(1);
+    if ((function->dl_handle = DLL_open(filename)) == NULL) {
+        fprintf(stderr, "Error loading native library: %s\n", filename);
+        exit(1);
+    }
+
+    printf("function handle: %p\n", function->dl_handle);
+
+#ifdef REMOVE_NNS_LIMIT
+    if (function->dl_handle)
+        set_primary_pkru_sandbox(domain, function);
+#endif
+
+    return;
 }
