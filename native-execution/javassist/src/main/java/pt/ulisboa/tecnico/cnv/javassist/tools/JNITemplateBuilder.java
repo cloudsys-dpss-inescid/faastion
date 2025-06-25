@@ -16,7 +16,7 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
-
+import javassist.CtNewMethod;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
@@ -193,6 +193,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		case "java.lang.Class":
 			return "jclass";
 		case "java.lang.Object":
+		case "java.nio.ByteBuffer":
 			return "jobject";
 		case "java.lang.Throwable":
 			return "jthrowable";
@@ -220,15 +221,35 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 				if (isLoadLibrary(className, methodName)) {
 					System.out.println("Found load library method call");
-					m.replace(";");
-				} 
+					CtClass clazz = behavior.getDeclaringClass();
+                    if (!isDeclared(clazz, "loadNativeInterfaceLibrary", "(Ljava/lang/String;)V")) {
+                        CtMethod newMethod = CtNewMethod.make(
+                            "public static void loadNativeInterfaceLibrary(String libName) { System.out.println(\"[load library] \" + libName); System.loadLibrary(libName); }",
+                            clazz);
+                        clazz.addMethod(newMethod);
+                    }
+                    m.replace("loadNativeInterfaceLibrary($1);");
+					// m.replace(";");
+				}
+
+				else if (isLoad(className, methodName)) {
+					System.out.println("Found load method call");
+					CtClass clazz = behavior.getDeclaringClass();
+                    if (!isDeclared(clazz, "loadNativeInterface", "(Ljava/lang/String;)V")) {
+                        CtMethod newMethod = CtNewMethod.make(
+                            "public static void loadNativeInterface(String libName) { System.out.println(\"[load] \" + libName); System.load(libName); }",
+                            clazz);
+                        clazz.addMethod(newMethod);
+                    }
+                    m.replace("loadNativeInterface($1);");
+				}
 				
 				else if (Modifier.isNative(method.getModifiers()) && !isInternalClass(className)) {
 					CallGate callGate = new CallGate(m);
 					if (addCallGateMethod(behavior.getDeclaringClass(), callGate)) {
 						callGate.createNativeTemplates();
 					}
-					m.replace((callGate.returnTypeIsVoid() ? "" : "$_=") + callGate.getGateName() + "($$);");
+					// m.replace((callGate.returnTypeIsVoid() ? "" : "$_=") + callGate.getGateName() + "($$);");
 				}
 			}
 
@@ -243,6 +264,10 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			throw new RuntimeException("Method could not be found");
 		}
 		return method;
+	}
+
+	private boolean isLoad(String className, String methodName) {
+		return className.equals("java.lang.System") && methodName.equals("load");
 	}
 
 	private boolean isLoadLibrary(String className, String methodName) {
@@ -304,11 +329,11 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		clazz.addMethod(nativeMethod);
 	}
 
-	public boolean isCallGateDeclared(CtClass clazz, String signature, String gateName) {
+	public boolean isDeclared(CtClass clazz, String methodName, String signature) {
 		CtMethod[] declaredMethods = clazz.getDeclaredMethods();
 
 		for (CtMethod method : declaredMethods) {
-			if (method.getName().equals(gateName) && method.getSignature().equals(signature)) {
+			if (method.getName().equals(methodName) && method.getSignature().equals(signature)) {
 				return true;
 			}
 		}
@@ -317,17 +342,17 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	boolean addCallGateMethod(CtClass clazz, CallGate callGate) {
-		if (isCallGateDeclared(clazz, callGate.getSignature(), callGate.getGateName())) {
+		if (isDeclared(clazz, callGate.getGateName(), callGate.getSignature())) {
 			return false;
 		}
 
-		try {
-			CtConstructor staticInitializer = clazz.makeClassInitializer();
-			staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getGateLib() + "\");");
-			declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
-		} catch (NotFoundException | CannotCompileException e) {
-			throw new RuntimeException("Could not declare call gate");
-		}
+		// try {
+		// 	CtConstructor staticInitializer = clazz.makeClassInitializer();
+		// 	staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getGateLib() + "\");");
+		// 	declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
+		// } catch (NotFoundException | CannotCompileException e) {
+		// 	throw new RuntimeException("Could not declare call gate");
+		// }
 		
 		return true;
 	}
