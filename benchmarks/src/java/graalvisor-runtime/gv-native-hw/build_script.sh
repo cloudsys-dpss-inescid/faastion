@@ -84,14 +84,14 @@ function build_native_library {
 }
 
 function build_snippets {
-	export NATIVE_LIB_NAME=lib${FUNCTION_ID}-pkru.so
 	make
 }
 
 function manipulate_bytecode {
-	CLASS_PATH="build/classes/java/main"
-	ENTRYPOINT="com.jni.HelloJNI"
-	TOOL="JNITemplateBuilder"
+	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
+	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
+
+	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-wrapper.so
 
 	mkdir -p $DIR/build/snippets
 
@@ -100,16 +100,7 @@ function manipulate_bytecode {
 	export FUNCTION_ID="$FUNCTION_ID"
 	export ENV="memisolation"
 
-	# cmd="$DEF_JAVA_HOME/bin/java \
-	# 		-cp $CLASS_PATH \
-	# 		-javaagent:$JAVA_AGENT=$TOOL:com.jni:output \
-	# 		$ENTRYPOINT"
-	# echo "$cmd"
-
-	$DEF_JAVA_HOME/bin/java \
-			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL::output \
-			$ENTRYPOINT
+	$DEF_JAVA_HOME/bin/java -cp $CLASS_PATH $ENTRYPOINT build/libs/native-hw-1.0-all.jar
 
 	echo "check snippets"
 }

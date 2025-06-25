@@ -24,7 +24,7 @@ LIB_CFLAGS += -Wall -Wl,--no-undefined
 LIB_DIR = $(GRAALVISOR_HOME)/build/libs
 
 all: $(OBJS)
-	$(CC) $(LIB_CFLAGS) -o $(LIB_DIR)/$(NATIVE_LIB_NAME) $^ $(LIB_DIR)/jni_handle.o -L$(LIB_DIR) -lpkru
+	$(CC) $(LIB_CFLAGS) -o $(LIB_DIR)/lib$(BENCHMARK_NAME)-wrapper.so $^ $(LIB_DIR)/jni_handle.o -L$(LIB_DIR) -lpkru
 
 clean:
 	rm -r $(SNIPPETS_DIR)/*.o
