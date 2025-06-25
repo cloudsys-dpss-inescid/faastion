@@ -11,7 +11,7 @@ ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
 CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/jni -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox/src"
 
 BENCHMARK_NAME="classify"
 SNIPPETS_DIR="$DIR/build/snippets"
@@ -55,7 +55,7 @@ function build_ni {
 	$JAVA_HOME/bin/native-image \
 		--no-fallback \
 		--enable-url-protocols=http \
-		-cp libs/classify-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
+		-cp $CLASS_PATH:libs/classify-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 		--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
@@ -67,12 +67,44 @@ function build_ni {
 	cd -
 }
 
+function build_faastion_image {
+	FUNCTION_ID="$BENCHMARK_NAME"
+	manipulate_bytecode
+	build_snippets
+
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
+	build_ni
+}
+
 function build_vanila_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
 
 	build_ni
+}
+
+function build_snippets {
+	make
+}
+
+function manipulate_bytecode {
+	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
+	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
+
+	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-wrapper.so
+
+	mkdir -p $DIR/build/snippets
+
+	export BENCHMARK_NAME="$BENCHMARK_NAME"
+	export SNIPPETS_DIR="$SNIPPETS_DIR"
+	export FUNCTION_ID="$FUNCTION_ID"
+	export ENV="memisolation"
+
+	$DEF_JAVA_HOME/bin/java -cp $CLASS_PATH $ENTRYPOINT build/libs/classify-1.0-all.jar
+
+	echo "check snippets"
 }
 
 if [ -z "$ARGO_HOME" ]
@@ -88,7 +120,7 @@ then
 fi
 
 # Build graalvisor lib.
-bash $ARGO_HOME/graalvisor-lib/build.sh
+#bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Move into the script directory.
 cd $DIR &> /dev/null
@@ -111,6 +143,8 @@ if [ ! -d config-dir ]; then
 	fi
 fi
 
-build_native_binary
+#build_native_binary
 
-build_vanila_image
+#build_vanila_image
+
+build_faastion_image

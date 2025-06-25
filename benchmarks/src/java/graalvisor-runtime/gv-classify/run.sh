@@ -12,7 +12,7 @@ function println {
 	echo -n -e '\n'
 }
 
-curl -s -X POST $HOST:$PORT/register?name=$NAME\&entryPoint=com.classify.Classify\&language=java\&sandbox=process \
+curl -s -X POST $HOST:$PORT/register?name=$NAME\&entryPoint=com.classify.Classify\&language=java \
 	-H 'Content-Type: application/json' --data-binary @"${DIR}/build/lib${NAME}.so" \
 && println \
 && curl -s -X POST $HOST:$PORT -H 'Content-Type: application/json' \

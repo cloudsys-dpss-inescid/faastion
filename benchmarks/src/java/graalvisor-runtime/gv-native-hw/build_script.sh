@@ -125,10 +125,10 @@ then
 fi
 
 # Build graalvisor lib.
-bash $ARGO_HOME/graalvisor-lib/build.sh
+# bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Build java agent.
-build_java_agent
+# build_java_agent
 
 # Move into the script directory.
 cd $DIR &> /dev/null
@@ -136,11 +136,11 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-build_native_binary # for LPI
+# build_native_binary # for LPI
 
 build_native_library # compile jni code
 
-build_vanila_image # to benchmark vanila
+# build_vanila_image # to benchmark vanila
 
 build_faastion_image # to benchmark faastion
 
