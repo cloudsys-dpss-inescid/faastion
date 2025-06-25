@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.lang.System;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import javassist.CannotCompileException;
@@ -21,8 +23,10 @@ import javassist.CtNewMethod;
 
 public class JNITemplateBuilder extends TemplateBuilder {
 
+	private Set<String> createdSnippets;
+
 	private final String loadNativeLib = 
-"void load_native_library(String libName);";
+"void loadNativeLibrary(String libName);";
 
 	private class LoadWrapper {
 
@@ -35,7 +39,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "	java.io.File file = new java.io.File(pathName);"						+
 "	if (file.isFile()) {"													+
 "		System.load(\"" + wrapperLib + "\");"								+
-"		load_native_library(pathName);"										+
+"		loadNativeLibrary(pathName);"										+
 "		return;"															+
 "	}"																		+
 "	throw new UnsatisfiedLinkError();"										+
@@ -54,7 +58,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "		java.io.File file = new java.io.File(pathName);"					+
 "		if (file.isFile()) {"												+
 "			System.load(\"" + wrapperLib + "\");"							+
-"			load_native_library(pathName);"									+
+"			loadNativeLibrary(pathName);"									+
 "			return;"														+
 "		}"																	+
 "	}"																		+
@@ -96,7 +100,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			this.methodName = method.getName();
 			this.signature = method.getSignature();
 			this.className = method.getDeclaringClass().getName(); 
-			this.gateName = methodName + "callGate";
+			// this.gateName = methodName + "callGate";
+			this.gateName = methodName;
 			this.gateLib = functionID.concat("-").concat("pkru");
 
 			System.out.println("Native method call " + className + "." + methodName);
@@ -151,6 +156,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 	public JNITemplateBuilder() {
 		super();
+
+		createdSnippets = new HashSet<>();
 
 		functionID = System.getenv("FUNCTION_ID");
 		templateDir = System.getenv("SNIPPETS_DIR");
@@ -303,10 +310,14 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	private void defineLoadWrapper(CtClass clazz, String methodName) throws CannotCompileException {
 		System.out.println("Load library method call");
 
-		if (!isDeclared(clazz, "load_native_library", "(Ljava/lang/String;)V")) {
+		String nativeMethodName = "loadNativeLibrary";
+		if (!isDeclared(clazz, nativeMethodName, "(Ljava/lang/String;)V")) {
 			CtMethod newMethod = CtNewMethod.make(loadNativeLib, clazz);
 			newMethod.setModifiers(Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
 			clazz.addMethod(newMethod);
+			String className = clazz.getName().replace(".", "_");
+			createHeader(new String[] {"jstring"}, "void", nativeMethodName, className, nativeMethodName);
+			createLoadNativeLibrarySnippet(nativeMethodName, className);
 		}
 		
 		if (!isDeclared(clazz, methodName, "(Ljava/lang/String;)V")) {
@@ -332,6 +343,13 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 	private String getHeaderFilename(String methodName, String className) {
 		return className + "_" + methodName + ".h";
+	}
+
+	public void createLoadNativeLibrarySnippet(String methodName, String className) {
+		String headerFilename = getHeaderFilename(methodName, className);
+		setTemplateVariable("headerFilename", headerFilename);
+		setTemplateVariable("load_native_library", "Java_" + className + "_" + methodName);
+		buildTemplate("templates/jni_wrapper_lib.vm", templateDir, className + "_" + methodName + ".c");
 	}
 
 	public void createHeader(String[] jniTypes, String returnJniType,
@@ -364,7 +382,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
 		setTemplateVariable("nativeMethod", "Java_" + className + "_" + methodName);
 
-		buildTemplate("templates/jni_callgate.vm", templateDir, methodName + ".c");
+		buildTemplate("templates/jni_callgate.vm", templateDir, className + "_" + methodName + ".c");
 	}
 
 	public void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType, String gateName)
@@ -398,19 +416,15 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	boolean addCallGateMethod(CtClass clazz, CallGate callGate) {
-		if (isDeclared(clazz, callGate.getGateName(), callGate.getSignature())) {
-			return false;
-		}
-
-		// try {
-		// 	CtConstructor staticInitializer = clazz.makeClassInitializer();
-		// 	staticInitializer.insertBefore("System.loadLibrary(\"" + callGate.getGateLib() + "\");");
-		// 	declareCallGate(clazz, callGate.getParameters(), callGate.getReturnType(), callGate.getGateName());
-		// } catch (NotFoundException | CannotCompileException e) {
-		// 	throw new RuntimeException("Could not declare call gate");
-		// }
+		String className = clazz.getName().replace(".", "_");
+		String snippetMethod = className + "_" + callGate;
 		
-		return true;
+		if (createdSnippets.contains(snippetMethod)) {
+			return false;
+		} else {
+			createdSnippets.add(snippetMethod);
+			return true;
+		}
 	}
 
 	public CtClass returnType(CtMethod method) {
