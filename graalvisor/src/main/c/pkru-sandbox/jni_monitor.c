@@ -84,6 +84,7 @@ static void handle_syscalls(int pkey) {
             break;
         case __NR_clone3:
         case __NR_clone:
+            fprintf(stderr, "[JNI montitor] received clone syscall\n");
             increment_sandbox_threads(function);
             resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
             break;
