@@ -14,7 +14,23 @@ public class HelloJNI {
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
         HashMap<String, Object> output = new HashMap<>();
-        printHello();
+
+        Thread t1 = new Thread(() -> {
+            printHello();
+        });
+        Thread t2 = new Thread(() -> {
+            printHello();
+        });
+        t1.start();
+        t2.start();
+        
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        }
+
         return output;
     }
 
