@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean gen_wrappers
 
 CC			= gcc
 CFLAGS		= -g -Wall -fPIC
@@ -7,12 +7,13 @@ LIB_DIR		= $(ARGO_HOME)/graalvisor/build/libs
 SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
 MALLOC_DIR	= $(SRC_DIR)/dlmalloc
+LOADER_DIR 	= $(SRC_DIR)/loader
 WRAPPER_DIR = $(SRC_DIR)/jni
 NATIVE_INTERFACE_DIR = $(SRC_DIR)/native-interface
 INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux \
 	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
 
-all:
+all: gen_wrappers
 	$(CC) $(CFLAGS) $(INCLUDE) -DLOADER_LIB="\"$(LIB_DIR)/libloader.so\"" -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/jni_handle.o $(NATIVE_INTERFACE_DIR)/jni_handle.c
 
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc.o $(MALLOC_DIR)/malloc.c
@@ -21,7 +22,7 @@ all:
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc_sync.o $(MALLOC_DIR)/malloc_sync.c
 	$(CC) -g -shared -o $(LIB_DIR)/libmem.so $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
 #
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/loader.o $(SRC_DIR)/loader/loader.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/loader.o $(LOADER_DIR)/loader.c
 	$(CC) -g -shared -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/domain_manager.o $(PKRU_DIR)/domain_manager.c
@@ -43,6 +44,9 @@ all:
 #
 	$(CC) $(INCLUDE) -c -o $(LIB_DIR)/NativeSandboxInterface.o $(SRC_DIR)/NativeSandboxInterface.c
 	ar rcs $(LIB_DIR)/libNativeSandboxInterface.a $(LIB_DIR)/NativeSandboxInterface.o
+
+gen_wrappers: generate_libc_wrappers.sh generate_libc_wrappers.py
+	./generate_libc_wrappers.sh
 
 clean:
 	rm -f $(LIB_DIR)/libpkru.so $(LIB_DIR)/*.o
