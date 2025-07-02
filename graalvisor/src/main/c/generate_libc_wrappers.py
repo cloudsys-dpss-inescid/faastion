@@ -9,6 +9,15 @@ dupe_names = {
     'lockf64',
 }
 ignore_names = [
+    'malloc',
+    'realloc',
+    'calloc',
+    'free',
+    'getenv',
+    'secure_getenv',
+    'pthread_create',
+    'localtime',
+    'dlsym',
     'ntp_gettimex',                                 # assembler message: already defined
     'sched_yield',                                  #
     'pthread_mutex_consistent',                     #
@@ -140,7 +149,17 @@ def new_wrapper(name, ret_type, params):
 {ret_type} (*{original_name})({params}) = NULL;
 
 {ret_type} {name}({params}) {{
+    unsigned int privileged_domain;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru();
+    privileged_domain = unprivileged_domain & 0x55555554;
+
+    __wrpkrumem(privileged_domain);
+    char buf[] = "[libc] {name}\\n";
+    syscall(__NR_write, 2, buf, sizeof(buf));
     lookup_symbol({name});
+    __wrpkrumem(unprivileged_domain);
     (*{original_name})({argnames});
 }}  
 '''
@@ -149,7 +168,17 @@ def new_wrapper(name, ret_type, params):
 {ret_type} (*{original_name})({params}) = NULL;
 
 {ret_type} {name}({params}) {{
+    unsigned int privileged_domain;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru();
+    privileged_domain = unprivileged_domain & 0x55555554;
+
+    __wrpkrumem(privileged_domain);
+    char buf[] = "[libc] {name}\\n";
+    syscall(__NR_write, 2, buf, sizeof(buf));
     lookup_symbol({name});
+    __wrpkrumem(unprivileged_domain);
     {ret_type} ret = (*{original_name})({argnames});
     return ret;
 }}

@@ -3,11 +3,12 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 HDRS=()
-FILE=$DIR/libc_wrappers.c
+FILE=$DIR/loader/libc_wrappers.c
 
 rm -f $FILE
 
 echo "#define _GNU_SOURCE" >> $FILE
+echo "#include \"pkru.h\"" >> $FILE
 
 function get_header_files {
     for file in $(ls $LIBC_HOME/$1 | grep -e '\.h'\$)

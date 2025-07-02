@@ -23,7 +23,8 @@ all: gen_wrappers
 	$(CC) -g -shared -o $(LIB_DIR)/libmem.so $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/loader.o $(LOADER_DIR)/loader.c
-	$(CC) -g -shared -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
+	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/libc_wrappers.o $(LOADER_DIR)/libc_wrappers.c
+	$(CC) -g -shared -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o $(LIB_DIR)/libc_wrappers.o $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/domain_manager.o $(PKRU_DIR)/domain_manager.c
 	$(CC) $(CFLAGS) $(INCLUDE) -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/memory_map.o $(PKRU_DIR)/memory_map.c
