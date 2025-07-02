@@ -10,7 +10,9 @@
 #include <string.h>
 #include <stdbool.h>
 
-static void *(*original__tls_get_addr)(void *) = NULL;
+#define lookup_symbol(sym) if (original_##sym == NULL) original_##sym = dlsym(RTLD_NEXT, #sym)
+
+static void *(*original___tls_get_addr)(void *) = NULL;
 
 void *__tls_get_addr(void /* tls_index */ *ti) {
     void *retval;
@@ -19,13 +21,10 @@ void *__tls_get_addr(void /* tls_index */ *ti) {
     
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
-
-    if (original__tls_get_addr == NULL) {
-        original__tls_get_addr = dlsym(RTLD_NEXT, "__tls_get_addr");
-    }
     
     __wrpkrumem(privileged_domain);
-    retval = original__tls_get_addr(ti);
+    lookup_symbol(__tls_get_addr);
+    retval = original___tls_get_addr(ti);
     __wrpkrumem(unprivileged_domain);
 
     return retval;
@@ -41,11 +40,8 @@ char *getenv(const char *name) {
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
 
-    if (original_getenv == NULL) {
-        original_getenv = dlsym(RTLD_NEXT, "getenv");
-    }
-
     __wrpkrumem(privileged_domain);
+    lookup_symbol(getenv);
     printf("getenv: %s\n", name);
     char *val = original_getenv(name);
     if (val)
@@ -65,12 +61,9 @@ char *secure_getenv(const char *name) {
 
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554;
-    
-    if (original_secure_getenv == NULL) {
-        original_secure_getenv = dlsym(RTLD_NEXT, "secure_getenv");
-    }
 
     __wrpkrumem(privileged_domain);
+    lookup_symbol(secure_getenv);
     printf("secure_getenv\n");
     char *val = original_secure_getenv(name);
     if (val)
@@ -90,11 +83,8 @@ struct tm *localtime(const time_t *__timer) {
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
 
-    if (original_localtime == NULL) {
-        original_localtime = dlsym(RTLD_NEXT, "localtime");
-    }
-
     __wrpkrumem(privileged_domain);
+    lookup_symbol(localtime);
     struct tm *time = original_localtime(__timer);
     if (time) {
         retval = malloc(sizeof(struct tm));
@@ -118,40 +108,15 @@ pthread_create(
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
 
-    if (original_pthread_create == NULL) {
-        original_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
-    }
-
     __wrpkrumem(privileged_domain);
+    lookup_symbol(pthread_create);
     retval = original_pthread_create(thread, attr, start_routine, arg);
     __wrpkrumem(unprivileged_domain);
 
     return retval;
 }
 
-void DLL_init() {
-    printf("loader stderr value: %p\n", (void *)(FILE *)stderr);
-
-    if (original__tls_get_addr == NULL) {
-        original__tls_get_addr = dlsym(RTLD_NEXT, "__tls_get_addr");
-    }
-
-    if (original_getenv == NULL) {
-        original_getenv = dlsym(RTLD_NEXT, "getenv");
-    }
-
-    if (original_secure_getenv == NULL) {
-        original_secure_getenv = dlsym(RTLD_NEXT, "secure_getenv");
-    }
-
-    if (original_localtime == NULL) {
-        original_localtime = dlsym(RTLD_NEXT, "localtime");
-    }
-
-    if (original_pthread_create == NULL) {
-        original_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
-    }
-}
+void DLL_init() {}
 
 void *DLL_open(const char *lib_name) {
     char *error;

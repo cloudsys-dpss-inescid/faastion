@@ -31,13 +31,6 @@ static int open_loader(unsigned int domain) {
     }
 
     dlerror();
-    void (*DLL_init)(void) = dlsym(dl_handle, "DLL_init");    
-    if ((error = dlerror()) != NULL) {
-        fprintf(stdout, "Failed to find the symbol: DLL_init: %s\n", error);
-        return -1;
-    }
-
-    dlerror();
     DLL_open = dlsym(dl_handle, "DLL_open");    
     if ((error = dlerror()) != NULL) {
         fprintf(stdout, "Failed to find the symbol: DLL_open: %s\n", error);
@@ -50,8 +43,6 @@ static int open_loader(unsigned int domain) {
         fprintf(stdout, "Failed to find the symbol: DLL_sym: %s\n", error);
         return -1;
     }
-
-    DLL_init();
 
     int (*DLL_get_mspace_count)(void) = DLL_sym(dl_handle, "get_mspace_count");
     if (!DLL_get_mspace_count)
