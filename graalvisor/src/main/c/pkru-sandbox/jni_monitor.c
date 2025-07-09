@@ -36,6 +36,8 @@ int install_jni_filter() {
     return install_seccomp_filter(filter);
 }
 
+extern void __attribute__((weak)) ensure_msid(unsigned int tid, unsigned int mspace_id);
+
 static void handle_syscalls(int pkey) {
     struct seccomp_notif *req = new_seccomp_notif();
     struct seccomp_notif_resp *resp = new_seccomp_notif_resp();
@@ -51,6 +53,10 @@ static void handle_syscalls(int pkey) {
         args = req->data.args;
         function = get_pkru_sandbox(pkey);
         switch (req->data.nr) {
+        case __NR_gettid:
+            ensure_msid(req->pid, pkey);
+            resp->flags = SECCOMP_USER_NOTIF_FLAG_CONTINUE;
+            break;
         case __NR_mmap:
             resp->val = syscall(__NR_mmap, args[0], args[1], args[2], args[3], args[4], args[5]);
             resp->error = resp->val < 0 ? -errno : 0;

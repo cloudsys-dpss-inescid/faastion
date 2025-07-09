@@ -20,6 +20,8 @@ static __thread void *(*DLL_sym)(void *, const char *) = NULL;
 __attribute__((weak)) mspace get_mspace(unsigned int pkey);
 __attribute__((weak)) void *get_mspace_lock(unsigned int pkey);
 
+extern char msids[0x400001];
+
 static int open_loader(unsigned int domain) {
     char *error;
 
@@ -44,28 +46,18 @@ static int open_loader(unsigned int domain) {
         return -1;
     }
 
-    int (*DLL_get_mspace_count)(void) = DLL_sym(dl_handle, "get_mspace_count");
-    if (!DLL_get_mspace_count)
+    // int (*DLL_get_mspace_count)(void) = DLL_sym(dl_handle, "get_mspace_count");
+    // if (!DLL_get_mspace_count)
+    //     return -1;
+
+    // int mspaces = DLL_get_mspace_count();
+    // printf("mspaces: %d\n", mspaces);
+
+    void (*DLL_worker_mspace_init)(unsigned int, void *, void *, char *) = DLL_sym(dl_handle, "worker_mspace_init");
+    if (!DLL_worker_mspace_init)
         return -1;
 
-    int mspaces = DLL_get_mspace_count();
-    printf("mspaces: %d\n", mspaces);
-
-    void (*DLL_set_mspace_lock)(unsigned int, void *) = DLL_sym(dl_handle, "set_mspace_lock");
-    if (!DLL_set_mspace_lock)
-        return -1;
-
-    void (*DLL_set_mspace)(unsigned int, void *) = DLL_sym(dl_handle, "set_mspace");
-    if (!DLL_set_mspace)
-        return -1;
-
-    void (*DLL_register_worker_thread)(unsigned int, unsigned int) = DLL_sym(dl_handle, "register_worker_thread");
-    if (!DLL_register_worker_thread)
-        return -1;
-
-    DLL_set_mspace(domain, get_mspace(domain));
-    DLL_set_mspace_lock(domain, get_mspace_lock(domain));
-    DLL_register_worker_thread(domain, gettid());
+    DLL_worker_mspace_init(domain, get_mspace(domain), get_mspace_lock(domain), msids);
 
     return 0;
 }

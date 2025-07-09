@@ -35,7 +35,11 @@ worker_t worker_threads[DOMAINS];
 // Threads that will be supervising domains.
 monitor_t monitor_threads[DOMAINS];
 
-static FILE *latency_breakdown_file;
+// Global table that stores mspace id per thread id
+char msids[0x400001] = {0};
+extern char * __attribute__((weak)) __msids;
+
+static FILE *latency_breakdown_file = {0};
 
 #ifdef PRINT_TIMER
 void print_systime() {
@@ -183,6 +187,9 @@ int pkru_sandbox_init()
     protect_library("[vvar]", LOADER_DOMAIN);
 
     seccomp_init();
+
+    // Set cr_malloc msid table
+    __msids = msids;
 
     // Launch worker threads.
     for (int i = 1; i < DOMAINS; i++) {

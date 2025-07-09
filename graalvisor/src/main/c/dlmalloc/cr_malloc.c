@@ -34,27 +34,23 @@ static futex_semaphore *sem_table[MAX_MSPACE] = {0};
 #endif
 
 static int mspace_count = 0;
-
-
-// There are 16 workers, so we only need to store the TID of 16 threads
-// A TID value that does not correspond to any worker TID is therefore a managed thread
-// Managed code will use the global mspace, whereas native code will use individual mspaces
-// NOTE (optimization): we use the fs register instead of TID to avoid executing a system call
-// FIXME: What happens when a worker thread calls clone inside native?
-//        We probably want the new thread to execute in the same memory domain and to
-//        allocate memory in the same mspace as the parent!
-static unsigned long worker_threads[DOMAINS] = {0};
-static unsigned long wrapper_threads[DOMAINS] = {0};
+char *__msids = NULL;
 
 #include "util.h"
 
-void register_worker_thread(unsigned int pkey, unsigned int tid) {
-    worker_threads[pkey] = tid;
+void ensure_msid(unsigned int tid, unsigned int mspace_id) {
+    __msids[tid] = mspace_id;
 }
 
-void register_wrapper_thread(unsigned int pkey, unsigned int tid) {
-    wrapper_threads[pkey] = tid;
-    mspace_count++;
+void worker_mspace_init(unsigned int pkey, mspace m, void *lock, char *msids) {
+    mspace_table[pkey] = m;
+#ifdef MUTEX_LOCKING
+    mutex_ptr_table[pkey] = (pthread_mutex_t *)lock;
+#else
+    sem_table[pkey] = (futex_semaphore *)lock;
+#endif
+    __msids = msids;
+    __msids[syscall(__NR_gettid)] = pkey;
 }
 
 mspace get_mspace_mapping() {
@@ -67,18 +63,6 @@ void *get_mspace_lock(unsigned int pkey) {
 #else
     return (void *)sem_table[pkey];
 #endif
-}
-
-void set_mspace_lock(unsigned int pkey, void *lock) {
-#ifdef MUTEX_LOCKING
-    mutex_ptr_table[pkey] = (pthread_mutex_t *)lock;
-#else
-    sem_table[pkey] = (futex_semaphore *)lock;
-#endif
-}
-
-void set_mspace(unsigned int pkey, mspace m) {
-    mspace_table[pkey] = m;
 }
 
 int get_mspace_count() {
@@ -112,13 +96,18 @@ mspace init_mspace(int mspace_id) {
 }
 
 int get_mspace_id(int tid) {
-    int i;
-    for (i = 0; i < DOMAINS; i++) {
-        if (tid == worker_threads[i] || tid == wrapper_threads[i]) {
-            break;
-        }
-    }
-    return i;
+    int pkru;
+    int mspace_id;
+
+    if (!__msids)
+        return 0;
+    
+    pkru = __rdpkru();
+    __wrpkru(DEFAULT_DOMAIN);
+    mspace_id = (int)__msids[tid];
+    __wrpkrumem(pkru);
+
+    return mspace_id;
 }
 
 mspace get_mspace(unsigned int mspace_id) {

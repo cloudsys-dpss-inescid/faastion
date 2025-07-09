@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include "pkru_sandbox.h"
-#include "cr_malloc.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -67,14 +66,9 @@ int pkru_sandbox_call(int domain, void** ret, size_t* ret_size, void (*fun)(int)
 	return 0;
 }
 
-__attribute__((weak)) void register_worker_thread(unsigned int pkey, unsigned int tid);
-__attribute__((weak)) void register_wrapper_thread(unsigned int pkey, unsigned int tid);
-
 void* worker(void* arg)
 {
     int pkey = (int) ((long) arg);
-    if (register_worker_thread)
-        register_worker_thread(pkey, syscall(__NR_gettid));
     _worker_domain = pkey;
 
     fprintf(stderr, "Worker for domain %d is running...\n", pkey);
@@ -108,8 +102,6 @@ void* worker(void* arg)
 void* worker_wrapper(void* arg)
 {
     int pkey = (int) ((long) arg);
-    if (register_wrapper_thread)
-        register_wrapper_thread(pkey, syscall(__NR_gettid));
     monitor_threads[pkey].seccomp_fd = install_jni_filter();
     if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
         fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
