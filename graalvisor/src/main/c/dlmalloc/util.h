@@ -6,18 +6,12 @@ extern futex_semaphore *new_semaphore(int value);
 extern void acquire(futex_semaphore *sem);
 extern void release(futex_semaphore *sem);
 
-int get_mspace_id(int tid);
-
 
 #ifdef DEBUG_MODE
 #define debug_dump(fmt, ...) (print(fmt __VA_OPT__(,) __VA_ARGS__))
 #else
-void debug_dump(char *fmt, ...) {}
+void debug_dump(__attribute__((unused)) char *fmt, ...) {}
 #endif
-
-mspace find_mspace(int tid) {
-    return get_mspace(get_mspace_id(tid));
-}
 
 #ifdef MUTEX_LOCKING
 #define acquire_lock() \
