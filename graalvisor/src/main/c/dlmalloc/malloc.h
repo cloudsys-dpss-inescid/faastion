@@ -615,6 +615,11 @@ int mspace_mallopt(int, int);
   The following operate identically to their malloc counterparts
   but operate only for the given mspace argument
 */
+
+int init_mparams(void);
+void *get_mstate();
+void set_mstate(void *);
+
 void* mspace_malloc(mspace msp, size_t bytes);
 void mspace_free(mspace msp, void* mem);
 void* mspace_calloc(mspace msp, size_t n_elements, size_t elem_size);
