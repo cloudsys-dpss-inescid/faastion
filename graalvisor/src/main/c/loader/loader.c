@@ -25,6 +25,27 @@ void *__tls_get_addr(void /* tls_index */ *ti) {
     __wrpkrumem(privileged_domain);
     lookup_symbol(__tls_get_addr);
     retval = original___tls_get_addr(ti);
+    // printf("[libc] tls: %p\n", retval);
+    __wrpkrumem(unprivileged_domain);
+
+    return retval;
+}
+
+typedef void (*dtor_func) (void *);
+
+int (*original___cxa_thread_atexit_impl)(dtor_func, void *, void *) = NULL;
+
+int __cxa_thread_atexit_impl (dtor_func func, void *obj, void *dso_symbol) {
+    int retval;
+    unsigned int privileged_domain;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru();
+    privileged_domain = unprivileged_domain & 0x55555554; 
+    
+    __wrpkrumem(privileged_domain);
+    lookup_symbol(__cxa_thread_atexit_impl);
+    retval = original___cxa_thread_atexit_impl(func, obj, dso_symbol);
     __wrpkrumem(unprivileged_domain);
 
     return retval;
@@ -42,11 +63,11 @@ char *getenv(const char *name) {
 
     __wrpkrumem(privileged_domain);
     lookup_symbol(getenv);
-    printf("getenv: %s\n", name);
+    // printf("[libc] getenv: %s\n", name);
     char *val = original_getenv(name);
     if (val)
         retval = strdup(val);
-    printf("getenv result: %p\n", (void *)val);
+    // printf("getenv result: %p\n", (void *)val);
     __wrpkrumem(unprivileged_domain);
 
     return retval;
@@ -64,7 +85,7 @@ char *secure_getenv(const char *name) {
 
     __wrpkrumem(privileged_domain);
     lookup_symbol(secure_getenv);
-    printf("secure_getenv\n");
+    // printf("[libc] secure_getenv\n");
     char *val = original_secure_getenv(name);
     if (val)
         retval = strdup(val);
