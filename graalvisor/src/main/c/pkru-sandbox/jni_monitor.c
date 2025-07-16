@@ -20,6 +20,7 @@ static struct sock_filter filter[] = {
 
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, (offsetof(struct seccomp_data, nr))),
 
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_gettid, 6, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_mprotect, 5, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_exit, 4, 0),
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, __NR_clone3, 3, 0),
