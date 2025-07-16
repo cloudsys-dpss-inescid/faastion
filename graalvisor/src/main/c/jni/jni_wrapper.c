@@ -229,6 +229,23 @@ ret Wrapper##function(type var, type2 var2, type3 isCopy) {                     
     return retval;                                                                          \
 }
 
+#define DEFINE_STR_WRAPPER(ret, function, type, var, type2, var2, type3, isCopy, get_len)   \
+ret Wrapper##function(type var, type2 var2, type3 isCopy) {                                 \
+    unsigned int privileged_pku;                                                            \
+    unsigned int pku;                                                                       \
+    unsigned int domain;                                                                    \
+    pku = __rdpkru();                                                                       \
+    domain = PKRU_TO_DOMAIN(pku);                                                           \
+    privileged_pku = pku & 0x55555554;                                                      \
+    __wrpkrumem(privileged_pku);                                                            \
+    jsize len = (*(domainEnv[domain]))->get_len(domainEnv[domain], var2);                   \
+    ret addr = (*(domainEnv[domain]))->function(domainEnv[domain], var2, NULL);             \
+    ret retval = string_to_c(addr, sizeof(*addr), len);                                     \
+    if (isCopy) *isCopy = JNI_TRUE;                                                         \
+    __wrpkrumem(pku);                                                                       \
+    return retval;                                                                          \
+}
+
 #define DEFINE_RELEASE_ARRAY_WRAPPER3(function, type, var, type2, var2, type3, c_addr) \
 void Wrapper##function(type var, type2 var2, type3 c_addr) {                                \
     unsigned int privileged_pku;                                                            \
@@ -273,6 +290,9 @@ struct hash_table *to_java;     // maps c addr (uintptr) to java addr (uintptr)
 JNIWrapper *globalWrapper; // Accessible in loader domain (1)
 
 static inline unsigned int PKRU_TO_DOMAIN(unsigned int pkru) {
+#ifdef NO_ISOLATION
+    return 2;
+#else
     pkru = pkru ^ 0x55555551;
     switch (pkru) {
     case 0:             return 1;
@@ -292,9 +312,34 @@ static inline unsigned int PKRU_TO_DOMAIN(unsigned int pkru) {
     case 0x40000000:    return 15;
     default:            return 0;
     }
+#endif
+}
+
+void *string_to_c(const void *java_addr, size_t size, jsize n) {
+    if (!java_addr)
+        return NULL;
+
+    struct c_array *c_addr;
+    if ((c_addr = hash_table_lookup(to_c, (unsigned long)java_addr)) != NULL)
+        return c_addr->base;
+
+    long zeros = 0;
+    jsize len = n * size;
+    c_addr = malloc(sizeof(struct c_array));
+    c_addr->base = malloc(len + size);    
+    c_addr->len = len;
+    memcpy(c_addr->base, java_addr, len);
+    memcpy(c_addr->base + len, &zeros, size);
+    hash_table_insert(to_c, (unsigned long)java_addr, (void *)c_addr);
+    hash_table_insert(to_java, (unsigned long)c_addr->base, (void *)java_addr);
+
+    return c_addr->base;
 }
 
 void *convert_to_c(const void *java_addr, jsize len) {
+    if (!java_addr)
+        return NULL;
+
     struct c_array *c_addr;
     if ((c_addr = hash_table_lookup(to_c, (unsigned long)java_addr)) != NULL)
         return c_addr->base;
@@ -503,11 +548,11 @@ DEFINE_VOID_WRAPPER4(SetStaticFloatField, JNIEnv *, env, jclass, clazz, jfieldID
 DEFINE_VOID_WRAPPER4(SetStaticDoubleField, JNIEnv *, env, jclass, clazz, jfieldID, fieldID, jdouble, val)
 DEFINE_WRAPPER3(jstring, NewString, JNIEnv *, env, const jchar *, unicode, jsize, len)
 DEFINE_WRAPPER2(jsize, GetStringLength, JNIEnv *, env, jstring, str)
-DEFINE_ARRAY_WRAPPER3(const jchar *, GetStringChars, JNIEnv *, env, jstring, str, jboolean *, isCopy, GetStringLength)
+DEFINE_STR_WRAPPER(const jchar *, GetStringChars, JNIEnv *, env, jstring, str, jboolean *, isCopy, GetStringLength)
 DEFINE_RELEASE_ARRAY_WRAPPER3(ReleaseStringChars, JNIEnv *, env, jstring, str, const jchar *, chars)
 DEFINE_WRAPPER2(jstring, NewStringUTF, JNIEnv *, env, const char *, utf)
 DEFINE_WRAPPER2(jsize, GetStringUTFLength, JNIEnv *, env, jstring, str)
-DEFINE_ARRAY_WRAPPER3(const char *, GetStringUTFChars, JNIEnv *, env, jstring, str, jboolean *, isCopy, GetStringUTFLength)
+DEFINE_STR_WRAPPER(const char *, GetStringUTFChars, JNIEnv *, env, jstring, str, jboolean *, isCopy, GetStringUTFLength)
 DEFINE_RELEASE_ARRAY_WRAPPER3(ReleaseStringUTFChars, JNIEnv *, env, jstring, str, const char *, chars)
 DEFINE_WRAPPER2(jsize, GetArrayLength, JNIEnv *, env, jarray, array)
 DEFINE_WRAPPER4(jobjectArray, NewObjectArray, JNIEnv *, env, jsize, len, jclass, clazz, jobject, init)
