@@ -39,6 +39,19 @@ static int copy(char *s1, char *s2, size_t length) {
     return nwrite;
 }
 
+static inline int process_integer(char *dst, int num, size_t length) {
+    long l = (long)num & 0x00000000ffffffff;
+    return long_to_string(dst, l, length);
+}
+
+static inline int process_string(char *dst, char *src, size_t length) {
+    return copy(dst, src, length);
+}
+
+static inline int process_long(char *dst, long num, size_t length) {
+    return long_to_string(dst, (unsigned long)num, length);
+}
+
 // consider adding support for negative values or other types of data (char, float, ...) 
 // consider adding support for bigger strings
 void print(char *fmt, ...) {
@@ -51,15 +64,18 @@ void print(char *fmt, ...) {
     for (c = 0; *fmt && c < n-1; fmt++) {
         if (*fmt == '%') {
             fmt++;
-            if (*fmt == 'l')
-                fmt++;
             switch (*fmt) {
             case 'd':
-                c += long_to_string(buf+c, (long)va_arg(args, int), n-1-c);
+                c += process_integer(buf+c, va_arg(args, int), n-1-c);
                 break;
             case 's':
-                c += copy(buf+c, va_arg(args, char *), n-1-c);
+                c += process_string(buf+c, va_arg(args, char *), n-1-c);
                 break;
+            case 'l':
+                if (*(fmt+1) == 'u' || *(fmt+1) == 'd') {
+                    fmt++;
+                    c += process_long(buf+c, va_arg(args, long), n-1-c);
+                }
             default:
                 break;
             }
