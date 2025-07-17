@@ -39,14 +39,4 @@ void debug_dump(__attribute__((unused)) char *fmt, ...) {}
     }
 #endif
 
-int get_current_tid() {
-#ifdef MSPACE_CACHING
-    if (!current_tid)
-        current_tid = syscall(__NR_gettid);
-#else
-    int current_tid = syscall(__NR_gettid);
-#endif
-    return current_tid;
-}
-
 #endif

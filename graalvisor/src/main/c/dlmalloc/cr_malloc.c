@@ -24,11 +24,6 @@ __wrpkrumem(privileged_pku)
 
 #define switch_unprivileged __wrpkrumem(pku)
 
-#ifdef MSPACE_CACHING
-static __thread mspace local = NULL;
-static __thread pid_t current_tid = 0;
-#endif
-
 typedef struct {
     int locked_tid;
     int value;
@@ -43,13 +38,33 @@ static pthread_mutex_t *mutex_ptr_table[MAX_MSPACE] = {0};
 static futex_semaphore *sem_table[MAX_MSPACE] = {0};
 #endif
 
-static int mspace_count = 0;
+static int use_cached_tid = 0;
+pid_t (*get_cached_tid)(void) = NULL;
+void (*set_cached_tid)(pid_t) = NULL;
+
 char *__msids = NULL;
 
 #include "util.h"
 
-void dlmalloc_init(char *msids) {
+pid_t get_current_tid() {
+    pid_t tid;
+    if (use_cached_tid) {
+        tid = get_cached_tid();
+        if (tid == 0) {
+            tid = syscall(__NR_gettid);
+            set_cached_tid(tid);
+        }
+    } else {
+        tid = syscall(__NR_gettid);
+    }
+    return tid;
+}
+
+void dlmalloc_init(char *msids, pid_t (*__get_cached_tid)(void), void (*__set_cached_tid)(pid_t)) {
     __msids = msids;
+    use_cached_tid = 1;
+    get_cached_tid = __get_cached_tid;
+    set_cached_tid = __set_cached_tid;
     pkey_mprotect(get_mstate(), malloc_state_sz, PROT_READ | PROT_WRITE, LOADER_DOMAIN);
 }
 
@@ -57,9 +72,12 @@ void ensure_msid(unsigned int tid, unsigned int mspace_id) {
     __msids[tid] = mspace_id;
 }
 
-void worker_mspace_init(unsigned int pkey, mspace m, void *lock, void *gm, char *msids) {
+void worker_mspace_init(unsigned int pkey, mspace m, void *lock, void *gm, char *msids, pid_t (*__get_cached_tid)(void), void (*__set_cached_tid)(pid_t)) {
     init_mparams();
     set_mstate(gm);
+    use_cached_tid = 1;
+    get_cached_tid = __get_cached_tid;
+    set_cached_tid = __set_cached_tid;
     mspace_table[pkey] = m;
 #ifdef MUTEX_LOCKING
     mutex_ptr_table[pkey] = (pthread_mutex_t *)lock;
@@ -80,10 +98,6 @@ void *get_mspace_lock(unsigned int pkey) {
 #else
     return (void *)sem_table[pkey];
 #endif
-}
-
-int get_mspace_count() {
-    return mspace_count;
 }
 
 #ifdef MUTEX_LOCKING
@@ -128,21 +142,9 @@ static int get_mspace_id(int tid) {
 }
 
 mspace get_mspace(unsigned int mspace_id) {
-#ifdef MSPACE_CACHING
-    if (local)
-        return local;
-#endif
-
     mspace mem = mspace_table[mspace_id];
-    if (mem)
-        return mem;
-    else
+    if (!mem)
         mem = init_mspace(mspace_id);
-
-#ifdef MSPACE_CACHING
-    local = mem;
-#endif
-
     return mem;
 }
 

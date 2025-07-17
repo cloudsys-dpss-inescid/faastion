@@ -17,6 +17,8 @@ static __thread void *(*DLL_open)(const char *) = NULL;
 static __thread void *(*DLL_sym)(void *, const char *) = NULL;
 
 // These symbols are resolved at runtime via LD_PRELOAD
+extern __attribute__((weak)) pid_t (*get_cached_tid)(void);
+extern __attribute__((weak)) void (*set_cached_tid)(pid_t);
 __attribute__((weak)) void *get_mstate();
 __attribute__((weak)) mspace get_mspace(unsigned int pkey);
 __attribute__((weak)) void *get_mspace_lock(unsigned int pkey);
@@ -58,11 +60,11 @@ static int open_loader(unsigned int domain) {
     // int mspaces = DLL_get_mspace_count();
     // printf("mspaces: %d\n", mspaces);
 
-    void (*DLL_worker_mspace_init)(unsigned int, void *, void *, void *, char *) = DLL_sym(dl_handle, "worker_mspace_init");
+    void (*DLL_worker_mspace_init)(unsigned int, void *, void *, void *, char *, pid_t (*)(void), void (*)(pid_t)) = DLL_sym(dl_handle, "worker_mspace_init");
     if (!DLL_worker_mspace_init)
         return -1;
 
-    DLL_worker_mspace_init(domain, get_mspace(domain), get_mspace_lock(domain), get_mstate(), msids);
+    DLL_worker_mspace_init(domain, get_mspace(domain), get_mspace_lock(domain), get_mstate(), msids, get_cached_tid, set_cached_tid);
 
     return 0;
 }

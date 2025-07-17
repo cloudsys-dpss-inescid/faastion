@@ -17,6 +17,17 @@
 #define PIPE_READ_END  0
 #define PIPE_WRITE_END 1
 
+// TLS variable addressable via offset from FS
+static __thread pid_t cached_tid = 0;
+
+pid_t __get_cached_tid() {
+    return cached_tid;
+}
+
+void __set_cached_tid(pid_t tid) {
+    cached_tid = tid;
+}
+
 void close_parent_fds(int childWrite, int parentRead) {
     // TODO - we should try to get a sense for the used file descriptors.
     for (int fd = 3; fd < 1024; fd++) {
@@ -34,7 +45,7 @@ void reset_parent_signal_handlers() {
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_ginit(JNIEnv *env, jobject thisObj) {
     setbuf(stdout, NULL);
 
-    if (pkru_sandbox_init()) {
+    if (pkru_sandbox_init(__get_cached_tid, __set_cached_tid)) {
         fprintf(stderr, "failed to initialize pthread sandboxes\n");
         cleanup_and_exit();
     }

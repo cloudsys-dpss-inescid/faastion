@@ -40,7 +40,7 @@ char msids[0x400001] = {0};
 
 static FILE *latency_breakdown_file = {0};
 
-__attribute__((weak)) void dlmalloc_init(char *);
+__attribute__((weak)) void dlmalloc_init(char *, pid_t (*)(void), void (*)(pid_t));
 
 
 #ifdef PRINT_TIMER
@@ -155,7 +155,7 @@ void cleanup_and_exit()
     exit(0);
 }
 
-int pkru_sandbox_init()
+int pkru_sandbox_init(pid_t (*__get_cached_tid)(void), void (*__set_cached_tid)(pid_t))
 {
     // Register the SIGINT handler
     // if (signal(SIGINT, handler) == SIG_ERR) {
@@ -191,7 +191,7 @@ int pkru_sandbox_init()
     seccomp_init();
 
     // Set cr_malloc msid table
-    dlmalloc_init(msids);
+    dlmalloc_init(msids, __get_cached_tid, __set_cached_tid);
 
     // Launch worker threads.
     for (int i = 1; i < DOMAINS; i++) {

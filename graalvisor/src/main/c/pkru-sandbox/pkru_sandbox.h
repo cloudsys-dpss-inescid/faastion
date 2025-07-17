@@ -37,7 +37,7 @@ typedef struct monitor {
 } monitor_t;
 
 
-int pkru_sandbox_init();
+int pkru_sandbox_init(pid_t (*get_tid)(void), void (*set_tid)(pid_t));
 void cleanup_and_exit(void);
 
 void *worker(void* arg);
