@@ -89,7 +89,7 @@ public class Classify {
     
     public static void main(String[] args) throws Exception {
     	HashMap<String, Object> output = new HashMap<>();
-        System.out.println(main(output));
+        main(output);
     }
     
 
