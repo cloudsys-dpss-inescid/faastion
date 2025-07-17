@@ -616,6 +616,8 @@ int mspace_mallopt(int, int);
   but operate only for the given mspace argument
 */
 
+extern size_t malloc_state_sz;
+
 int init_mparams(void);
 void *get_mstate();
 void set_mstate(void *);

@@ -37,9 +37,11 @@ monitor_t monitor_threads[DOMAINS];
 
 // Global table that stores mspace id per thread id
 char msids[0x400001] = {0};
-extern char * __attribute__((weak)) __msids;
 
 static FILE *latency_breakdown_file = {0};
+
+__attribute__((weak)) void dlmalloc_init(char *);
+
 
 #ifdef PRINT_TIMER
 void print_systime() {
@@ -189,7 +191,7 @@ int pkru_sandbox_init()
     seccomp_init();
 
     // Set cr_malloc msid table
-    __msids = msids;
+    dlmalloc_init(msids);
 
     // Launch worker threads.
     for (int i = 1; i < DOMAINS; i++) {

@@ -2610,6 +2610,8 @@ struct malloc_state {
   size_t     exts;
 };
 
+size_t malloc_state_sz = sizeof(struct malloc_state);
+
 typedef struct malloc_state*    mstate;
 
 /* ------------- Global malloc_state and malloc_params ------------------- */
@@ -2638,7 +2640,7 @@ static struct malloc_params mparams;
 #if !ONLY_MSPACES
 
 /* The global malloc_state used for all non-"mspace" calls */
-static struct malloc_state _gm_;
+static struct malloc_state __attribute__((aligned(0x1000))) _gm_;
 static mstate gm = &_gm_;
 // #define gm                 (&_gm_)
 #define is_global(M)       ((M) == gm)
