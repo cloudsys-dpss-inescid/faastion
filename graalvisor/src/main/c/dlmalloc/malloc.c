@@ -2639,8 +2639,17 @@ static struct malloc_params mparams;
 
 /* The global malloc_state used for all non-"mspace" calls */
 static struct malloc_state _gm_;
-#define gm                 (&_gm_)
-#define is_global(M)       ((M) == &_gm_)
+static mstate gm = &_gm_;
+// #define gm                 (&_gm_)
+#define is_global(M)       ((M) == gm)
+
+void *get_mstate() {
+  return (void *)gm;
+}
+
+void set_mstate(void *m) {
+  gm = (mstate)m;
+}
 
 #endif /* !ONLY_MSPACES */
 
@@ -3105,7 +3114,7 @@ static void post_fork_child(void)  { INITIAL_LOCK(&(gm)->mutex); }
 #endif /* LOCK_AT_FORK */
 
 /* Initialize mparams */
-static int init_mparams(void) {
+int init_mparams(void) {
 #ifdef NEED_GLOBAL_LOCK_INIT
   if (malloc_global_mutex_status <= 0)
     init_malloc_global_mutex();
@@ -3181,7 +3190,8 @@ static int init_mparams(void) {
 #elif defined(LACKS_TIME_H)
       magic = (size_t)&magic ^ (size_t)0x55555555U;
 #else
-      magic = (size_t)(time(0) ^ (size_t)0x55555555U);
+      // magic = (size_t)(time(0) ^ (size_t)0x55555555U);
+      magic = 1122334455;
 #endif
       magic |= (size_t)8U;    /* ensure nonzero */
       magic &= ~(size_t)7U;   /* improve chances of fault for bad values */

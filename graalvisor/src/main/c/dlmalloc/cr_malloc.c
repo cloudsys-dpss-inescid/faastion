@@ -14,6 +14,12 @@
 
 // #define MUTEX_LOCKING 1
 
+#define switch_privileged \
+unsigned int pku = __rdpkru(); \
+__wrpkru(DEFAULT_DOMAIN)
+
+#define switch_unprivileged __wrpkrumem(pku)
+
 #ifdef MSPACE_CACHING
 static __thread mspace local = NULL;
 static __thread pid_t current_tid = 0;
@@ -42,7 +48,9 @@ void ensure_msid(unsigned int tid, unsigned int mspace_id) {
     __msids[tid] = mspace_id;
 }
 
-void worker_mspace_init(unsigned int pkey, mspace m, void *lock, char *msids) {
+void worker_mspace_init(unsigned int pkey, mspace m, void *lock, void *gm, char *msids) {
+    init_mparams();
+    set_mstate(gm);
     mspace_table[pkey] = m;
 #ifdef MUTEX_LOCKING
     mutex_ptr_table[pkey] = (pthread_mutex_t *)lock;
@@ -95,7 +103,7 @@ mspace init_mspace(int mspace_id) {
     return newmspace;
 }
 
-int get_mspace_id(int tid) {
+static int get_mspace_id(int tid) {
     int pkru;
     int mspace_id;
 
@@ -129,7 +137,12 @@ mspace get_mspace(unsigned int mspace_id) {
     return mem;
 }
 
+static mspace find_mspace(int tid) {
+    return get_mspace(get_mspace_id(tid));
+}
+
 void* malloc(size_t bytes) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] malloc, mspace_id: %d\n", tid, mspace_id);
@@ -137,10 +150,12 @@ void* malloc(size_t bytes) {
     void* ret = mspace_malloc(get_mspace(mspace_id), bytes);
     release_lock();
     debug_dump("malloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
 }
 
 void free(void* mem) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] free: %ld, mspace_id: %d\n", tid, (unsigned long)mem, mspace_id);
@@ -148,9 +163,11 @@ void free(void* mem) {
     mspace_free(get_mspace(mspace_id), mem);
     release_lock();
     debug_dump("free: success\n");
+    switch_unprivileged;
 }
 
 void* calloc(size_t num, size_t size) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] calloc, mspace_id: %d\n", tid, mspace_id);
@@ -158,10 +175,12 @@ void* calloc(size_t num, size_t size) {
     void* ret = mspace_calloc(get_mspace(mspace_id), num, size);
     release_lock();
     debug_dump("calloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
 }
 
 void* realloc(void* ptr, size_t size) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] realloc, mspace_id: %d\n", tid, mspace_id);
@@ -169,5 +188,81 @@ void* realloc(void* ptr, size_t size) {
     void* ret = mspace_realloc(get_mspace(mspace_id), ptr, size);
     release_lock();
     debug_dump("realloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
+}
+
+size_t malloc_usable_size(const void* mem) {
+    switch_privileged;
+    size_t ret = dlmalloc_usable_size(mem);
+    switch_unprivileged;
+    return ret;
+}
+
+struct mallinfo mallinfo() {
+    switch_privileged;
+    int tid = get_current_tid();
+    struct mallinfo ret = mspace_mallinfo(find_mspace(tid));
+    switch_unprivileged;
+    return ret;
+}
+
+int mallopt(int param_number, int value) {
+    switch_privileged;
+    int ret = dlmallopt(param_number, value);
+    switch_unprivileged;
+}
+
+void* memalign(size_t alignment, size_t bytes) {
+    switch_privileged;
+    int tid = get_current_tid();
+    void *ret = mspace_memalign(find_mspace(tid), alignment, bytes);
+    switch_unprivileged;
+    return ret;
+}
+
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+    switch_privileged;
+    int ret = dlposix_memalign(memptr, alignment, size);
+    switch_unprivileged;
+    return ret;
+}
+
+void* valloc(size_t size) {
+    switch_privileged;
+    void *ret = dlvalloc(size);
+    switch_unprivileged;
+    return ret;
+}
+
+void* pvalloc(size_t size) {
+    switch_privileged;
+    void *ret = dlpvalloc(size);
+    switch_unprivileged;
+    return ret;
+}
+
+void malloc_stats() {
+    switch_privileged;
+    int tid = get_current_tid();
+    mspace_malloc_stats(find_mspace(tid));
+    switch_unprivileged;
+}
+
+int malloc_trim(size_t pad) {
+    switch_privileged;
+    int tid = get_current_tid();
+    int ret = mspace_trim(find_mspace(tid), pad);
+    switch_unprivileged;
+    return ret;
+}
+
+int malloc_info() {
+    debug_dump("error: malloc_info is not supported\n");
+    return 0;
+}
+
+void *reallocarray (void *__ptr, size_t __nmemb, size_t __size) {
+    debug_dump("error: reallocarray is not supported\n");
+    return NULL;
 }

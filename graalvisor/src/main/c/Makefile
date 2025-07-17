@@ -2,7 +2,7 @@
 
 CC			= gcc
 CFLAGS		= -g -Wall -fPIC
-OPTIONS		= -DHAVE_MORECORE=0 -DUSE_DL_PREFIX -DONLY_MSPACES -DMALLOC_INSPECT_ALL=1 # for mspace_inspect_all
+OPTIONS		= -DHAVE_MORECORE=0 -DUSE_DL_PREFIX -DMSPACES -DMALLOC_INSPECT_ALL=1 -DUSE_DLMALLOC_MALLOC_TRIM -DFOOTERS=1 # for mspace_inspect_all
 LIB_DIR		= $(ARGO_HOME)/graalvisor/build/libs
 SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
@@ -24,7 +24,7 @@ all: gen_wrappers
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/loader.o $(LOADER_DIR)/loader.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/libc_wrappers.o $(LOADER_DIR)/libc_wrappers.c
-	$(CC) -g -shared -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o $(LIB_DIR)/libc_wrappers.o $(LIB_DIR)/cr_malloc.o $(LIB_DIR)/malloc.o $(LIB_DIR)/log.o $(LIB_DIR)/malloc_sync.o
+	$(CC) -g -shared -L$(LIB_DIR) -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o -lmem
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/domain_manager.o $(PKRU_DIR)/domain_manager.c
 	$(CC) $(CFLAGS) $(INCLUDE) -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/memory_map.o $(PKRU_DIR)/memory_map.c
