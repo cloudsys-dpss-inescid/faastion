@@ -17,6 +17,13 @@
 
 // #define MUTEX_LOCKING 1
 
+#define switch_privileged \
+unsigned int pku = __rdpkru();                                      \
+unsigned int privileged_pku = pku & DOMAIN_TO_PKRU(LOADER_DOMAIN);  \
+__wrpkrumem(privileged_pku)
+
+#define switch_unprivileged __wrpkrumem(pku)
+
 #ifdef MSPACE_CACHING
 static __thread mspace local = NULL;
 static __thread pid_t current_tid = 0;
@@ -144,6 +151,7 @@ static mspace find_mspace(int tid) {
 }
 
 void* malloc(size_t bytes) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] malloc, mspace_id: %d\n", tid, mspace_id);
@@ -151,10 +159,12 @@ void* malloc(size_t bytes) {
     void* ret = mspace_malloc(get_mspace(mspace_id), bytes);
     release_lock();
     debug_dump("malloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
 }
 
 void free(void* mem) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] free: %ld, mspace_id: %d\n", tid, (unsigned long)mem, mspace_id);
@@ -162,9 +172,11 @@ void free(void* mem) {
     mspace_free(get_mspace(mspace_id), mem);
     release_lock();
     debug_dump("free: success\n");
+    switch_unprivileged;
 }
 
 void* calloc(size_t num, size_t size) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] calloc, mspace_id: %d\n", tid, mspace_id);
@@ -172,10 +184,12 @@ void* calloc(size_t num, size_t size) {
     void* ret = mspace_calloc(get_mspace(mspace_id), num, size);
     release_lock();
     debug_dump("calloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
 }
 
 void* realloc(void* ptr, size_t size) {
+    switch_privileged;
     int tid = get_current_tid();
     int mspace_id = get_mspace_id(tid);
     debug_dump("[%d] realloc, mspace_id: %d\n", tid, mspace_id);
@@ -183,54 +197,73 @@ void* realloc(void* ptr, size_t size) {
     void* ret = mspace_realloc(get_mspace(mspace_id), ptr, size);
     release_lock();
     debug_dump("realloc: %ld\n", (unsigned long)ret);
+    switch_unprivileged;
     return ret;
 }
 
 size_t malloc_usable_size(const void* mem) {
+    switch_privileged;
     size_t ret = dlmalloc_usable_size(mem);
+    switch_unprivileged;
     return ret;
 }
 
 struct mallinfo mallinfo() {
+    switch_privileged;
     int tid = get_current_tid();
     struct mallinfo ret = mspace_mallinfo(find_mspace(tid));
+    switch_unprivileged;
     return ret;
 }
 
 int mallopt(int param_number, int value) {
+    switch_privileged;
     int ret = dlmallopt(param_number, value);
+    switch_unprivileged;
     return ret;
 }
 
 void* memalign(size_t alignment, size_t bytes) {
+    switch_privileged;
     int tid = get_current_tid();
     void *ret = mspace_memalign(find_mspace(tid), alignment, bytes);
+    switch_unprivileged;
     return ret;
 }
 
 int posix_memalign(void **memptr, size_t alignment, size_t size) {
+    switch_privileged;
     int ret = dlposix_memalign(memptr, alignment, size);
+    switch_unprivileged;
     return ret;
 }
 
 void* valloc(size_t size) {
+    switch_privileged;
     void *ret = dlvalloc(size);
+    switch_unprivileged;
     return ret;
 }
 
 void* pvalloc(size_t size) {
+    switch_privileged;
     void *ret = dlpvalloc(size);
+    switch_unprivileged;
     return ret;
 }
 
 void malloc_stats() {
+    switch_privileged;
     int tid = get_current_tid();
+    switch_unprivileged;
     mspace_malloc_stats(find_mspace(tid));
 }
 
 int malloc_trim(size_t pad) {
+    switch_privileged;
     int tid = get_current_tid();
     int ret = mspace_trim(find_mspace(tid), pad);
+    switch_unprivileged;
     return ret;
 }
 

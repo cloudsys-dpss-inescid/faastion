@@ -80,7 +80,7 @@ void run_constructor(dl_init_t constructor, int argc, char **argv, char **env) {
         argc = 0;
         argv = vargv;
         env = venv;
-        unprivileged_domain = DOMAIN_TO_PKRU(pkey) & DOMAIN_TO_PKRU(LOADER_DOMAIN);
+        unprivileged_domain = DOMAIN_TO_PKRU(pkey) & RO_LOADER_DOMAIN;
         __wrpkrumem(unprivileged_domain);
     }
     fn(constructor, argc, argv, env);
