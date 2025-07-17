@@ -4,10 +4,10 @@ import sys
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
 dupes = {}
-dupe_names = {
+dupe_names = [
     'lockf', # for some reason lockf appears twice in the AST
     'lockf64',
-}
+]
 ignore_names = [
     'malloc',
     'realloc',
@@ -18,6 +18,17 @@ ignore_names = [
     'pthread_create',
     'localtime',
     'dlsym',
+    'malloc_usable_size',
+    'mallinfo',
+    'mallopt',
+    'memalign',
+    'valloc',
+    'pvalloc',
+    'malloc_stats',
+    'malloc_info',
+    'malloc_trim',
+    'reallocarray',
+    'posix_memalign',
     'ntp_gettimex',                                 # assembler message: already defined
     'sched_yield',                                  #
     'pthread_mutex_consistent',                     #
@@ -55,6 +66,7 @@ ignore_names = [
     'isblank_l',
     'obstack_free',
 ]
+allow_names = []
 
 def parse_input():
     if len(sys.argv) < 2:
@@ -144,44 +156,42 @@ def new_wrapper(name, ret_type, params):
     ret_type = get_complex(ret_type, name)
     original_name = 'original_' + name
     
+    code = f'''
+{ret_type} (*{original_name})({params}) = NULL;
+
+{ret_type} {name}({params}) {{
+    unsigned int privileged_domain;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru();
+    privileged_domain = unprivileged_domain & 0x55555554;
+
+    __wrpkrumem(privileged_domain);
+    char buf[] = "[libc] {name}\\n";
+    syscall(__NR_write, 2, buf, sizeof(buf));
+    lookup_symbol({name});'''
+
+    if name in allow_names:
+        code += f'''
+    __wrpkrumem(privileged_domain);'''
+
     if ret_type.strip().endswith('void'):
-        code = f'''
-{ret_type} (*{original_name})({params}) = NULL;
-
-{ret_type} {name}({params}) {{
-    unsigned int privileged_domain;
-    unsigned int unprivileged_domain;
-    
-    unprivileged_domain = __rdpkru();
-    privileged_domain = unprivileged_domain & 0x55555554;
-
-    __wrpkrumem(privileged_domain);
-    char buf[] = "[libc] {name}\\n";
-    syscall(__NR_write, 2, buf, sizeof(buf));
-    lookup_symbol({name});
-    __wrpkrumem(unprivileged_domain);
-    (*{original_name})({argnames});
-}}  
-'''
+        code += f'''
+    (*{original_name})({argnames});'''
     else:
-        code = f'''
-{ret_type} (*{original_name})({params}) = NULL;
+        code += f'''
+    {ret_type} ret = (*{original_name})({argnames});'''
 
-{ret_type} {name}({params}) {{
-    unsigned int privileged_domain;
-    unsigned int unprivileged_domain;
+    if name in allow_names:
+        code += f'''
+    __wrpkrumem(unprivileged_domain);'''
+
+    if not ret_type.strip().endswith('void'):
+        code += f'''
+    return ret;'''
     
-    unprivileged_domain = __rdpkru();
-    privileged_domain = unprivileged_domain & 0x55555554;
-
-    __wrpkrumem(privileged_domain);
-    char buf[] = "[libc] {name}\\n";
-    syscall(__NR_write, 2, buf, sizeof(buf));
-    lookup_symbol({name});
-    __wrpkrumem(unprivileged_domain);
-    {ret_type} ret = (*{original_name})({argnames});
-    return ret;
-}}
+    code += f'''
+}} 
 '''
 
     init = f'''
