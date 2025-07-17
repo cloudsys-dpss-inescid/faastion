@@ -30,14 +30,20 @@ static inline int DOMAIN_TO_PKRU(int domain) {
   }
 }
 
-#ifndef __wrpkru
+#ifdef NO_ISOLATION
+
+#define __wrpkru(PKRU_ARG) {}
+
+#define __wrpkrumem(PKRU_ARG) {}
+
+#else
+
 #define __wrpkru(PKRU_ARG)			    \
   do {									\
     asm volatile ("xor %%ecx, %%ecx\n\txor %%edx, %%edx\n\tmov %0,%%eax\n\t.byte 0x0f,0x01,0xef\n\t" \
 	      : : "n" (PKRU_ARG)					\
 	      :"eax", "ecx", "edx");			\
   } while (0)
-#endif
 
 #define __wrpkrumem(PKRU_ARG)			    \
   do {									\
@@ -46,7 +52,8 @@ static inline int DOMAIN_TO_PKRU(int domain) {
 	      :"eax", "ecx", "edx");			\
   } while (0)
 
-#ifndef __rdpkru
+#endif /* NO_ISOLATION */
+
 #define __rdpkru()                              \
   ({                                            \
     unsigned int eax, edx;                      \
@@ -58,6 +65,5 @@ static inline int DOMAIN_TO_PKRU(int domain) {
     pkru = eax;                                 \
     pkru;                                       \
   })
-#endif
 
 #endif // __PKRU_H__
