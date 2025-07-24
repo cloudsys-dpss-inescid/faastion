@@ -5,6 +5,7 @@ build/
 bin/
 target/
 out/
+output/
 ffmpeg
 .idea
 *.mp4
