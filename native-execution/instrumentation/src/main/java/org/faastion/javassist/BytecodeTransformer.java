@@ -17,7 +17,7 @@ public class BytecodeTransformer {
     private static CtClass getClassFromJarEntry(ClassPool pool, String name) {
         CtClass ctClass;
         
-        if (!name.endsWith(".class")) {
+        if (!name.endsWith(".class") || name.startsWith("META-INF/")) {
             return null;
         }
 

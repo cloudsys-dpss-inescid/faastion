@@ -283,6 +283,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 
 			public void edit(MethodCall m) throws CannotCompileException {
 				CtMethod method = getMethodFromMethodCall(m);
+				if (method == null)
+					return;
 				String className = method.getDeclaringClass().getName();
 				String methodName = method.getName();
 
@@ -336,7 +338,8 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		try {
 			method = methodCall.getMethod();
 		} catch (NotFoundException nfe) {
-			throw new RuntimeException("Method could not be found");
+			// System.out.println("WARNING: Method not found " + methodCall.getClassName() + "." +methodCall.getMethodName());
+			return null;
 		}
 		return method;
 	}
