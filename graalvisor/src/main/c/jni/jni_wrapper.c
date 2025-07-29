@@ -293,7 +293,7 @@ static inline unsigned int PKRU_TO_DOMAIN(unsigned int pkru) {
 #ifdef NO_ISOLATION
     return 2;
 #else
-    pkru = pkru ^ 0x55555551;
+    pkru = pkru ^ 0x55555559;
     switch (pkru) {
     case 0:             return 1;
     case 0x10:          return 2;
