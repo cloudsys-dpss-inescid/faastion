@@ -24,7 +24,8 @@ all: gen_wrappers
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/loader.o $(LOADER_DIR)/loader.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/libc_wrappers.o $(LOADER_DIR)/libc_wrappers.c
-	$(CC) -g -shared -L$(LIB_DIR) -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o -lmem
+	$(CC) -g -shared -Wl,--no-as-needed -L$(LIB_DIR) -o $(LIB_DIR)/libloader.so $(LIB_DIR)/libc_wrappers.o $(LIB_DIR)/loader.o -lmem -lm
+#	$(CC) -g -shared -L$(LIB_DIR) -o $(LIB_DIR)/libloader.so $(LIB_DIR)/loader.o -lmem
 #
 	$(CC) $(CFLAGS) $(INCLUDE) -c -o $(LIB_DIR)/domain_manager.o $(PKRU_DIR)/domain_manager.c
 	$(CC) $(CFLAGS) $(INCLUDE) -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/memory_map.o $(PKRU_DIR)/memory_map.c

@@ -140,6 +140,97 @@ def get_param_list(params):
         i += 1
     return final_list
 
+def new_void_wrapper(name, params, argnames):
+    original_name = 'original_' + name
+    enable_default_domain = 1 if name in allow_names else 0 # compiler should optimize the if stmts
+    code = f'''
+void (*{original_name})({params}) = NULL;
+
+void {name}({params}) {{
+    unsigned int pku;
+    unsigned int privileged_pku;
+
+    if ({original_name} == NULL) {{
+        pku = __rdpkru();
+        privileged_pku = pku & 0x55555554;
+        __wrpkrumem(privileged_pku);
+        {original_name} = dlsym(RTLD_NEXT, "{name}");
+        if ({enable_default_domain}) {{
+            (*{original_name})({argnames});
+            __wrpkrumem(pku);
+        }} else {{
+            __wrpkrumem(pku);
+            (*{original_name})({argnames});
+        }}
+    }}
+    
+    else if ({enable_default_domain}) {{
+        pku = __rdpkru();
+        privileged_pku = pku & 0x55555554;
+        __wrpkrumem(privileged_pku);
+        (*{original_name})({argnames});
+        __wrpkrumem(pku);
+    }} 
+    
+    else {{
+        (*{original_name})({argnames});
+    }}
+}}'''
+
+    init = f'''
+    if ({original_name} == NULL) {{
+        {original_name} = dlsym(RTLD_NEXT, "{name}");
+    }}
+'''
+
+    return code, init
+
+def new_typed_wrapper(name, ret_type, params, argnames):
+    original_name = 'original_' + name
+    enable_default_domain = 1 if name in allow_names else 0 # // compiler should optimize the if stmts
+    code = f'''
+{ret_type} (*{original_name})({params}) = NULL;
+
+{ret_type} {name}({params}) {{
+    {ret_type} ret;
+    unsigned int pku;
+    unsigned int privileged_pku;
+
+    if ({original_name} == NULL) {{
+        pku = __rdpkru();
+        privileged_pku = pku & 0x55555554;
+        __wrpkrumem(privileged_pku);
+        {original_name} = dlsym(RTLD_NEXT, "{name}");
+        if ({enable_default_domain}) {{
+            ret = (*{original_name})({argnames});
+            __wrpkrumem(pku);
+        }} else {{
+            __wrpkrumem(pku);
+            ret = (*{original_name})({argnames});
+        }}
+        return ret;
+    }}
+
+    if ({enable_default_domain}) {{
+        pku = __rdpkru();
+        privileged_pku = pku & 0x55555554;
+        __wrpkrumem(privileged_pku);
+        ret = (*{original_name})({argnames});
+        __wrpkrumem(pku);
+    }} else {{
+        ret = (*{original_name})({argnames});
+    }}
+    return ret;
+}}'''
+
+    init = f'''
+    if ({original_name} == NULL) {{
+        {original_name} = dlsym(RTLD_NEXT, "{name}");
+    }}
+'''
+
+    return code, init
+
 def new_wrapper(name, ret_type, params):
     args = []
     param_list = get_param_list(params) 
@@ -154,53 +245,10 @@ def new_wrapper(name, ret_type, params):
         params = ', '.join([get_param(get_complex(param_list[i], name), args[i]) for i in range(arg_cnt)])
 
     ret_type = get_complex(ret_type, name)
-    original_name = 'original_' + name
-    
-    code = f'''
-{ret_type} (*{original_name})({params}) = NULL;
-
-{ret_type} {name}({params}) {{
-    unsigned int privileged_domain;
-    unsigned int unprivileged_domain;
-    
-    unprivileged_domain = __rdpkru();
-    privileged_domain = unprivileged_domain & 0x55555554;
-
-    __wrpkrumem(privileged_domain);
-    char buf[] = "[libc] {name}\\n";
-    syscall(__NR_write, 2, buf, sizeof(buf));
-    lookup_symbol({name});'''
-
-    if name in allow_names:
-        code += f'''
-    __wrpkrumem(privileged_domain);'''
-
     if ret_type.strip().endswith('void'):
-        code += f'''
-    (*{original_name})({argnames});'''
+        return new_void_wrapper(name, params, argnames)
     else:
-        code += f'''
-    {ret_type} ret = (*{original_name})({argnames});'''
-
-    if name in allow_names:
-        code += f'''
-    __wrpkrumem(unprivileged_domain);'''
-
-    if not ret_type.strip().endswith('void'):
-        code += f'''
-    return ret;'''
-    
-    code += f'''
-}} 
-'''
-
-    init = f'''
-    if ({original_name} == NULL) {{
-        {original_name} = dlsym(RTLD_NEXT, "{name}");
-    }}
-'''
-
-    return code, init
+        return new_typed_wrapper(name, ret_type, params, argnames)
 
 def generate_wrappers(lines):
     for name in dupe_names:
