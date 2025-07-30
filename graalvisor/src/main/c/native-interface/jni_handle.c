@@ -53,13 +53,6 @@ static int open_loader(unsigned int domain) {
         return -1;
     }
 
-    // int (*DLL_get_mspace_count)(void) = DLL_sym(dl_handle, "get_mspace_count");
-    // if (!DLL_get_mspace_count)
-    //     return -1;
-
-    // int mspaces = DLL_get_mspace_count();
-    // printf("mspaces: %d\n", mspaces);
-
     void (*DLL_worker_mspace_init)(unsigned int, void *, void *, void *, char *, pid_t (*)(void), void (*)(pid_t)) = DLL_sym(dl_handle, "worker_mspace_init");
     if (!DLL_worker_mspace_init)
         return -1;

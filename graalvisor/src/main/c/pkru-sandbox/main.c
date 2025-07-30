@@ -76,7 +76,6 @@ void run_constructor(dl_init_t constructor, int argc, char **argv, char **env) {
     char **vargv = {NULL};
     char **venv = {NULL};
     if (pkey && is_running_untrusted()) {
-        // printf("run constructor\n");
         argc = 0;
         argv = vargv;
         env = venv;

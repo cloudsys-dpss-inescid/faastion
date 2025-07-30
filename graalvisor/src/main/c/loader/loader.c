@@ -144,7 +144,7 @@ void *DLL_open(const char *lib_name) {
     dlerror();
     void *lib = dlopen(lib_name, RTLD_LAZY);
 	if ((error = dlerror()) != NULL) {
-        printf("Error loading %s: %s\n", lib_name, error);
+        fprintf(stderr, "Error loading %s: %s\n", lib_name, error);
         return NULL;
     }
 	return lib;
@@ -155,7 +155,7 @@ void *DLL_sym(void *lib, const char *name) {
     dlerror();
 	void *sym = (void *)dlsym(lib, name);
     if ((error = dlerror()) != NULL) {
-        printf("Error resolving symbol %s: %s\n", name, error);
+        fprintf(stderr, "Error resolving symbol %s: %s\n", name, error);
         return NULL;
     }
 	return sym;

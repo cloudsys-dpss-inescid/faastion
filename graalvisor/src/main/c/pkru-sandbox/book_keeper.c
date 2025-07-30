@@ -52,7 +52,7 @@ int enter_sandbox_domain(IsolateFunction *function) {
         atomic_fetch_add(&active_waiting_count, 1);
         usleep(100);
     }
-    printf("Chosen domain: %d\n", domain);
+    // printf("Chosen domain: %d\n", domain);
     function->current_domain = domain;
     function->prev_domain = domain;
     function->jni_threads += 1;
