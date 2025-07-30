@@ -14,7 +14,6 @@ $include <limits.h>
 static char pathname[PATH_MAX]; 
 
 void nativeMethodInterface_$load_native_library(int domain) {
-    printf("enter nativeMethodInterface_load_native_library\n");
     IsolateFunction *function = get_pkru_sandbox(domain);
     load_native_library(function, pathname);
 }
@@ -22,8 +21,6 @@ void nativeMethodInterface_$load_native_library(int domain) {
 // transition to native code
 // we don't need to switch MPK domain yet
 JNIEXPORT void JNICALL $load_native_library(JNIEnv *env, jobject obj, jstring libName) {
-    printf("Hello from load native library entrypoint\n");
-
     int domain;
     request_t * request;
     IsolateFunction *function;

@@ -35,12 +35,9 @@ $include <jni_handle.h>
 $include "$headerFilename"
 
 void nativeMethodInterface_$callGate(int domain) {
-    printf("enter native method interface\n");
     IsolateFunction *function = get_pkru_sandbox(domain);
     if (load_native_method(function, "$nativeMethod"))
         exit(EXIT_FAILURE);
-
-    printf("global native method symbol: %p\n", _native_method);
 
     request_t* request = (request_t*) get_domain_arena(domain);
     $returnType (*native_method)($paramTypes) = _native_method; // accessible in worker domain
@@ -55,7 +52,6 @@ void nativeMethodInterface_$callGate(int domain) {
     __wrpkru(DEFAULT_DOMAIN);
     memcpy(request->ret, &retval, sizeof($returnType));
 #end
-    printf("return from nativeMethodInterface\n");
 }
 
 /*
@@ -71,8 +67,6 @@ JNIEXPORT $returnType JNICALL $callGate($params) {
     SNI_DBM("[s]: Getting available domain...");
 
     print_systime();
-
-    printf("Switch to native method $callGate\n");
 
     int domain;
     request_t * request;
