@@ -81,18 +81,14 @@ function build_native_library {
 }
 
 function build_snippets {
-	pathname=$(ls "$SNIPPETS_DIR"/*.c)
-	file=${pathname##*/}
-	name=${file%.*}
-	gcc $SFLAGS -DREMOVE_NNS_LIMIT -o $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-${name}.so $pathname -L$GRAALVISOR_HOME/build/libs -lpkru
+	make
 }
 
 function manipulate_bytecode {
-	CLASS_PATH="build/classes/java/main"
-	ENTRYPOINT="com.jni.MST"
-	TOOL="JNITemplateBuilder"
+	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
+	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
 
-	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-mst.so
+	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-wrapper.so
 
 	mkdir -p $DIR/build/snippets
 
@@ -101,10 +97,7 @@ function manipulate_bytecode {
 	export FUNCTION_ID="$FUNCTION_ID"
 	export ENV="memisolation"
 
-	$DEF_JAVA_HOME/bin/java \
-			-cp $CLASS_PATH \
-			-javaagent:$JAVA_AGENT=$TOOL::output \
-			$ENTRYPOINT
+	$DEF_JAVA_HOME/bin/java -cp $CLASS_PATH $ENTRYPOINT build/libs/mst-1.0-all.jar
 
 	echo "check snippets"
 }
@@ -129,10 +122,10 @@ then
 fi
 
 # Build graalvisor lib.
-bash $ARGO_HOME/graalvisor-lib/build.sh
+# bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Build java agent.
-build_java_agent
+# build_java_agent
 
 # Move into the script directory.
 cd $DIR &> /dev/null

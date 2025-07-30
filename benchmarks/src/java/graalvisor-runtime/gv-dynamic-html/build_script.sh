@@ -55,10 +55,18 @@ function build_ni {
 	cd -
 }
 
+function build_faastion_image {
+	NI_BIN_OPTS="--shared"
+	CLASS_PATH="$DIR/output"
+	FUNCTION_ID="$BENCHMARK_NAME"
+	
+	build_ni
+}
+
 function build_vanila_image {
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
 
 	build_ni
 }
@@ -77,7 +85,7 @@ then
 fi
 
 # Build graalvisor lib.
-bash $ARGO_HOME/graalvisor-lib/build.sh
+# bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Move into the script directory.
 cd $DIR &> /dev/null
@@ -88,3 +96,5 @@ cd $DIR &> /dev/null
 build_native_binary
 
 build_vanila_image
+
+build_faastion_image
