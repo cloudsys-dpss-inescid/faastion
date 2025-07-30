@@ -35,7 +35,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "	if (pathName == null) {"												+
 "		throw new NullPointerException();"									+
 "	}"																		+
-"	System.out.println(pathName);"											+
+"	// System.out.println(pathName);"											+
 "	java.io.File file = new java.io.File(pathName);"						+
 "	if (file.isFile()) {"													+
 "		System.load(\"" + wrapperLib + "\");"								+
@@ -50,7 +50,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "	if (libName == null) {"													+
 "		throw new NullPointerException();"									+
 "	}"																		+
-"	System.out.println(libName);"											+
+"	// System.out.println(libName);"											+
 "	String libraryPath = System.getProperty(\"java.library.path\");"		+
 "	String[] folders = libraryPath.split(\":\");"							+
 "	for (int i = 0; i < folders.length; i++) {"								+
@@ -310,7 +310,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	private void defineLoadWrapper(CtClass clazz, String methodName) throws CannotCompileException {
-		System.out.println("Load library method call");
+		// System.out.println("Load library method call");
 
 		String nativeMethodName = "loadNativeLibrary";
 		if (!isDeclared(clazz, nativeMethodName, "(Ljava/lang/String;)V")) {
