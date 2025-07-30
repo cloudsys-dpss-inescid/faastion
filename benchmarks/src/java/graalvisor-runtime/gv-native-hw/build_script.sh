@@ -136,11 +136,11 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-# build_native_binary # for LPI
+build_native_binary # for LPI
 
 build_native_library # compile jni code
 
-# build_vanila_image # to benchmark vanila
+build_vanila_image # to benchmark vanila
 
 build_faastion_image # to benchmark faastion
 
