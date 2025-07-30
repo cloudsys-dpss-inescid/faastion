@@ -35,7 +35,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "	if (pathName == null) {"												+
 "		throw new NullPointerException();"									+
 "	}"																		+
-"	// System.out.println(pathName);"											+
 "	java.io.File file = new java.io.File(pathName);"						+
 "	if (file.isFile()) {"													+
 "		System.load(\"" + wrapperLib + "\");"								+
@@ -50,7 +49,6 @@ public class JNITemplateBuilder extends TemplateBuilder {
 "	if (libName == null) {"													+
 "		throw new NullPointerException();"									+
 "	}"																		+
-"	// System.out.println(libName);"											+
 "	String libraryPath = System.getProperty(\"java.library.path\");"		+
 "	String[] folders = libraryPath.split(\":\");"							+
 "	for (int i = 0; i < folders.length; i++) {"								+
