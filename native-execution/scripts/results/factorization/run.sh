@@ -1,1 +1,0 @@
-java -cp /home/cidra/git/faastion/native-execution/scripts/benchmarks/factorization/build/libs/factorization-all.jar -javaagent:/home/cidra/git/faastion/native-execution/scripts/../javassist/target/JavassistWrapper-1.0-jar-with-dependencies.jar=MethodExecutionTimer::output Factorization
