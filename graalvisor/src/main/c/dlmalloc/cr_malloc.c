@@ -205,7 +205,7 @@ void* realloc(void* ptr, size_t size) {
 
 size_t malloc_usable_size(const void* mem) {
     switch_privileged;
-    size_t ret = dlmalloc_usable_size(mem);
+    size_t ret = mspace_usable_size(mem);
     switch_unprivileged;
     return ret;
 }
@@ -220,7 +220,7 @@ struct mallinfo mallinfo() {
 
 int mallopt(int param_number, int value) {
     switch_privileged;
-    int ret = dlmallopt(param_number, value);
+    int ret = mspace_mallopt(param_number, value);
     switch_unprivileged;
     return ret;
 }
@@ -235,21 +235,30 @@ void* memalign(size_t alignment, size_t bytes) {
 
 int posix_memalign(void **memptr, size_t alignment, size_t size) {
     switch_privileged;
-    int ret = dlposix_memalign(memptr, alignment, size);
+    int ret = ENOMEM;
+    int tid = get_current_tid();
+    void *mem = mspace_memalign(find_mspace(tid), alignment, size);
+    if (mem) {
+        *memptr = mem;        
+        ret = 0;
+    }
     switch_unprivileged;
     return ret;
 }
 
 void* valloc(size_t size) {
     switch_privileged;
-    void *ret = dlvalloc(size);
+    int tid = get_current_tid();
+    void *ret = mspace_memalign(find_mspace(tid), getpagesize(), size);
     switch_unprivileged;
     return ret;
 }
 
 void* pvalloc(size_t size) {
     switch_privileged;
-    void *ret = dlpvalloc(size);
+    int tid = get_current_tid();
+    int pagesize = getpagesize();
+    void *ret = mspace_memalign(find_mspace(tid), pagesize, (size + pagesize - (size_t)1) & ~(pagesize - (size_t)1));
     switch_unprivileged;
     return ret;
 }
@@ -257,8 +266,8 @@ void* pvalloc(size_t size) {
 void malloc_stats() {
     switch_privileged;
     int tid = get_current_tid();
-    switch_unprivileged;
     mspace_malloc_stats(find_mspace(tid));
+    switch_unprivileged;
 }
 
 int malloc_trim(size_t pad) {
