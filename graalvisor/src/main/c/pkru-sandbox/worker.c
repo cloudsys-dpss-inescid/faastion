@@ -96,13 +96,17 @@ void* worker(void* arg)
     return NULL;
 }
 
+extern void __attribute__((weak)) ensure_msid(unsigned int tid, unsigned int mspace_id);
+
 // This function installs a seccomp filter in the wrapper thread to protect
 // the memory regions allocated in `pthread_create`.
 // This method isolates the stack, TLS, and DTV of the child thread (worker)
 void* worker_wrapper(void* arg)
 {
     int pkey = (int) ((long) arg);
+    pid_t tid = syscall(__NR_gettid);
     monitor_threads[pkey].seccomp_fd = install_jni_filter();
+    ensure_msid(tid, pkey);
     if (pthread_create(&(worker_threads[pkey].thread), NULL, worker, (void*)(intptr_t)pkey)) {
         fprintf(stderr, "Error creating worker thread for domain %d\n", pkey);
         cleanup_and_exit();
