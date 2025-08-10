@@ -12,9 +12,8 @@
 #error "LOADER_LIB is not defined. Export LOADER_LIB first: it should point to graalvisor/build/libs"
 #endif
 
-void *_native_method;
 static __thread void *(*DLL_open)(const char *) = NULL;
-static __thread void *(*DLL_sym)(void *, const char *) = NULL;
+static __thread void *(*DLL_sym)(void *, const char *, void *) = NULL;
 
 // These symbols are resolved at runtime via LD_PRELOAD
 extern __attribute__((weak)) pid_t (*get_cached_tid)(void);
@@ -53,7 +52,7 @@ static int open_loader(unsigned int domain) {
         return -1;
     }
 
-    void (*DLL_worker_mspace_init)(unsigned int, void *, void *, void *, char *, pid_t (*)(void), void (*)(pid_t)) = DLL_sym(dl_handle, "worker_mspace_init");
+    void (*DLL_worker_mspace_init)(unsigned int, void *, void *, void *, char *, pid_t (*)(void), void (*)(pid_t)) = DLL_sym(dl_handle, "worker_mspace_init", dlsym);
     if (!DLL_worker_mspace_init)
         return -1;
 
@@ -64,19 +63,27 @@ static int open_loader(unsigned int domain) {
 
 // TODO: return list of handles
 static void *get_handle(IsolateFunction *function) {
+#ifdef REMOVE_NNS_LIMIT
+    int domain = function->current_domain;
+    IsolateFunction *primary_function = get_primary_pkru_sandbox(domain);
+    if (primary_function)
+        return primary_function->dl_handle;
+#endif
     return function->dl_handle;
 }
 
 // TODO: iterate over list of handles to find the symbol
 int load_native_method(IsolateFunction *function, const char *symbol) {
-    void *dl_handle;
+    void *dl_handle = NULL;
     
     if ((dl_handle = get_handle(function)) == NULL)
         return -1;
 
-    _native_method = (void *)DLL_sym(dl_handle, symbol);    
-    if (!_native_method)
+    void *native_method = (void *)DLL_sym(dl_handle, symbol, dlsym);
+    if (!native_method)
         return -1;
+
+    function->native_method = native_method;
 
     return 0;
 }

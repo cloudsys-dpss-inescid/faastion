@@ -40,7 +40,7 @@ void nativeMethodInterface_$callGate(int domain) {
         exit(EXIT_FAILURE);
 
     request_t* request = (request_t*) get_domain_arena(domain);
-    $returnType (*native_method)($paramTypes) = _native_method; // accessible in worker domain
+    $returnType (*native_method)($paramTypes) = function->native_method; // accessible in worker domain
 
     int pku = DOMAIN_TO_PKRU(domain) & RO_LOADER_DOMAIN;
     __wrpkrumem(pku);

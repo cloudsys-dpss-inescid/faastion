@@ -35,6 +35,8 @@ typedef void (*dtor_func) (void *);
 
 int (*original___cxa_thread_atexit_impl)(dtor_func, void *, void *) = NULL;
 
+// required by _dl_find_dso_for_object
+// FIXME: we dont want to run the user destructor functions in domain 0
 int __cxa_thread_atexit_impl (dtor_func func, void *obj, void *dso_symbol) {
     int retval;
     unsigned int privileged_domain;
@@ -43,7 +45,7 @@ int __cxa_thread_atexit_impl (dtor_func func, void *obj, void *dso_symbol) {
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
     
-    __wrpkrumem(privileged_domain);
+    __wrpkru(DEFAULT_DOMAIN);
     lookup_symbol(__cxa_thread_atexit_impl);
     retval = original___cxa_thread_atexit_impl(func, obj, dso_symbol);
     __wrpkrumem(unprivileged_domain);
@@ -118,9 +120,9 @@ struct tm *localtime(const time_t *__timer) {
 
 int (*original_pthread_create)(pthread_t *, const pthread_attr_t *, void *(*)(void *), void *) = NULL;
 
-int
-pthread_create(
-    pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg)
+// required by _dl_allocate_tls_init
+int pthread_create(
+pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine)(void *), void *arg)
 {
     int retval;
     unsigned int privileged_domain;
@@ -129,9 +131,25 @@ pthread_create(
     unprivileged_domain = __rdpkru();
     privileged_domain = unprivileged_domain & 0x55555554; 
 
-    __wrpkrumem(privileged_domain);
+    __wrpkru(DEFAULT_DOMAIN);
     lookup_symbol(pthread_create);
     retval = original_pthread_create(thread, attr, start_routine, arg);
+    __wrpkrumem(unprivileged_domain);
+
+    return retval;
+}
+
+void *(*original_dlsym)(void *__restrict, const char *__restrict) = NULL;
+
+// required by _dl_find_dso_for_object
+void *dlsym(void *__restrict handle, const char *__restrict name) {
+    void *retval;
+    unsigned int unprivileged_domain;
+    
+    unprivileged_domain = __rdpkru(); 
+    
+    __wrpkru(DEFAULT_DOMAIN);
+    retval = original_dlsym(handle, name);
     __wrpkrumem(unprivileged_domain);
 
     return retval;
@@ -150,8 +168,13 @@ void *DLL_open(const char *lib_name) {
 	return lib;
 }
 
-void *DLL_sym(void *lib, const char *name) {
+void *DLL_sym(void *lib, const char *name, void *(*base_dlsym)(void *__restrict, const char *__restrict)) {
     char *error;
+
+    if (!original_dlsym) {
+        original_dlsym = base_dlsym(RTLD_NEXT, "dlsym");
+    }
+
     dlerror();
 	void *sym = (void *)dlsym(lib, name);
     if ((error = dlerror()) != NULL) {
