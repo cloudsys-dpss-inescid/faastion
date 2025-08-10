@@ -25,6 +25,8 @@ typedef struct MemoryRegionNode {
 typedef struct {
     pthread_mutex_t mutex;
     void *dl_handle;
+    void *dl_sym;
+    void *native_method;
     int current_domain;             
     int prev_domain;
     int jni_threads;
@@ -83,17 +85,6 @@ int get_active_waiting_count();
  * @return MemoryRegionNode* Pointer to the newly created node.
  */
 MemoryRegionNode* create_memory_region_node(void* address, size_t size, int prot);
-
-void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t size);
-
-/**
- * @brief Append a new MemoryRegionNode to the end of the linked list.
- * 
- * @param address The start address of the new memory region.
- * @param size The size of the new memory region.
- * @param prot The protection flags for the new memory region.
- */
-void append_memory_region_node(MemoryRegionNode **head, void* address, size_t size, int prot);
 
 /**
  * @brief Protect all memory regions in the linked list with the specified pkey.

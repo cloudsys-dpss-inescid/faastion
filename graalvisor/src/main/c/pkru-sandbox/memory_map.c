@@ -20,6 +20,13 @@ MemoryRegionNode* create_memory_region_node(void* address, size_t size, int prot
     return newNode;
 }
 
+/**
+ * @brief Append a new MemoryRegionNode to the end of the linked list.
+ * 
+ * @param address The start address of the new memory region.
+ * @param size The size of the new memory region.
+ * @param prot The protection flags for the new memory region.
+ */
 void append_memory_region_node(MemoryRegionNode** head, void* address, size_t size, int prot) {
     MemoryRegionNode* newNode = create_memory_region_node(address, size, prot);
 
@@ -35,11 +42,11 @@ void append_memory_region_node(MemoryRegionNode** head, void* address, size_t si
     current->next = newNode;
 }
 
-int protect_memory_region_node(MemoryRegionNode *head, void *address, size_t size, int prot) {
+int protect_memory_region_node(MemoryRegionNode **nodePtr, void *address, size_t size, int prot) {
+    MemoryRegionNode *head = *nodePtr;
     if (head == NULL)
         return size;
 
-    MemoryRegionNode **nodePtr = &head;
     MemoryRegionNode *current = head;
     int prot_flags;
     size_t bytes_left;
@@ -60,10 +67,10 @@ int protect_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
                 prot_flags = current->region.prot;
                 current->region.size = mem_split_start_addr - mem_start_addr;
                 current->region.prot = prot;
-                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                append_memory_region_node(nodePtr, (void *)mem_split_start_addr,
                     mem_end_addr - mem_split_start_addr, prot_flags);
             } else {
-                delete_memory_region_node(head, (void *)mem_end_addr, 
+                delete_memory_region_node(nodePtr, (void *)mem_end_addr, 
                     mem_split_start_addr - mem_end_addr);
                 current->region.size = size;
                 current->region.prot = prot;
@@ -72,24 +79,23 @@ int protect_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
         } else if (addr > mem_start_addr && addr < mem_end_addr) {
             if (mem_split_start_addr == mem_end_addr) {
                 current->region.size = addr - mem_start_addr;
-                append_memory_region_node(&head, (void *)addr,
+                append_memory_region_node(nodePtr, (void *)addr,
                     mem_split_start_addr - addr, prot);
             } else if (mem_split_start_addr < mem_end_addr) {
                 current->region.size = addr - mem_start_addr;
-                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                append_memory_region_node(nodePtr, (void *)mem_split_start_addr,
                     mem_end_addr - mem_split_start_addr, current->region.prot);
-                append_memory_region_node(&head, (void *)addr,
+                append_memory_region_node(nodePtr, (void *)addr,
                     mem_split_start_addr - addr, prot);
             } else {
-                delete_memory_region_node(head, (void *)mem_end_addr, 
+                delete_memory_region_node(nodePtr, (void *)mem_end_addr, 
                     mem_split_start_addr - mem_end_addr);
                 current->region.size = addr - mem_start_addr;
-                append_memory_region_node(&head, (void *)addr,
+                append_memory_region_node(nodePtr, (void *)addr,
                     mem_split_start_addr - mem_start_addr, prot);
             }
             return 0;
         } else {
-            nodePtr = &current->next;
             current = current->next;
         }
     }
@@ -97,11 +103,11 @@ int protect_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
     return bytes_left;
 }
 
-void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t size) {
+void delete_memory_region_node(MemoryRegionNode **nodePtr, void *address, size_t size) {
+    MemoryRegionNode *head = *nodePtr;
     if (head == NULL)
         return;
 
-    MemoryRegionNode **nodePtr = &head;
     MemoryRegionNode *current = head;
     unsigned long addr;
     unsigned long mem_end_addr;
@@ -122,7 +128,7 @@ void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
             } else {
                 *nodePtr = current->next;
                 free(current);
-                delete_memory_region_node(head, (void *)mem_end_addr,
+                delete_memory_region_node(nodePtr, (void *)mem_end_addr,
                     mem_split_start_addr - mem_end_addr);
             }
             return;
@@ -131,11 +137,11 @@ void delete_memory_region_node(MemoryRegionNode *head, void *address, size_t siz
                 current->region.size = addr - mem_start_addr;
             } else if (mem_split_start_addr < mem_end_addr) {
                 current->region.size = addr - mem_start_addr;
-                append_memory_region_node(&head, (void *)mem_split_start_addr,
+                append_memory_region_node(nodePtr, (void *)mem_split_start_addr,
                     mem_end_addr - mem_split_start_addr, current->region.prot);
             } else {
                 current->region.size = addr - mem_start_addr;
-                delete_memory_region_node(head, (void *)mem_end_addr,
+                delete_memory_region_node(nodePtr, (void *)mem_end_addr,
                     mem_split_start_addr - mem_end_addr);
             }
             return;
@@ -168,7 +174,7 @@ void free_memory_region_list(MemoryRegionNode *head) {
 void insert_app_region(IsolateFunction *function, void* address, size_t size, int prot) {
     if (function == NULL)
         return;
-    size_t bytes_left = protect_memory_region_node(function->regions, address, size, prot);
+    size_t bytes_left = protect_memory_region_node(&function->regions, address, size, prot);
     if (bytes_left) {
         address = (void *)((char *)address + size - bytes_left);
         append_memory_region_node(&function->regions, address, bytes_left, prot);
@@ -178,7 +184,7 @@ void insert_app_region(IsolateFunction *function, void* address, size_t size, in
 void remove_app_region(IsolateFunction *function, void *address, size_t size) {
     if (function == NULL)
         return;
-    delete_memory_region_node(function->regions, address, size);
+    delete_memory_region_node(&function->regions, address, size);
 }
 
 void protect_memory_regions(MemoryRegionNode *head, int pkey) {
@@ -225,5 +231,5 @@ void protect_app_regions(IsolateFunction *function, int pkey) {
 void protect_app_region(IsolateFunction *function, void *address, size_t size, int prot) {
     if (function == NULL)
         return;
-    protect_memory_region_node(function->regions, address, size, prot);
+    protect_memory_region_node(&function->regions, address, size, prot);
 }
