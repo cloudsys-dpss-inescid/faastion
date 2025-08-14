@@ -150,6 +150,9 @@ void {name}({params}) {{
     unsigned int pku;
     unsigned int privileged_pku;
 
+    // char buf[] = "[libc] {name}\\n";
+    // syscall(__NR_write, 2, buf, sizeof(buf));
+
     if ({original_name} == NULL) {{
         pku = __rdpkru();
         privileged_pku = pku & 0x55555554;
@@ -195,6 +198,9 @@ def new_typed_wrapper(name, ret_type, params, argnames):
     {ret_type} ret;
     unsigned int pku;
     unsigned int privileged_pku;
+
+    // char buf[] = "[libc] {name}\\n";
+    // syscall(__NR_write, 2, buf, sizeof(buf));
 
     if ({original_name} == NULL) {{
         pku = __rdpkru();
