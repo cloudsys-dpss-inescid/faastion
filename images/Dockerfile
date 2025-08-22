@@ -15,4 +15,4 @@ RUN ln -s $build_home/libigraph.so.3 $build_home/libigraph.so
 # Make the entrypoint script executable.
 RUN chmod +x /graalvisor/start.sh
 
-ENTRYPOINT /graalvisor/start.sh
+ENTRYPOINT ["/graalvisor/start.sh"]
