@@ -32,6 +32,8 @@ static inline int DOMAIN_TO_PKRU(int domain) {
   }
 }
 
+// #define NO_ISOLATION 1
+
 #ifdef NO_ISOLATION
 
 #define __wrpkru(PKRU_ARG) {}

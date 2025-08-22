@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
+void delete_memory_region_node(MemoryRegionNode **nodePtr, void *address, size_t size);
+
 MemoryRegionNode* create_memory_region_node(void* address, size_t size, int prot) {
     MemoryRegionNode* newNode = (MemoryRegionNode*)malloc(sizeof(MemoryRegionNode));
     if (!newNode) {
