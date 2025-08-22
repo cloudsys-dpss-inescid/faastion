@@ -7,7 +7,6 @@ local max_workers = 15
 function setup(thread)
     local id = (thread_counter % max_workers) + 1
     thread:set("thread_id", id)
-    print("new thread " .. id)
     thread_counter = thread_counter + 1
 end
 
