@@ -8,6 +8,10 @@ public abstract class SandboxHandle {
         // default implementation;
     }
 
+    public boolean supportsLPI() {
+        return false;
+    }
+
     @Override
     public abstract String toString();
 }

@@ -15,6 +15,8 @@ import org.graalvm.argo.graalvisor.sandboxing.SandboxHandle;
 import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface; 
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 
+import static org.graalvm.argo.graalvisor.RuntimeProxy.FTABLE;
+
 /**
  * A runtime proxy that runs requests on Native image-based sandboxes.
  */
@@ -60,14 +62,19 @@ public class SubstrateVMProxy extends RuntimeProxy {
         private void processRequest(SandboxHandle shandle, Request req) {
             synchronized (req) {
 
-                if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
-                    HashMap<String, Object> output = new HashMap<>();
-                    String filename = System.getenv("ARGO_HOME")
-                        .concat("/graalvisor/build/libs/")
-                        .concat(pipeline.getFunction().getName().replaceAll("[\\d.]", ""))
-                        .concat("-proc");
-                    NativeSandboxInterface.invokeProcessSandbox(filename);
-                    req.setOutput(output.toString());
+                if (shandle.supportsLPI() && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
+                    String isName = pipeline.getFunction().getName().replaceAll("[\\d.]", "");
+                    String procName = isName + "-proc";
+
+                    String res;
+                    PolyglotFunction function = FTABLE.get(procName);
+                    if (function == null) {
+                        res = String.format("{'Error': 'Function %s not registered!'}", procName);
+                    } else {
+                        res = getFunctionPipeline(function).invokeInCachedSandbox("{}");
+                    }
+
+                    req.setOutput(res);
                 } else {
                     // Get input from request, invoke function in isolate, fill output.
                     try {
@@ -122,7 +129,7 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
         private final AtomicInteger active = new AtomicInteger(0);
 
-        private final int maxFaastlaneWorkers = 15;
+        private final int maxFaastlaneWorkers = 1;
         
         private boolean faastlane;
 

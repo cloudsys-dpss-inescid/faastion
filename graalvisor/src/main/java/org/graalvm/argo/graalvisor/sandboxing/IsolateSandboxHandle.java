@@ -5,6 +5,8 @@ import org.graalvm.argo.graalvisor.function.NativeFunction;
 import org.graalvm.nativeimage.IsolateThread;
 import org.graalvm.nativeimage.Isolates;
 
+import org.graalvm.argo.graalvisor.Main;
+
 public class IsolateSandboxHandle extends SandboxHandle {
 
     private final IsolateSandboxProvider isProvider;
@@ -32,5 +34,9 @@ public class IsolateSandboxHandle extends SandboxHandle {
     @Override
     public String toString() {
         return Long.toString(Isolates.getIsolate(isolateThread).rawValue());
+    }
+
+    public boolean supportsLPI() {
+        return Main.LPI;
     }
 }
