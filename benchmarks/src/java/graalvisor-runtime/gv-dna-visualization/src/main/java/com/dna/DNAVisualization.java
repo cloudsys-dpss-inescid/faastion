@@ -92,15 +92,6 @@ public class DNAVisualization {
         }
     }
 
-    public static void deleteFile(String filePath) {
-        try {
-            Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static DNACoordinates transform(String sequence, String method) {
         return transform(sequence, method, false);
     }
@@ -157,19 +148,30 @@ public class DNAVisualization {
     public static HashMap<String, Object> main(Map<String, Object> input) {
         HashMap<String, Object> output = new HashMap<>();
 
-        String result = "Error: something went wrong";
-        if (downloadFile(url, filePath)) {
-            try {
-                BufferedReader reader = Files.newBufferedReader(Paths.get(filePath));
-                String fastaSequence = reader.lines().collect(Collectors.joining());
-                DNACoordinates dna = transform(fastaSequence);
-                result = "(" + dna.getHorizontalCoordinates(0, 10)
+        // String result = "Error: something went wrong";
+        // if (downloadFile(url, filePath)) {
+        //     try {
+        //         BufferedReader reader = Files.newBufferedReader(Paths.get(filePath));
+        //         String fastaSequence = reader.lines().collect(Collectors.joining());
+        //         DNACoordinates dna = transform(fastaSequence);
+        //         result = "(" + dna.getHorizontalCoordinates(0, 10)
+        //                 + ", " + dna.getVerticalCoordinates(0, 10) + ")";
+        //     } catch (IOException e) {
+        //         e.printStackTrace();
+        //     }
+        // }
+
+        DNACoordinates dna = transform(
+"ATGGTGCATCTGACTCCTGAGGAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAGGTGAACGTGGATGAAG" +
+"TTGGTGGTGAGGCCCTGGGCAGGCTGCTGGTGGTCTACCCTTGGACCCAGAGGTTCTTTGAGTCCTTTGG" +
+"GGATCTGTCCACTCCTGATGCTGTTATGGGCAACCCTAAGGTGAAGGCTCATGGCAAGAAAGTGCTCGGT" +
+"GCCTTTAGTGATGGCCTGGCTCACCTGGACAACCTCAAGGGCACCTTTGCCACACTGAGTGAGCTGCACT" +
+"GTGACAAGCTGCACGTGGATCCTGAGAACTTCAGGCTCCTGGGCAACGTGCTGGTCTGTGTGCTGGCCCA" +
+"TCACTTTGGCAAAGAATTCACCCCACCAGTGCAGGCTGCCTATCAGAAAGTGGTGGCTGGTGTGGCTAAT" +
+"GCCCTGGCCCACAAGTATCACTAA"
+        );
+        String result = "(" + dna.getHorizontalCoordinates(0, 10)
                         + ", " + dna.getVerticalCoordinates(0, 10) + ")";
-                deleteFile(filePath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
         output.put("result", result);
 
         return output;
