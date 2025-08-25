@@ -49,15 +49,6 @@ public class ZIPCompression {
         }
     }
 
-    public static void deleteFile(String filePath) {
-        try {
-            Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static HashMap<String, Object> main(Map<String, Object> input) {
         HashMap<String, Object> output = new HashMap<>();
 
@@ -67,7 +58,6 @@ public class ZIPCompression {
 
         if (success) {
             compress();
-            deleteFile(filePath);
         }
         output.put("success", success);
         

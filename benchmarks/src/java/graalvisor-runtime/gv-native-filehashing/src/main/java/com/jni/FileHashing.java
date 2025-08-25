@@ -62,15 +62,6 @@ public class FileHashing {
         }
     }
 
-    public static void deleteFile(String filePath) {
-        try {
-            Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static HashMap<String, Object> main(Map<String, Object> args) {
 	    HashMap<String, Object> output = new HashMap<>();
 

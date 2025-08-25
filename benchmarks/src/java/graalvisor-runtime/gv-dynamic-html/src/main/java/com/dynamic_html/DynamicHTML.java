@@ -58,15 +58,6 @@ public class DynamicHTML {
         }
     }
 
-    public static void deleteFile(String filePath) {
-        try {
-            Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static boolean renderTemplate(String name, int size) {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(filePath);
@@ -92,7 +83,6 @@ public class DynamicHTML {
         boolean success;
         if ((success = downloadFile(url, filePath))) {
             success = renderTemplate("testname", LARGE_INPUT);
-            deleteFile(filePath);
         }
         output.put("success", success);
 
