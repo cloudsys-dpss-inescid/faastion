@@ -22,9 +22,13 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.ContentType;
+
 public class Uploader {
 
     private static final String url = "http://127.0.0.1:8000/snap.png";
+    private static final String upload_url = "http://127.0.0.1:9696/upload";
     private static final String filePath = "/tmp/snap.png";
 
     public static boolean downloadFile(String url, String filePath) {
@@ -54,21 +58,19 @@ public class Uploader {
         }
     }
 
-    public static void deleteFile(String filePath) {
-        try {
-            Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static int uploadFile(String url, String filePath) throws IOException {
         HttpClient httpclient = new DefaultHttpClient();
         HttpPost httppost = new HttpPost(url);
-        
-        FormBodyPart part = new FormBodyPart("data", new FileBody(new File(filePath)));
-        HttpEntity entity = MultipartEntityBuilder.create().addPart(part).build();
+
+        File file = new File(filePath);
+        HttpEntity entity = MultipartEntityBuilder.create()
+                .addBinaryBody(
+                    "file",
+                    file,
+                    ContentType.create("image/png"),
+                    file.getName() // System.currentTimeMillis() + ".png"
+                )
+                .build();
         httppost.setEntity(entity);
 
         HttpResponse response = httpclient.execute(httppost);
@@ -82,7 +84,7 @@ public class Uploader {
         boolean success;
         if ((success = downloadFile(url, filePath))) {
             try {
-                result = uploadFile(url, filePath);
+                result = uploadFile(upload_url, filePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
