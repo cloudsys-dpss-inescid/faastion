@@ -9,3 +9,9 @@ request = function()
     
     return wrk.format("POST", nil, nil, wrk.body)
 end
+
+-- function response(status, headers, body)
+--     print(body)
+-- end
+
+-- wrk.response = response

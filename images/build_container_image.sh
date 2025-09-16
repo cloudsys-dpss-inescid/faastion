@@ -5,6 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 GRAALVISOR_HOME=$ARGO_HOME/graalvisor
 BUILD_HOME=$GRAALVISOR_HOME/build/libs/
 GRAALVISOR_BINARY=$GRAALVISOR_HOME/build/native-image/polyglot-proxy
+FFMPEG_BIN=$HOME/Desktop/resources/ffmpeg
 
 # Prepare directory used to setup the filesystem.
 DISK=$DIR/disk
@@ -26,6 +27,7 @@ env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" LD_PRELOA
 ' > $DISK/graalvisor/start.sh
 
 # Copy graalvisor and init.
+cp $FFMPEG_BIN $DISK/. # required by videoprocessing
 cp $BUILD_HOME/*.so $DISK/$BUILD_HOME/.
 cp -r $LIBC_HOME/* $DISK/$LIBC_HOME/.
 cp /usr/lib/libigraph.so.3 $DISK/$BUILD_HOME/. # required by search algorithms
