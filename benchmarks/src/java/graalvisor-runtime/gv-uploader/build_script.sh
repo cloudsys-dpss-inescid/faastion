@@ -120,7 +120,7 @@ if [ ! -d config-dir ]; then
 	fi
 fi
 
-build_native_binary
+#build_native_binary
 
 build_vanila_image
 

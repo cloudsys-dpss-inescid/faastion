@@ -93,7 +93,7 @@ cd $DIR &> /dev/null
 # Build.
 ./gradlew clean shadowJar assemble
 
-build_native_binary
+#build_native_binary
 
 build_vanila_image
 

@@ -133,7 +133,7 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-build_native_binary # for LPI
+#build_native_binary # for LPI
 
 build_native_library # compile jni code
 
