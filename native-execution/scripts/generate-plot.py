@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 # Load data from files
 transitions = np.loadtxt('results/transitions.dat')
 percentages = np.loadtxt('results/percentages.dat')
-untrusted = np.loadtxt('results/untrusted.dat')
 benchmarks = np.loadtxt('results/benchmarks.dat', dtype=str)  # Load benchmarks as strings
 
 x = np.arange(len(benchmarks))  # X-axis positions for benchmarks
@@ -40,16 +39,3 @@ ax.grid(axis='y', linestyle='--', linewidth=0.5)
 plt.title("Percentage of Time in Native Code")
 plt.tight_layout()
 plt.savefig("results/percentage-native-code.pdf", dpi=300)
-
-# Bar graph 3: Untrusted methods
-fig, ax = plt.subplots()
-ax.bar(x, untrusted, width=0.6, color='green', label="% of untrusted native methods")
-ax.set_xticks(x)
-ax.set_xticklabels(benchmarks)
-ax.set_ylim(ymin=0)
-ax.set_ylabel("Percentage of untrusted native methods")
-ax.set_xlabel("Benchmarks")
-ax.grid(axis='y', linestyle='--', linewidth=0.5)
-plt.title("Percentage of Untrusted Native Methods")
-plt.tight_layout()
-plt.savefig("results/untrusted-methods.pdf", dpi=300)

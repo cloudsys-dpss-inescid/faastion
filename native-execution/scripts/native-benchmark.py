@@ -73,14 +73,10 @@ def run(command):
     # Filter lines containing 'timer'
     timer_lines = [line for line in output_lines if 'timer' in line]
 
-    # Extract the line with "Actual/total" and compute the untrusted percentage
-    actual_total_lines = [s for s in output_lines if "Actual/total" in s]
-    actual_count, total_count = map(float, actual_total_lines[-1].split()[-1].split("/"))
-
     # Calculate elapsed time in microseconds
     elapsed_time_microseconds = (end_time - start_time) * 1_000_000
 
-    return timer_lines, elapsed_time_microseconds, (actual_count, total_count)
+    return timer_lines, elapsed_time_microseconds
 
 def main():
     command, times = parse_args()
@@ -89,18 +85,13 @@ def main():
 
     native_percentages = [process_results(result[0], result[1]) for result in results]
     total_times = [result[1] for result in results]
-    actual_count = [result[2][0] for result in results]
-    total_count = [result[2][1] for result in results]
 
     avg_total_time = np.sum(total_times) / times
     avg_native_percentage = np.sum(native_percentages) / times
-    avg_actual_count = np.sum(actual_count) / times
-    avg_total_count = np.sum(total_count) / times
 
     print("Average percentage of native execution: {:.2f}".format(avg_native_percentage))
-    print(f"Number of transitions per second: {len(results[0][0])/(avg_total_time/1000000)}") # number of transitions is fixed
-    print("Average untrusted native calls percentage: {:.2f}".format(avg_actual_count/avg_total_count))
-    print(f"Actual/Total: {avg_actual_count}/{avg_total_count}")
+    print(f"Total number of transitions per invocation: {len(results[0][0])}") # number of transitions is fixed
+    print("Average function invocation time: {:.3f}".format(avg_total_time/1000)) # time in ms
 
 
 if __name__ == "__main__":

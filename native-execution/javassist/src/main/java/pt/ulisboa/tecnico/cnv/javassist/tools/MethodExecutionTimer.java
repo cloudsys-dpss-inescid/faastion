@@ -32,9 +32,9 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
                     calleeMethod = m.getMethod();
                     mod = calleeMethod.getModifiers();
                 } catch (NotFoundException e) {
-                    String methodName = m.getMethodName();
-                    String className = m.getClassName();
-                    System.out.println(String.format("Warning: unable to check modifier for %s:%s", className, methodName));
+                    // String methodName = m.getMethodName();
+                    // String className = m.getClassName();
+                    // System.out.println(String.format("Warning: unable to check modifier for %s:%s", className, methodName));
                     return;
                 }
 
@@ -48,7 +48,6 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
                     if (calleeClassName.startsWith("java.") ||
                     calleeClassName.startsWith("javax.") ||
                     calleeClassName.startsWith("jdk.") ||
-                    calleeClassName.startsWith("org.") ||
                     calleeClassName.startsWith("sun.") ||
                     calleeClassName.startsWith("com.sun.")) {
                         return;
@@ -67,9 +66,5 @@ public class MethodExecutionTimer extends AbstractJavassistTool {
                 }
             }
         });
-    }
-
-    public void printNativeCallCounts() {
-        System.out.println("Actual/total Native Calls: " + actualNativeCalls + "/" + totalNativeCalls);
     }
 }
