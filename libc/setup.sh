@@ -17,5 +17,5 @@ cd - &> /dev/null
 # Build libc
 cd $DIR/glibc-2.35/build
 ../configure --prefix=$(pwd)/install
-make -j20
-make install -j20
+make -j`nproc`
+make install -j`nproc`
