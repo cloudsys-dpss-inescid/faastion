@@ -36,7 +36,7 @@ cp $DIR/glibc-2.35.patch $DISK/.
 cp $GRAALVISOR_BINARY $DISK/graalvisor/build/native-image/polyglot-proxy
 
 # Build docker.
-docker build -t faastion $DIR
+docker build --build-arg libc_home=$LIBC_HOME -t faastion $DIR
 
 # Remove directory used to create the image.
 rm -rf $DISK &> /dev/null
