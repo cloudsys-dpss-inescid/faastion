@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 public class DynamicHTML {
 
     private static final String url = "http://127.0.0.1:8000/template.html";
-    private static final String filePath = "/tmp/template.html";
     private static final int TEST_INPUT = 10;
     private static final int SMALL_INPUT = 1000;
     private static final int LARGE_INPUT = 100000;
@@ -58,7 +57,7 @@ public class DynamicHTML {
         }
     }
 
-    public static boolean renderTemplate(String name, int size) {
+    public static boolean renderTemplate(String filePath, String name, int size) {
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile(filePath);
         Map<String, Object> contents = new HashMap();
@@ -78,11 +77,14 @@ public class DynamicHTML {
     }
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
+        String tmpDir = (String) input.get("tmpDir");
+        String filePath = tmpDir + "/template.html";
+
         HashMap<String, Object> output = new HashMap<>();
 
         boolean success;
         if ((success = downloadFile(url, filePath))) {
-            success = renderTemplate("testname", SMALL_INPUT);
+            success = renderTemplate(filePath, "testname", SMALL_INPUT);
         }
         output.put("success", success);
 
