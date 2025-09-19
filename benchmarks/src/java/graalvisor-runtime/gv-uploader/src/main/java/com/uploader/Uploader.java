@@ -25,11 +25,13 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.ContentType;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class Uploader {
 
     private static final String url = "http://127.0.0.1:8000/snap.png";
     private static final String upload_url = "http://127.0.0.1:9696/upload";
-    private static final String filePath = "/tmp/snap.png";
+    public static String IMG_FILENAME = String.format("img-%d.png", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
 
     public static boolean downloadFile(String url, String filePath) {
         InputStream is = null;
@@ -58,17 +60,19 @@ public class Uploader {
         }
     }
 
-    public static int uploadFile(String url, String filePath) throws IOException {
+    public static int uploadFile(String url, String tmpDir, String filePath) throws IOException {
         HttpClient httpclient = new DefaultHttpClient();
         HttpPost httppost = new HttpPost(url);
 
         File file = new File(filePath);
+        Path path = Paths.get(tmpDir);
+        Path fileName = path.getFileName();
         HttpEntity entity = MultipartEntityBuilder.create()
                 .addBinaryBody(
                     "file",
                     file,
                     ContentType.create("image/png"),
-                    file.getName() // System.currentTimeMillis() + ".png"
+                    fileName + ".png" // System.currentTimeMillis() + ".png"
                 )
                 .build();
         httppost.setEntity(entity);
@@ -78,13 +82,16 @@ public class Uploader {
     }
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
+        String tmpDir = (String) input.get("tmpDir");
+        String filePath = tmpDir + "/" + IMG_FILENAME;
+
         HashMap<String, Object> output = new HashMap<>();
 
         int result = 400;
         boolean success;
         if ((success = downloadFile(url, filePath))) {
             try {
-                result = uploadFile(upload_url, filePath);
+                result = uploadFile(upload_url, tmpDir, filePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
