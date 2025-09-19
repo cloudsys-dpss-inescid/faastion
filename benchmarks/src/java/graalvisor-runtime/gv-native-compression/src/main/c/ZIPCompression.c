@@ -10,13 +10,17 @@ void printHex(const unsigned char *data, int len) {
     fprintf(stderr, "\n");
 }
 
-JNIEXPORT void JNICALL Java_com_jni_ZIPCompression_compress(JNIEnv *env, jobject object) {
-    const char *filename = "/tmp/snap.png";
+JNIEXPORT void JNICALL Java_com_jni_ZIPCompression_compress(JNIEnv *env, jobject object, jstring filePath) {
+    jboolean isCopy;
+    const char *filename = (*env)->GetStringUTFChars(env, filePath, &isCopy);
+    
     FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("Unable to open file");
         return;
     }
+
+    (*env)->ReleaseStringUTFChars(env, filePath, filename);
 
     fseek(file, 0, SEEK_END);
     long fileSize = ftell(file);

@@ -15,12 +15,16 @@ import java.util.Map;
 import java.util.Random;
 import java.util.HashMap;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class ZIPCompression {
     static {
         System.loadLibrary("zip-jni");
     }
+
+    public static String IMG_FILENAME = String.format("img-%d.png", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
     
-    public static native void compress();
+    public static native void compress(String filePath);
 
     public static boolean downloadFile(String url, String filePath) {
         InputStream is = null;
@@ -50,14 +54,16 @@ public class ZIPCompression {
     }
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
+        String tmpDir = (String) input.get("tmpDir");
+        String filePath = tmpDir + "/" + IMG_FILENAME;
+
         HashMap<String, Object> output = new HashMap<>();
 
         String url = "http://127.0.0.1:8000/snap.png";
-        String filePath = "/tmp/snap.png";
         boolean success = downloadFile(url, filePath);
 
         if (success) {
-            compress();
+            compress(filePath);
         }
         output.put("success", success);
         
