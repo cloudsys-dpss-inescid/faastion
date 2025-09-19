@@ -22,7 +22,7 @@ public class Classify {
     private static final String image_url = "http://127.0.0.1:8000/eagle.jpg";
 
     private static InceptionImageClassifier classifier = null;
-    private static String TMP_IMG_PATH = String.format("/tmp/img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
+    public static String IMG_FILENAME = String.format("img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
 
     public static byte[] fromInputStream(InputStream is) throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -62,21 +62,25 @@ public class Classify {
     }
     
     public static HashMap<String, Object> main(Map<String, Object> args) {
+        String tmpDir = (String) args.get("tmpDir");
+        String tmpImgPath = tmpDir + "/" + IMG_FILENAME;
+        String modelPath = tmpDir + "/tensorflow_inception_graph.pb";
+        String labelsPath = tmpDir + "/imagenet_comp_graph_label_strings.txt";
         HashMap<String, Object> output = new HashMap<>();
         try {
            	if (classifier == null) {
                 classifier = new InceptionImageClassifier();
-                downloadIfNecessary("/tmp/tensorflow_inception_graph.pb", model_url);
-                downloadIfNecessary("/tmp/imagenet_comp_graph_label_strings.txt", labels_url);
-    			classifier.load_model(new FileInputStream("/tmp/tensorflow_inception_graph.pb"));
-    			classifier.load_labels(new FileInputStream(("/tmp/imagenet_comp_graph_label_strings.txt")));
+                downloadIfNecessary(modelPath, model_url);
+                downloadIfNecessary(labelsPath, labels_url);
+    			classifier.load_model(new FileInputStream(modelPath));
+    			classifier.load_labels(new FileInputStream(labelsPath));
             }
            	
-            try (FileOutputStream stream = new FileOutputStream(TMP_IMG_PATH)) {
+            try (FileOutputStream stream = new FileOutputStream(tmpImgPath)) {
                 stream.write(downloadBytes(image_url));
             }
 
-			output.put("prediction", classifier.predict_image(ImageIO.read(new FileInputStream(TMP_IMG_PATH))));
+			output.put("prediction", classifier.predict_image(ImageIO.read(new FileInputStream(tmpImgPath))));
         } catch (Throwable e) {
 			output.put("exception", e.getMessage());
 			e.printStackTrace();
