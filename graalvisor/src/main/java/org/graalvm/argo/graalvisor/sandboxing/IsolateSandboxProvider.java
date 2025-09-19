@@ -53,10 +53,11 @@ public class IsolateSandboxProvider extends SandboxProvider {
     }
 
     @Override
-    public void destroySandbox(SandboxHandle shandle) {
+    public void destroySandbox(SandboxHandle shandle) throws IOException {
         IsolateSandboxHandle ipshandle = (IsolateSandboxHandle) shandle;
         graalvisorAPI.tearDownIsolate((IsolateThread) ipshandle.getIsolateThread());
         NativeSandboxInterface.destroyIsolateFunction();
+        ipshandle.destroyHandle();
     }
 
     @Override

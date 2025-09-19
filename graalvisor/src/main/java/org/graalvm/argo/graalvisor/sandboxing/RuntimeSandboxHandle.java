@@ -26,7 +26,7 @@ public class RuntimeSandboxHandle extends SandboxHandle {
     }
 
     @Override
-    public String invokeSandbox(String jsonArguments) throws Exception {
+    public String invokeSandbox(String jsonArguments) throws IOException {
         PolyglotFunction function = rsProvider.getFunction();
         return graalvisorAPI.invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);
     }

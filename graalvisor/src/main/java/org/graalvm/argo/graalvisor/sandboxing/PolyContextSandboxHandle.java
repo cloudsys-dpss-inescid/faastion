@@ -1,5 +1,7 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
+import java.io.IOException;
+
 import static org.graalvm.argo.graalvisor.utils.IsolateUtils.copyString;
 import static org.graalvm.argo.graalvisor.utils.IsolateUtils.retrieveString;
 
@@ -26,7 +28,7 @@ public class PolyContextSandboxHandle extends SandboxHandle {
 
     @CEntryPoint
     public static ObjectHandle invokeFunction(@CEntryPoint.IsolateThreadContext IsolateThread processContext, IsolateThread defaultContext,
-                    ObjectHandle functionHandle, ObjectHandle argumentHandle) throws Exception {
+                    ObjectHandle functionHandle, ObjectHandle argumentHandle) throws IOException {
         String functionName = retrieveString(functionHandle);
         String argumentString = retrieveString(argumentHandle);
         String resultString;
@@ -43,7 +45,7 @@ public class PolyContextSandboxHandle extends SandboxHandle {
     }
 
     @Override
-    public String invokeSandbox(String jsonArguments) throws Exception {
+    public String invokeSandbox(String jsonArguments) throws IOException {
         PolyglotFunction function = csProvider.getFunction();
         ObjectHandle nameHandle = copyString(isolateThread, function.getName());
         ObjectHandle argsHandle = copyString(isolateThread, jsonArguments);

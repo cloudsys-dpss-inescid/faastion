@@ -1,5 +1,7 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
+import java.io.IOException;
+
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 import org.graalvm.nativeimage.IsolateThread;
@@ -24,7 +26,7 @@ public class IsolateSandboxHandle extends SandboxHandle {
     }
 
     @Override
-    public String invokeSandbox(String jsonArguments) throws Exception {
+    public String invokeSandbox(String jsonArguments) throws IOException {
         PolyglotFunction function = isProvider.getFunction();
         String functionName = function.getName();
         String resp = isProvider.getGraalvisorAPI().invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);

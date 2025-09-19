@@ -15,6 +15,8 @@ import org.graalvm.argo.graalvisor.sandboxing.SandboxHandle;
 import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface; 
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 
+import org.graalvm.argo.graalvisor.utils.FileUtils;
+
 import static org.graalvm.argo.graalvisor.RuntimeProxy.FTABLE;
 
 /**
@@ -78,7 +80,9 @@ public class SubstrateVMProxy extends RuntimeProxy {
                 } else {
                     // Get input from request, invoke function in isolate, fill output.
                     try {
-                        req.setOutput(shandle.invokeSandbox(req.getInput()));
+                        // Extending the arguments JSON object to include sandbox-specific tmp directory.
+                        String arguments = appendTmpDirectoryKey(req.getInput(), shandle.initSandboxTmpDirectory()); 
+                        req.setOutput(shandle.invokeSandbox(arguments));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -182,6 +186,15 @@ public class SubstrateVMProxy extends RuntimeProxy {
         super(port);
     }
 
+    private static String appendTmpDirectoryKey(String jsonString, String tmpDirectory) {
+        String trimmed = jsonString.substring(1, jsonString.length()-1).trim();
+        String tmpDir = "\"tmpDir\":\"" + tmpDirectory + "\"";
+        if (trimmed.length() != 0) {
+            tmpDir = "," + tmpDir;
+        }
+        return "{" + trimmed + tmpDir + "}";
+    }
+
     private static FunctionPipeline getFunctionPipeline(PolyglotFunction function) {
         FunctionPipeline pipeline = queues.get(function.getName());
 
@@ -218,6 +231,8 @@ public class SubstrateVMProxy extends RuntimeProxy {
             res = getFunctionPipeline(function).invokeInCachedSandbox(arguments);
         } else {
             SandboxHandle shandle = prepareSandbox(function);
+            // Extending the arguments JSON object to include sandbox-specific tmp directory.
+            arguments = appendTmpDirectoryKey(arguments, shandle.initSandboxTmpDirectory());
             res = shandle.invokeSandbox(arguments);
             destroySandbox(function, shandle);
         }
