@@ -95,9 +95,9 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			CtMethod method = getMethodFromMethodCall(methodCall);			
 			this.returnType = returnType(method);
 			this.parameters = parameterTypes(method);
-			this.methodName = method.getName();
+			this.methodName = method.getName().replace("_", "_1");
 			this.signature = method.getSignature();
-			this.className = method.getDeclaringClass().getName(); 
+			this.className = method.getDeclaringClass().getName().replace("_", "_1");
 			// this.gateName = methodName + "callGate";
 			this.gateName = methodName;
 			this.gateLib = functionID.concat("-").concat("pkru");
@@ -315,7 +315,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 			CtMethod newMethod = CtNewMethod.make(loadNativeLib, clazz);
 			newMethod.setModifiers(Modifier.PUBLIC | Modifier.STATIC | Modifier.NATIVE);
 			clazz.addMethod(newMethod);
-			String className = clazz.getName().replace(".", "_");
+			String className = clazz.getName().replace("_", "_1").replace(".", "_");
 			createHeader(new String[] {"jstring"}, "void", nativeMethodName, className, nativeMethodName);
 			createLoadNativeLibrarySnippet(nativeMethodName, className);
 		}
@@ -343,14 +343,14 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	private String getHeaderFilename(String methodName, String className) {
-		return className + "_" + methodName + ".h";
+		return className.replace("$", "_") + "_" + methodName + ".h";
 	}
 
 	public void createLoadNativeLibrarySnippet(String methodName, String className) {
 		String headerFilename = getHeaderFilename(methodName, className);
 		setTemplateVariable("headerFilename", headerFilename);
-		setTemplateVariable("load_native_library", "Java_" + className + "_" + methodName);
-		buildTemplate("templates/jni_wrapper_lib.vm", templateDir, className + "_" + methodName + ".c");
+		setTemplateVariable("load_native_library", "Java_" + className.replace("$", "_00024") + "_" + methodName);
+		buildTemplate("templates/jni_wrapper_lib.vm", templateDir, className.replace("$", "_") + "_" + methodName + ".c");
 	}
 
 	public void createHeader(String[] jniTypes, String returnJniType,
@@ -358,9 +358,9 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	{
 		String headerFilename = getHeaderFilename(methodName, className);
 
-        setTemplateVariable("headerGuard", "_Included_" + className);
+        setTemplateVariable("headerGuard", "_Included_" + className.replace("$", "_"));
 		setTemplateVariable("returnType", returnJniType);
-		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
+		setTemplateVariable("callGate", "Java_" + className.replace("$", "_00024") + "_" + gateName);
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("jniTypes", jniTypes);
 
@@ -380,10 +380,10 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		setTemplateVariable("numArgs", jniTypes.length);
 		setTemplateVariable("headerFilename", headerFilename);
 		setTemplateVariable("returnType", returnJniType);
-		setTemplateVariable("callGate", "Java_" + className + "_" + gateName);
-		setTemplateVariable("nativeMethod", "Java_" + className + "_" + methodName);
+		setTemplateVariable("callGate", "Java_" + className.replace("$", "_00024") + "_" + gateName);
+		setTemplateVariable("nativeMethod", "Java_" + className.replace("$", "_00024") + "_" + methodName);
 
-		buildTemplate("templates/jni_callgate.vm", templateDir, className + "_" + methodName + ".c");
+		buildTemplate("templates/jni_callgate.vm", templateDir, className.replace("$", "_") + "_" + methodName + ".c");
 	}
 
 	public void declareCallGate(CtClass clazz, String[] parameters, CtClass returnType, String gateName)
@@ -417,13 +417,12 @@ public class JNITemplateBuilder extends TemplateBuilder {
 	}
 
 	boolean addCallGateMethod(CtClass clazz, CallGate callGate) {
-		String className = clazz.getName().replace(".", "_");
-		String snippetMethod = className + "_" + callGate;
+		String snippet = clazz.getName() + callGate.getGateName();
 		
-		if (createdSnippets.contains(snippetMethod)) {
+		if (createdSnippets.contains(snippet)) {
 			return false;
 		} else {
-			createdSnippets.add(snippetMethod);
+			createdSnippets.add(snippet);
 			return true;
 		}
 	}
