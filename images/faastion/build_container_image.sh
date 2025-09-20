@@ -14,7 +14,7 @@ fi
 # Prepare directory used to setup the filesystem.
 DISK=$DIR/disk
 rm -rf $DISK &> /dev/null
-mkdir -p $DISK/graalvisor/build/native-image $DISK/$BUILD_HOME
+mkdir -p $DISK/graalvisor/build/native-image $DISK/$BUILD_HOME $DISK/$LIBC_HOME
 
 echo '#!/bin/bash
 
@@ -26,13 +26,13 @@ elif [ "$1" = "--enable-early-booking" ]; then
     export faastlane=true
 fi
 
-library_path="'$BUILD_HOME':/glibc-2.35/build/install/lib:/usr/local/lib:/lib/x86_64-linux-gnu"
+library_path="'$BUILD_HOME':'$LIBC_HOME'/lib:/usr/local/lib:/lib/x86_64-linux-gnu"
 env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" LD_PRELOAD="libmem.so" $DIR/build/native-image/polyglot-proxy
 ' > $DISK/graalvisor/start.sh
 
 # Copy graalvisor and init.
 cp $BUILD_HOME/*.so $DISK/$BUILD_HOME/.
-cp $DIR/glibc-2.35.patch $DISK/.
+cp -r $LIBC_HOME/* $DISK/$LIBC_HOME/.
 cp $GRAALVISOR_BINARY $DISK/graalvisor/build/native-image/polyglot-proxy
 
 # Build docker.
