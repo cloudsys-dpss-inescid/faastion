@@ -1,8 +1,7 @@
 {
   "resources":{
-  "includes":[]},
-  "bundles":[{
-      "name":"sun.awt.resources.awt",
-      "classNames":["sun.awt.resources.awt"]
-    }]
+  "includes":[{
+      "pattern":"\\Qnu/pattern/opencv/linux/x86_64/libopencv_java490.so\\E"
+    }]},
+  "bundles":[]
 }

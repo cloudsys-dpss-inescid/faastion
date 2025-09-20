@@ -3,7 +3,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
-group 'com.httprequest'
+group 'com.thubmnail'
 version '1.0'
 
 repositories {
@@ -13,6 +13,10 @@ repositories {
 shadowJar() {
     configurations = [project.configurations.compileClasspath]
     from sourceSets.main.output
+}
+
+dependencies {
+    implementation("org.openpnp:opencv:4.9.0-0")
 }
 
 jar {
