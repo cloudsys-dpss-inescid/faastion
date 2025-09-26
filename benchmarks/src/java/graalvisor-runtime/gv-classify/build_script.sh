@@ -38,6 +38,7 @@ function build_native_binary {
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			--enable-url-protocols=http \
+			-Djava.awt.headless=true \
 			-cp $CLASS_PATH:libs/classify-1.0-all.jar \
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-H:ConfigurationFileDirectories=../ni-agent-config,../config-dir \
@@ -55,6 +56,7 @@ function build_ni {
 	$JAVA_HOME/bin/native-image \
 		--no-fallback \
 		--enable-url-protocols=http \
+		-Djava.awt.headless=true \
 		-cp $CLASS_PATH:libs/classify-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \

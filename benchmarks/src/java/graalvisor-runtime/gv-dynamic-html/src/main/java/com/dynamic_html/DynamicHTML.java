@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.io.FileOutputStream;
-import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 public class DynamicHTML {
 
-    private static final String url = "http://127.0.0.1:8000/template.html";
+    private static final String url = "http://172.18.0.1:8000/template.html";
     private static final int TEST_INPUT = 10;
     private static final int SMALL_INPUT = 1000;
     private static final int LARGE_INPUT = 100000;
@@ -68,7 +68,9 @@ public class DynamicHTML {
                         .mapToObj(n -> String.valueOf(n))
                         .collect(Collectors.toList()));
         try {
-            mustache.execute(new PrintWriter(System.out), contents).flush();
+            StringWriter sw = new StringWriter();
+            mustache.execute(sw, contents).flush();
+            System.out.println(sw.toString().substring(0, 10));
         } catch (IOException e) {
             e.printStackTrace();
             return false;

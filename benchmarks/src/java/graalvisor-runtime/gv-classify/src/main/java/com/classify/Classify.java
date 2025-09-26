@@ -17,9 +17,9 @@ import javax.imageio.ImageIO;
 
 public class Classify {
 
-    private static final String model_url = "http://127.0.0.1:8000/tensorflow_inception_graph.pb";
-    private static final String labels_url = "http://127.0.0.1:8000/imagenet_comp_graph_label_strings.txt";
-    private static final String image_url = "http://127.0.0.1:8000/eagle.jpg";
+    private static final String model_url = "http://172.18.0.1:8000/tensorflow_inception_graph.pb";
+    private static final String labels_url = "http://172.18.0.1:8000/imagenet_comp_graph_label_strings.txt";
+    private static final String image_url = "http://172.18.0.1:8000/eagle.jpg";
 
     private static InceptionImageClassifier classifier = null;
     public static String IMG_FILENAME = String.format("img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));

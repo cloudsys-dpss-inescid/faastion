@@ -133,13 +133,13 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
         private final AtomicInteger active = new AtomicInteger(0);
 
-        private final int maxFaastlaneWorkers = 1;
+        private final int maxFaastlaneWorkers = 15;
         
         private boolean faastlane;
 
         public FunctionPipeline(PolyglotFunction function) {
             this.function = function;
-            this.queue = new ArrayBlockingQueue<>(64);
+            this.queue = new ArrayBlockingQueue<>(256);
             String faastlane_mode = System.getenv("faastlane");
             this.faastlane = faastlane_mode != null && faastlane_mode.equals("true");
         }
@@ -187,7 +187,8 @@ public class SubstrateVMProxy extends RuntimeProxy {
     }
 
     private static String appendTmpDirectoryKey(String jsonString, String tmpDirectory) {
-        String trimmed = jsonString.substring(1, jsonString.length()-1).trim();
+        String normalized = jsonString.replace("\n", "").replace("\r", "").trim();
+        String trimmed = normalized.substring(1, normalized.length()-1).trim();
         String tmpDir = "\"tmpDir\":\"" + tmpDirectory + "\"";
         if (trimmed.length() != 0) {
             tmpDir = "," + tmpDir;

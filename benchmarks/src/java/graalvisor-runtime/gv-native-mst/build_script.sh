@@ -115,11 +115,11 @@ then
 	exit 1
 fi
 
-if [ -z "$JAVASSIST_HOME" ]
-then
-	echo "Please set JAVASSIST_HOME first."
-	exit 1
-fi
+# if [ -z "$JAVASSIST_HOME" ]
+# then
+# 	echo "Please set JAVASSIST_HOME first."
+# 	exit 1
+# fi
 
 # Build graalvisor lib.
 # bash $ARGO_HOME/graalvisor-lib/build.sh

@@ -24,7 +24,7 @@ import java.io.BufferedReader;
 
 public class DNAVisualization {
 
-    private static final String url = "http://127.0.0.1:8000/bacillus_subtilis.fasta";
+    private static final String url = "http://172.18.0.1:8000/bacillus_subtilis.fasta";
     private static final String filePath = "/tmp/bacillus_subtilis.fasta";
 
     private static class DNACoordinates {

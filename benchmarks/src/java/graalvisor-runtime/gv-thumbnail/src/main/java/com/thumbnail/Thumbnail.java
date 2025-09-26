@@ -58,7 +58,7 @@ public class Thumbnail {
 
     public static HashMap<String, Object> main(Map<String, Object> input) {
         String tmpDir = (String) input.get("tmpDir");
-        String url = "http://127.0.0.1:8000/snap.png";
+        String url = "http://172.18.0.1:8000/snap.png";
         String filePath = tmpDir + "/" + IMG_FILENAME;
         String outFile = tmpDir + "/output.png"; 
         HashMap<String, Object> output = new HashMap<>();
