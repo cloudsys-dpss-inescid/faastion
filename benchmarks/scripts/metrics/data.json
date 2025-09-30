@@ -1,0 +1,122 @@
+{
+    "gv_classify": {
+        "lib_name": "classify",
+        "dir": "gv-classify",
+        "entrypoint": "com.classify.Classify",
+        "kn_dir": "kn-classify",
+        "kn_image": "knative-jv/kn-classify",
+        "warmup_time": "40s",
+        "benchmark_time": "20s",
+        "kn_input": "{ \"model_url\": \"http://\($webserver):8000/tensorflow_inception_graph.pb\", \"labels_url\": \"http://\($webserver):8000/imagenet_comp_graph_label_strings.txt\", \"image_url\": \"http://\($webserver):8000/eagle.jpg\" }",
+        "cpus": "1.4",
+        "memory": "4096" 
+    },
+    "gv_pagerank": {
+        "lib_name": "pagerank",
+        "dir": "gv-native-pagerank",
+        "entrypoint": "com.jni.PageRank",
+        "kn_dir": "kn-native-pagerank",
+        "kn_image": "knative-jv/kn-pagerank",
+        "warmup_time": "4s",
+        "benchmark_time": "4s",
+        "kn_input": "{}",
+        "cpus": "8",
+        "memory": "8192" 
+    },
+    "gv_bfs": {
+        "lib_name": "bfs",
+        "dir": "gv-native-bfs",
+        "entrypoint": "com.jni.BFS",
+        "kn_dir": "kn-native-bfs",
+        "kn_image": "knative-jv/kn-bfs",
+        "warmup_time": "4s",
+        "benchmark_time": "4s",
+        "kn_input": "{}",
+        "cpus": "8",
+        "memory": "8192" 
+    },
+    "gv_mst": {
+        "lib_name": "mst",
+        "dir": "gv-native-mst",
+        "entrypoint": "com.jni.MST",
+        "kn_dir": "kn-native-mst",
+        "kn_image": "knative-jv/kn-mst",
+        "warmup_time": "4s",
+        "benchmark_time": "4s",
+        "kn_input": "{}",
+        "cpus": "0.5",
+        "memory": "512"
+    },
+    "gv_compression": {
+        "lib_name": "zip",
+        "dir": "gv-native-compression",
+        "entrypoint": "com.jni.ZIPCompression",
+        "kn_dir": "kn-native-compression",
+        "kn_image": "knative-jv/kn-compression",
+        "warmup_time": "15s",
+        "benchmark_time": "15s",
+        "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
+        "cpus": "0.5",
+        "memory": "512" 
+    },
+    "gv_thumbnail": {
+        "lib_name": "thumbnail",
+        "dir": "gv-thumbnail",
+        "entrypoint": "com.thumbnail.Thumbnail",
+        "kn_dir": "kn-thumbnail",
+        "kn_image": "knative-jv/kn-thumbnail",
+        "warmup_time": "10s",
+        "benchmark_time": "4s",
+        "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
+        "cpus": "0.5",
+        "memory": "512" 
+    },
+    "gv_uploader": {
+        "lib_name": "uploader",
+        "dir": "gv-uploader",
+        "entrypoint": "com.uploader.Uploader",
+        "kn_dir": "kn-uploader",
+        "kn_image": "knative-jv/kn-uploader",
+        "warmup_time": "4s",
+        "benchmark_time": "4s",
+        "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\", \"upload_url\": \"http://\($webserver):9696/upload\" }",
+        "cpus": "8",
+        "memory": "8192" 
+    },
+    "gv_dynamic_html": {
+        "lib_name": "dynamic-html",
+        "dir": "gv-dynamic-html",
+        "entrypoint": "com.dynamic_html.DynamicHTML",
+        "kn_dir": "kn-dynamic-html",
+        "kn_image": "knative-jv/kn-dynamic-html",
+        "warmup_time": "2s",
+        "benchmark_time": "2s",
+        "kn_input": "{ \"url\": \"http://\($webserver):8000/template.html\" }",
+        "cpus": "0.5",
+        "memory": "512" 
+    },
+    "gv_videoprocessing": {
+        "lib_name": "videoprocessing",
+        "dir": "gv-video-processing",
+        "entrypoint": "com.videoprocessing.VideoProcessing",
+        "kn_dir": "kn-video-processing",
+        "kn_image": "knative-jv/kn-video-processing",
+        "warmup_time": "60s",
+        "benchmark_time": "60s",
+        "kn_input": "{ \"ffmpeg\": \"http://\($webserver):8000/ffmpeg\", \"video\": \"http://\($webserver):8000/video.mp4\" }",
+        "cpus": "0.5",
+        "memory": "512" 
+    },
+    "gv_dna": {
+        "lib_name": "dna",
+        "dir": "gv-dna-visualization",
+        "entrypoint": "com.dna.DNAVisualization",
+        "kn_dir": "kn-dna-visualization",
+        "kn_image": "knative-jv/kn-dna",
+        "warmup_time": "2s",
+        "benchmark_time": "2s",
+        "kn_input": "{}",
+        "cpus": "0.5",
+        "memory": "512" 
+    }
+}
