@@ -1,3 +1,6 @@
 /.luarocks
 /experiments
 plots/
+*.pdf
+*.png
+*.out
