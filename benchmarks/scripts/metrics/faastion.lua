@@ -12,13 +12,13 @@ request = function()
     local thread_id = wrk.thread:get("thread_id")
 
     wrk.headers["Content-Type"] = "application/json"
-    wrk.body = '{"name":"' .. function_name .. thread_id .. '","async":"false","cached":"true","arguments":""}'
+    wrk.body = '{"name":"' .. function_name .. thread_id .. '","async":"false","cached":"true","arguments":"{}"}'
     
     return wrk.format("POST", nil, nil, wrk.body)
 end
 
--- function response(status, headers, body)
---    print(body)
--- end
+function response(status, headers, body)
+   print(body)
+end
 
--- wrk.response = response
+wrk.response = response
