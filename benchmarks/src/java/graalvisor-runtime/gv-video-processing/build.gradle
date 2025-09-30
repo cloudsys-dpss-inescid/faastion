@@ -15,10 +15,6 @@ shadowJar() {
     from sourceSets.main.output
 }
 
-dependencies {
-    implementation group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.7.0'
-}
-
 jar {
     manifest {
         attributes(

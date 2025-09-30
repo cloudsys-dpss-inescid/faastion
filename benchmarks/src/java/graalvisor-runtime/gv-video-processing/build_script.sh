@@ -97,7 +97,7 @@ then
 fi
 
 # Build graalvisor lib.
-bash $ARGO_HOME/graalvisor-lib/build.sh
+# bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Move into the script directory.
 cd $DIR &> /dev/null
@@ -120,7 +120,7 @@ if [ ! -d config-dir ]; then
 	fi
 fi
 
-build_native_binary
+#build_native_binary
 
 build_vanila_image
 
