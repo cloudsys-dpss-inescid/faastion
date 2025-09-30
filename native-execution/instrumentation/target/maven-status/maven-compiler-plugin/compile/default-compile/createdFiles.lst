@@ -1,0 +1,5 @@
+org/faastion/javassist/JNITemplateBuilder$1.class
+org/faastion/javassist/JNITemplateBuilder$CallGate.class
+org/faastion/javassist/TemplateBuilder.class
+org/faastion/javassist/JNITemplateBuilder.class
+org/faastion/javassist/BytecodeTransformer.class

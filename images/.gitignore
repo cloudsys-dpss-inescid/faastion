@@ -1,0 +1,7 @@
+# Ignore results of the build script execution.
+disk/
+init
+init.o
+*.o
+*.ext4
+*.img

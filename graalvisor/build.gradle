@@ -25,34 +25,11 @@ repositories {
     }
 }
 
-processResources {
-    from(zipTree('../graalvisor-lib/build/libs/graalvisor-lib-1.0-host.jar')) {
-        include("com.oracle.svm.graalvisor.headers/")
-    }
-}
-
-// exclude graalvisor for native java proxy, would be deprecated soon
-task javaProxy(type: ShadowJar) {
-    from sourceSets.main.output
-    configurations = [project.configurations.compileClasspath]
-    minimize {
-        exclude "com.oracle.svm.graalvisor.headers/*"
-        exclude "com/oracle/svm/graalvisor/**/*"
-        exclude "org/graalvm/argo/graalvisor/engine/PolyglotEngine*"
-        exclude "org/graalvm/argo/graalvisor/base/PolyglotFunction*"
-    }
-    javaProxy.archiveFileName = rootProject.name + '-1.0-java' + '.jar'
-}
 
 dependencies {
-    if (System.getenv('GRAALVM_VERSION').contains('23.0.0')) {
-        compileOnly 'org.graalvm.sdk:graal-sdk:23.0.0'
-        compileOnly 'org.graalvm.nativeimage:svm:23.0.0'
-    } else {
-        implementation 'org.graalvm.sdk:graal-sdk:22.1.0'
-        implementation 'org.graalvm.nativeimage:svm:22.1.0'
-    }
+    compileOnly 'org.graalvm.sdk:graal-sdk:23.0.0'
+    compileOnly 'org.graalvm.nativeimage:svm:23.0.0'
     implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
-    implementation(files('../graalvisor-lib/build/libs/graalvisor-lib-1.0-host.jar'))
+    implementation(files(System.getenv('ARGO_HOME') + '/graalvisor-lib/build/libs/graalvisor-lib-1.0-all.jar'))
 }

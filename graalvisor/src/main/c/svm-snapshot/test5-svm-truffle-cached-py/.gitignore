@@ -1,0 +1,7 @@
+.gradle
+build
+resources
+sources
+/*.h
+libhello.so.debug
+libhello.so

@@ -1,51 +1,44 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
 import java.io.IOException;
-
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
-import org.graalvm.nativeimage.Isolate;
-import org.graalvm.nativeimage.IsolateThread;
-import com.oracle.svm.graalvisor.api.GraalVisorAPI;
 
 public class ContextSandboxProvider extends SandboxProvider {
 
-    private GraalVisorAPI graalvisorAPI;
-
-    private Isolate isolate;
+    // Context sandboxes use a single isolate. This is the handle to that isolate.
+    private long isolateHandle;
 
     public ContextSandboxProvider(PolyglotFunction function) {
         super(function);
     }
 
-    public GraalVisorAPI getGraalvisorAPI() {
-        return this.graalvisorAPI;
-    }
-
     @Override
     public void loadProvider() throws IOException {
-        this.graalvisorAPI = new GraalVisorAPI(((NativeFunction) getFunction()).getPath());
-        IsolateThread isolateThread = graalvisorAPI.createIsolate();
-        this.isolate = graalvisorAPI.getIsolate(isolateThread);
-        graalvisorAPI.detachThread(isolateThread);
+        String fpath = ((NativeFunction) getFunction()).getPath();
+        functionHandle = NativeSandboxInterface.loadFunction(fpath);
+        long ithreadHandle = NativeSandboxInterface.createSandbox(functionHandle);
+        isolateHandle = NativeSandboxInterface.getSandbox(functionHandle, ithreadHandle);
+        NativeSandboxInterface.detachThread(functionHandle, ithreadHandle);
     }
 
     @Override
-    public SandboxHandle createSandbox() {
-        IsolateThread isolateThread = graalvisorAPI.attachThread(isolate);
-        return new ContextSandboxHandle(this, isolateThread);
+    public SandboxHandle createSandbox() throws IOException {
+        long iThreadHandle = NativeSandboxInterface.attachThread(functionHandle, isolateHandle);
+        return new ContextSandboxHandle(functionHandle, iThreadHandle);
     }
 
     @Override
-    public void destroySandbox(SandboxHandle shandle) {
-        graalvisorAPI.detachThread(((ContextSandboxHandle)shandle).getIsolateThread());
+    public void destroySandbox(SandboxHandle shandle) throws IOException {
+        NativeSandboxInterface.detachThread(functionHandle, ((ContextSandboxHandle)shandle).getIThreadHandle());
+        shandle.destroyHandle();
     }
 
     @Override
     public void unloadProvider() throws IOException {
-        IsolateThread isolateThread = graalvisorAPI.attachThread(isolate);
-        graalvisorAPI.tearDownIsolate(isolateThread);
-        graalvisorAPI.close();
+        long ithreadHandle = NativeSandboxInterface.attachThread(functionHandle, isolateHandle);
+        NativeSandboxInterface.destroySandbox(functionHandle, ithreadHandle);
+        NativeSandboxInterface.unloadFunction(functionHandle);
     }
 
     @Override

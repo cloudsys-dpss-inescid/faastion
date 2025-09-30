@@ -12,5 +12,5 @@ else
 fi
 
 cd $DIR &> /dev/null
-$DIR/gradlew clean shadowJar guestLib hostLib
+$DIR/gradlew clean shadowJar
 cd - &> /dev/null

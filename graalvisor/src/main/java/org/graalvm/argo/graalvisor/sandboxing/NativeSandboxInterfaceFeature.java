@@ -2,6 +2,7 @@ package org.graalvm.argo.graalvisor.sandboxing;
 
 import com.oracle.svm.core.jdk.NativeLibrarySupport;
 import com.oracle.svm.core.jdk.PlatformNativeLibrarySupport;
+import com.oracle.svm.core.jni.JNIRuntimeAccess;
 import com.oracle.svm.hosted.FeatureImpl;
 import com.oracle.svm.hosted.c.NativeLibraries;
 import org.graalvm.nativeimage.hosted.Feature;
@@ -16,5 +17,14 @@ public class NativeSandboxInterfaceFeature implements Feature {
         NativeLibraries nativeLibraries = ((FeatureImpl.BeforeAnalysisAccessImpl) access).getNativeLibraries();
         // Add "jvm" as a dependency to "NativeSandboxInterface".
         nativeLibraries.addStaticJniLibrary("NativeSandboxInterface");
+        // Ensure that JNI will have access to SnapshotSandboxHandle and its field.
+        try {
+            JNIRuntimeAccess.register(SnapshotSandboxHandle.class);
+            JNIRuntimeAccess.register(true, SnapshotSandboxHandle.class.getDeclaredField("sandboxHandle"));
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
     }
 }

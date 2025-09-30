@@ -17,34 +17,7 @@ shadowJar() {
     shadowJar.archiveFileName = rootProject.name + '-1.0-all' + '.jar'
 }
 
-task guestLib(type: ShadowJar) {
-    configurations = [project.configurations.runtimeClasspath]
-    from sourceSets.main.output
-    minimize{
-        exclude "com/oracle/svm/graalvisor/GraalVisorImpl*"
-        exclude "com/oracle/svm/graalvisor/api/**/*"
-    }
-    guestLib.archiveFileName = rootProject.name + '-1.0-guest' + '.jar'
-}
-
-task hostLib(type: ShadowJar) {
-    configurations = [project.configurations.runtimeClasspath]
-    from sourceSets.main.output
-    minimize{
-        exclude "com/oracle/svm/graalvisor/utils/file/*"
-        exclude "com/oracle/svm/graalvisor/guestapi/**/*"
-        exclude "com/oracle/svm/graalvisor/substitution/**/*"
-    }
-    hostLib.archiveFileName = rootProject.name + '-1.0-host' + '.jar'
-}
-
 dependencies {
-    if (System.getenv('GRAALVM_VERSION') && System.getenv('GRAALVM_VERSION').contains('23.0.0')) {
-        compileOnly 'org.graalvm.sdk:graal-sdk:23.0.0'
-        compileOnly 'org.graalvm.nativeimage:svm:23.0.0'
-    } else {
-        implementation 'org.graalvm.sdk:graal-sdk:22.1.0'
-        implementation 'org.graalvm.nativeimage:svm:22.1.0'
-    }
+    compileOnly 'org.graalvm.sdk:graal-sdk:23.0.0'
     implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
 }

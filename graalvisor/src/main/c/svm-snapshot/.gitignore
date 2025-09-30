@@ -1,0 +1,9 @@
+*.o
+*.so
+*.txt
+*.log
+*.swp
+*.snap
+.vscode
+/main
+

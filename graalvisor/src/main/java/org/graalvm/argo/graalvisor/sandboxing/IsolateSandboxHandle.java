@@ -1,38 +1,31 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
-import org.graalvm.argo.graalvisor.function.PolyglotFunction;
-import org.graalvm.argo.graalvisor.function.NativeFunction;
-import org.graalvm.nativeimage.IsolateThread;
-import org.graalvm.nativeimage.Isolates;
+import java.io.IOException;
 
 public class IsolateSandboxHandle extends SandboxHandle {
 
-    private final IsolateSandboxProvider isProvider;
+    // Native function handle (pointer casted to long).
+    private final long functionHandle;
+    // Native isolate thread handle (pointer casted to long).
+    private final long iThreadHandle;
 
-    private final IsolateThread isolateThread;
-
-    public IsolateSandboxHandle(IsolateSandboxProvider isProvider, IsolateThread isolateThread) {
-        this.isProvider = isProvider;
-        this.isolateThread = isolateThread;
-        NativeSandboxInterface.createNativeIsolateSandbox(((NativeFunction) isProvider.getFunction()).hasLazyIsolation());
+    public IsolateSandboxHandle(long functionHandle, long iThreadHandle) {
+        this.functionHandle = functionHandle;
+        this.iThreadHandle = iThreadHandle;
+        NativeSandboxInterface.createNativeIsolateSandbox(); // TODO - keep?
     }
 
-    public IsolateThread getIsolateThread() {
-        return isolateThread;
+    public long getIThreadHandle() {
+        return this.iThreadHandle;
     }
 
     @Override
-    public String invokeSandbox(String jsonArguments) throws Exception {
-        PolyglotFunction function = isProvider.getFunction();
-        String functionName = function.getName();
-        NativeSandboxInterface.setupMemIsolation(functionName);
-        String resp = isProvider.getGraalvisorAPI().invokeFunction((IsolateThread) isolateThread, function.getEntryPoint(), jsonArguments);
-        NativeSandboxInterface.teardownMemIsolation(functionName);
-        return resp;
+    public String invokeSandbox(String jsonArguments) throws IOException {
+        return NativeSandboxInterface.invokeSandbox(functionHandle, iThreadHandle, jsonArguments);
     }
 
     @Override
     public String toString() {
-        return Long.toString(Isolates.getIsolate(isolateThread).rawValue());
+        return Long.toString(iThreadHandle);
     }
 }

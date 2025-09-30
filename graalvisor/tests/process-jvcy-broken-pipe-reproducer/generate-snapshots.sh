@@ -1,0 +1,1 @@
+../cr-single-function/generate-snapshots.sh

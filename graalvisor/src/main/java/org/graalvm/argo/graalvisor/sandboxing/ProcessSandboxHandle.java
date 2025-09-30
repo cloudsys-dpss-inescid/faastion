@@ -6,13 +6,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import org.graalvm.argo.graalvisor.function.NativeFunction;
-import org.graalvm.nativeimage.IsolateThread;
 import org.graalvm.nativeimage.StackValue;
 import org.graalvm.nativeimage.c.function.CFunction;
 import org.graalvm.nativeimage.c.type.CIntPointer;
-
-import com.oracle.svm.graalvisor.api.GraalVisorAPI;
 
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -54,22 +50,26 @@ public class ProcessSandboxHandle extends SandboxHandle {
     public static native int kill(int pid, int sig);
 
     @CFunction
+    public static native int raise(int sig);
+
+    @CFunction
     public static native int waitpid(int pid, CIntPointer stat_loc, int options);
 
     private void child(ProcessSandboxProvider rsProvider) {
-        NativeFunction function = (NativeFunction) rsProvider.getFunction();
-        GraalVisorAPI gvAPI = rsProvider.getGraalvisorAPI();
-        IsolateThread ithread = gvAPI.createIsolate();
+        long functionHandle = rsProvider.getFunctionHandle();
+        long iThreadHandle = NativeSandboxInterface.createSandbox(functionHandle);
+
         String line;
         try {
             while((line = receiver.readLine()) != null) {
-                sender.write(String.format("%s\n", gvAPI.invokeFunction(ithread, function.getEntryPoint(), line)).getBytes());
+                String output = NativeSandboxInterface.invokeSandbox(functionHandle, iThreadHandle, line);
+                sender.write(String.format("%s\n", output).getBytes());
             }
         } catch(Exception e) {
             System.err.println(e.getMessage());
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         } finally {
-            destroyChild(childPid);
+            raise(SIGKILL);
         }
     }
 
@@ -79,22 +79,26 @@ public class ProcessSandboxHandle extends SandboxHandle {
         return ctor.newInstance(fd);
     }
 
-    public ProcessSandboxHandle(ProcessSandboxProvider rsProvider) throws Exception {
+    public ProcessSandboxHandle(ProcessSandboxProvider rsProvider) throws IOException {
         int[] childPipe = new int[2];
         int[] parentPipe = new int[2];
-        if ((childPid = NativeSandboxInterface.createNativeProcessSandbox(childPipe, parentPipe, ((NativeFunction) rsProvider.getFunction()).hasLazyIsolation())) == 0) {
-            childPid = (int) ProcessHandle.current().pid();
-            sender = new FileOutputStream(createFileDescriptor(childPipe[1]));
-            receiver = new BufferedReader(new FileReader(createFileDescriptor(parentPipe[0])));
-            child(rsProvider);
-        } else {
-            sender = new FileOutputStream(createFileDescriptor(parentPipe[1]));
-            receiver = new BufferedReader(new FileReader(createFileDescriptor(childPipe[0])));
+        try {
+            if ((childPid = NativeSandboxInterface.createNativeProcessSandbox(childPipe, parentPipe)) == 0) {
+                sender = new FileOutputStream(createFileDescriptor(childPipe[1]));
+                receiver = new BufferedReader(new FileReader(createFileDescriptor(parentPipe[0])));
+                child(rsProvider);
+            } else {
+                sender = new FileOutputStream(createFileDescriptor(parentPipe[1]));
+                receiver = new BufferedReader(new FileReader(createFileDescriptor(childPipe[0])));
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            throw new IOException(e);
         }
     }
 
     @Override
-    public String invokeSandbox(String jsonArguments) throws Exception {
+    public String invokeSandbox(String jsonArguments) throws IOException {
         sender.write(String.format("%s\n", jsonArguments).getBytes());
         return receiver.readLine();
     }
@@ -107,12 +111,13 @@ public class ProcessSandboxHandle extends SandboxHandle {
             sender.close();
             receiver.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
     }
 
     @Override
     public void destroyHandle() throws IOException {
+        super.destroyHandle();
         this.sender.close();
         this.receiver.close();
         destroyChild(childPid);
