@@ -22,7 +22,7 @@ JNIEXPORT void JNICALL Java_com_jni_PageRank_pagerank(JNIEnv *env, jobject obj) 
         igraph_arpack_options_init(&arpack_opts);
         igraph_vector_init(&res, 0);
 
-        igraph_barabasi_game(&graph, 100, 1, EDGES, NULL, 1, 0, IGRAPH_DIRECTED, IGRAPH_BARABASI_PSUMTREE, NULL);
+        igraph_barabasi_game(&graph, 1000, 1, EDGES, NULL, 1, 0, IGRAPH_DIRECTED, IGRAPH_BARABASI_PSUMTREE, NULL);
         igraph_pagerank(&graph, IGRAPH_PAGERANK_ALGO_PRPACK, &res, NULL, igraph_vss_all(), IGRAPH_DIRECTED, 0.85, NULL, NULL);
 
         igraph_destroy(&graph);
