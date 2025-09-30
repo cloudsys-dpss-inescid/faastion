@@ -1,5 +1,7 @@
 package org.graalvm.argo.graalvisor;
 
+import java.util.HashMap;
+
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -9,6 +11,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
 import org.graalvm.argo.graalvisor.sandboxing.SandboxHandle;
+import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface; 
+import org.graalvm.argo.graalvisor.function.NativeFunction;
+
+import org.graalvm.argo.graalvisor.utils.FileUtils;
+
+import static org.graalvm.argo.graalvisor.RuntimeProxy.FTABLE;
 
 import com.sun.net.httpserver.HttpExchange;
 import org.graalvm.argo.graalvisor.utils.JsonUtils;

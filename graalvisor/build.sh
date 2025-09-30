@@ -3,6 +3,7 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 GRAALVISOR_HOME=$DIR/build/native-image
 GRAALVISOR_JAR=$DIR/build/libs/graalvisor-1.0-all.jar
+
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
@@ -112,6 +113,12 @@ fi
 if [ -z "$ARGO_HOME" ]
 then
     echo "Please set ARGO_HOME first. It should point to a checkout of github.com/graalvm/argo."
+    exit 1
+fi
+
+if [ -z "$LIBC_HOME" ]
+then
+    echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
     exit 1
 fi
 

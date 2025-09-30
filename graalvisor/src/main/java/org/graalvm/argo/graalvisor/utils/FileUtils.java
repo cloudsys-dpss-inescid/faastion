@@ -31,4 +31,8 @@ public class FileUtils {
         }
         return directory.delete();
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> rbruno/visor-dlmopen

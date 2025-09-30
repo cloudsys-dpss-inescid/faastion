@@ -3,37 +3,39 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Load data from files
 transitions = np.loadtxt('results/transitions.dat')
 percentages = np.loadtxt('results/percentages.dat')
-labels      = ["Hello World", "File Hashing", "REST", "Shopcart\n(Micronaut)", "PetClinic\n(SpringBoot)", "ML inference\n (TensorFlow)"]
-x           = np.arange(len(labels))
+benchmarks = np.loadtxt('results/benchmarks.dat', dtype=str)  # Load benchmarks as strings
 
-#transitions[3]=0
-#percentages[3]=0
-#labels[3]=""
+x = np.arange(len(benchmarks))  # X-axis positions for benchmarks
 
-#transitions[4]=0
-#percentages[4]=0
-#labels[4]=""
-
+# Set plot style and figure size
 plt.rcParams.update({'font.size': 10})
-plt.rcParams["figure.figsize"] = (8,4)
+plt.rcParams["figure.figsize"] = (8, 4)
 
-width = .25
-fig, ax1 = plt.subplots()
-
-ax1.bar(x - (width * 1.05)/2, transitions, width, label="Transitions per second")
-ax1.set_xticks(x, labels)
-ax1.set_ylim(ymin=0, ymax=25)
-ax1.set_ylabel("Number of transitions per second")
-ax1.grid(axis = 'y', linestyle = '--', linewidth = 0.25)
-
-ax2 = ax1.twinx()
-ax2.bar(x + (width * 1.05)/2, percentages, width, color="red", label="% of time in native code")
-ax2.set_ylabel("Percentage of time in native code")
-ax2.set_ylim(ymin=0, ymax=25)
-
-fig.legend(ncol=2, bbox_to_anchor=(.65,.96))
+# Bar graph 1: Transitions per second
+fig, ax = plt.subplots()
+ax.bar(x, transitions, width=0.6, color='blue', label="Transitions per second")
+ax.set_xticks(x)
+ax.set_xticklabels(benchmarks)
+ax.set_ylim(ymin=0)
+ax.set_ylabel("Number of transitions per second")
+ax.set_xlabel("Benchmarks")
+ax.grid(axis='y', linestyle='--', linewidth=0.5)
+plt.title("Transitions per Second")
 plt.tight_layout()
-plt.savefig("native-execution.pdf")
-plt.savefig("native-execution.png", dpi=300)
+plt.savefig("results/transitions-per-second.pdf", dpi=300)
+
+# Bar graph 2: Percentage of time in native code
+fig, ax = plt.subplots()
+ax.bar(x, percentages, width=0.6, color='red', label="% of time in native code")
+ax.set_xticks(x)
+ax.set_xticklabels(benchmarks)
+ax.set_ylim(ymin=0)
+ax.set_ylabel("Percentage of time in native code")
+ax.set_xlabel("Benchmarks")
+ax.grid(axis='y', linestyle='--', linewidth=0.5)
+plt.title("Percentage of Time in Native Code")
+plt.tight_layout()
+plt.savefig("results/percentage-native-code.pdf", dpi=300)

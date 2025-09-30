@@ -19,8 +19,13 @@ public abstract class SandboxHandle {
     public abstract String invokeSandbox(String jsonArguments) throws IOException;
 
     public void destroyHandle() throws IOException {
+        // default implementation;
         String directoryName = TMP_DIRECTORY_PREFIX + this.sandboxId;
         FileUtils.deleteDirectory(directoryName);
+    }
+
+    public boolean supportsLPI() {
+        return false;
     }
 
     @Override

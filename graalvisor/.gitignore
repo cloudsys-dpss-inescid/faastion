@@ -3,6 +3,7 @@
 .classpath
 .settings
 .vscode
+*.txt
 
 # Ignore java binary files
 *.class
@@ -13,3 +14,10 @@
 
 # Ignore Gradle build output directory
 build/
+
+*.i
+ffmpeg
+domain_usage.txt
+log_resources.sh
+debug*
+run.sh

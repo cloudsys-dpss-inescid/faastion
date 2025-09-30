@@ -1,0 +1,52 @@
+$define _GNU_SOURCE
+
+$include "$headerFilename"
+$include <domain_manager.h>
+$include <pkru_sandbox.h>
+$include <hash_table.h>
+$include <jni_handle.h>
+
+$include <stdio.h>
+$include <string.h>
+$include <unistd.h>
+$include <limits.h>
+
+static char pathname[PATH_MAX]; 
+
+void nativeMethodInterface_$load_native_library(int domain) {
+    IsolateFunction *function = get_pkru_sandbox(domain);
+    load_native_library(function, pathname);
+}
+
+// transition to native code
+// we don't need to switch MPK domain yet
+JNIEXPORT void JNICALL $load_native_library(JNIEnv *env, jobject obj, jstring libName) {
+    int domain;
+    request_t * request;
+    IsolateFunction *function;
+
+    function = get_cached_pkru_sandbox();
+    if (!function) {
+        function = (IsolateFunction *)hash_table_lookup(proc_tbl, gettid());
+        set_cached_pkru_sandbox(function);
+    }
+    
+    // choose the domain where the native library will be loaded into
+    domain = enter_sandbox_domain(function);
+
+    pthread_mutex_t* request_lock = get_request_lock(domain); 
+    pthread_mutex_lock(request_lock);
+
+    request = (request_t*) get_domain_arena(domain);
+    request->fun = nativeMethodInterface_$load_native_library;
+
+    const char *lib = (*env)->GetStringUTFChars(env, libName, NULL);
+    strcpy(pathname, lib);
+    (*env)->ReleaseStringUTFChars(env, libName, lib);
+
+    notify_worker(domain);
+    wait_worker(domain);
+
+    pthread_mutex_unlock(request_lock);
+    leave_sandbox_domain(function);
+}

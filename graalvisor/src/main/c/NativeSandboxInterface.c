@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <jni.h>
 #include <dlfcn.h>
 #include <unistd.h>

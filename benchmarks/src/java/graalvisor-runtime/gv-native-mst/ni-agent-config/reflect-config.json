@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.jni.MST",
+  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
+}
+]

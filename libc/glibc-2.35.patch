@@ -1,0 +1,251 @@
+diff -ruN glibc-2.35.orig/elf/dl-close.c glibc-2.35/elf/dl-close.c
+--- glibc-2.35.orig/elf/dl-close.c	2025-09-15 14:37:59.372296690 +0100
++++ glibc-2.35/elf/dl-close.c	2025-09-15 14:38:10.204191034 +0100
+@@ -34,11 +34,9 @@
+ #include <stap-probe.h>
+ #include <dl-find_object.h>
+ 
+-#include <dl-unmap-segments.h>
+-
++#include <dl-events.h>
+ 
+-/* Type of the constructor functions.  */
+-typedef void (*fini_t) (void);
++#include <dl-unmap-segments.h>
+ 
+ 
+ /* Special l_idx value used to indicate which objects remain loaded.  */
+@@ -126,13 +124,12 @@
+ 			 / sizeof (ElfW(Addr)));
+ 
+       while (sz-- > 0)
+-	((fini_t) array[sz]) ();
++	run_destructor((fini_t)array[sz]);
+     }
+ 
+   /* Next try the old-style destructor.  */
+   if (map->l_info[DT_FINI] != NULL)
+-    DL_CALL_DT_FINI (map, ((void *) map->l_addr
+-			   + map->l_info[DT_FINI]->d_un.d_ptr));
++	run_destructor((fini_t)((void *) map->l_addr + map->l_info[DT_FINI]->d_un.d_ptr));
+ }
+ 
+ void
+diff -ruN glibc-2.35.orig/elf/dl-events.c glibc-2.35/elf/dl-events.c
+--- glibc-2.35.orig/elf/dl-events.c	1970-01-01 01:00:00.000000000 +0100
++++ glibc-2.35/elf/dl-events.c	2025-09-15 14:38:10.200191072 +0100
+@@ -0,0 +1,13 @@
++#include <dl-events.h>
++
++void run_destructor(fini_t destructor) {
++	destructor();
++}
++
++void run_constructor(dl_init_t constructor, int argc, char **argv, char **env) {
++    constructor(argc, argv, env);
++}
++
++ElfW(Addr) run_fixup(struct link_map *l, ElfW(Word) reloc_arg) {
++    return _dl_fixup(l, reloc_arg);
++}
+\ No newline at end of file
+diff -ruN glibc-2.35.orig/elf/dl-events.h glibc-2.35/elf/dl-events.h
+--- glibc-2.35.orig/elf/dl-events.h	1970-01-01 01:00:00.000000000 +0100
++++ glibc-2.35/elf/dl-events.h	2025-09-15 14:38:10.200191072 +0100
+@@ -0,0 +1,10 @@
++#ifndef _DL_EVENTS_H
++#define _DL_EVENTS_H 
++
++#include <ldsodefs.h>
++
++void run_destructor(fini_t destructor);
++void run_constructor(dl_init_t constructor, int argc, char **argv, char **env);
++ElfW(Addr) run_fixup(struct link_map *l, ElfW(Word) reloc_arg);
++
++#endif /* _DL_EVENTS_H */
+\ No newline at end of file
+diff -ruN glibc-2.35.orig/elf/dl-init.c glibc-2.35/elf/dl-init.c
+--- glibc-2.35.orig/elf/dl-init.c	2025-09-15 14:37:59.376296651 +0100
++++ glibc-2.35/elf/dl-init.c	2025-09-15 14:38:10.204191034 +0100
+@@ -19,9 +19,9 @@
+ #include <assert.h>
+ #include <stddef.h>
+ #include <ldsodefs.h>
++#include <dl-events.h>
+ #include <elf-initfini.h>
+ 
+-
+ static void
+ call_init (struct link_map *l, int argc, char **argv, char **env)
+ {
+@@ -53,7 +53,7 @@
+      - the others in the DT_INIT_ARRAY.
+   */
+   if (ELF_INITFINI && l->l_info[DT_INIT] != NULL)
+-    DL_CALL_DT_INIT(l, l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr, argc, argv, env);
++    run_constructor((dl_init_t)(l->l_addr + l->l_info[DT_INIT]->d_un.d_ptr), argc, argv, env);
+ 
+   /* Next see whether there is an array with initialization functions.  */
+   ElfW(Dyn) *init_array = l->l_info[DT_INIT_ARRAY];
+@@ -67,7 +67,7 @@
+ 
+       addrs = (ElfW(Addr) *) (init_array->d_un.d_ptr + l->l_addr);
+       for (j = 0; j < jm; ++j)
+-	((dl_init_t) addrs[j]) (argc, argv, env);
++  run_constructor((dl_init_t)addrs[j], argc, argv, env);
+     }
+ }
+ 
+@@ -99,7 +99,7 @@
+ 
+       addrs = (ElfW(Addr) *) (preinit_array->d_un.d_ptr + main_map->l_addr);
+       for (cnt = 0; cnt < i; ++cnt)
+-	((dl_init_t) addrs[cnt]) (argc, argv, env);
++  run_constructor((dl_init_t)addrs[cnt], argc, argv, env);
+     }
+ 
+   /* Stupid users forced the ELF specification to be changed.  It now
+diff -ruN glibc-2.35.orig/elf/dl-runtime.c glibc-2.35/elf/dl-runtime.c
+--- glibc-2.35.orig/elf/dl-runtime.c	2025-09-15 14:37:59.376296651 +0100
++++ glibc-2.35/elf/dl-runtime.c	2025-09-15 14:38:10.204191034 +0100
+@@ -36,8 +36,7 @@
+    to that address.  Future calls will bounce directly from the PLT to the
+    function.  */
+ 
+-DL_FIXUP_VALUE_TYPE
+-attribute_hidden __attribute ((noinline)) DL_ARCH_FIXUP_ATTRIBUTE
++DL_FIXUP_VALUE_TYPE __attribute ((noinline)) DL_ARCH_FIXUP_ATTRIBUTE
+ _dl_fixup (
+ # ifdef ELF_MACHINE_RUNTIME_FIXUP_ARGS
+ 	   ELF_MACHINE_RUNTIME_FIXUP_ARGS,
+diff -ruN glibc-2.35.orig/elf/link.h glibc-2.35/elf/link.h
+--- glibc-2.35.orig/elf/link.h	2025-09-15 14:37:59.380296612 +0100
++++ glibc-2.35/elf/link.h	2025-09-15 14:38:10.212190956 +0100
+@@ -185,6 +185,7 @@
+ 					       size_t, void *),
+ 			    void *__data);
+ 
++extern ElfW(Addr) _dl_fixup (struct link_map *, ElfW(Word));
+ 
+ /* Prototypes for the ld.so auditing interfaces.  These are not
+    defined anywhere in ld.so but instead have to be provided by the
+diff -ruN glibc-2.35.orig/elf/Makefile glibc-2.35/elf/Makefile
+--- glibc-2.35.orig/elf/Makefile	2025-09-15 14:37:59.364296768 +0100
++++ glibc-2.35/elf/Makefile	2025-09-15 14:38:10.200191072 +0100
+@@ -46,6 +46,7 @@
+   libc-dl_find_object \
+   libc_early_init \
+   rtld_static_init \
++  dl-events \
+   # routines
+ 
+ # The core dynamic linking functions are in libc for the static and
+diff -ruN glibc-2.35.orig/elf/Versions glibc-2.35/elf/Versions
+--- glibc-2.35.orig/elf/Versions	2025-09-15 14:37:59.364296768 +0100
++++ glibc-2.35/elf/Versions	2025-09-15 14:38:10.200191072 +0100
+@@ -79,5 +79,10 @@
+ 
+     # Set value of a tunable.
+     __tunable_get_val;
++
++    _dl_fixup;
++    run_fixup;
++    run_destructor;
++    run_constructor;
+   }
+ }
+diff -ruN glibc-2.35.orig/include/link.h glibc-2.35/include/link.h
+--- glibc-2.35.orig/include/link.h	2025-09-15 14:37:59.512295324 +0100
++++ glibc-2.35/include/link.h	2025-09-15 14:38:10.332189784 +0100
+@@ -30,6 +30,7 @@
+    prototype uses the type, so we have to declare it separately.  */
+ #  define link_map	link_map_public
+ #  define la_objopen	la_objopen_wrongproto
++#  define _dl_fixup  _dl_fixup_wrongproto
+ # endif
+ 
+ #include <elf/link.h>
+@@ -38,10 +39,12 @@
+ 
+ #undef	link_map
+ #undef	la_objopen
++#undef   _dl_fixup
+ 
+ struct link_map;
+ extern unsigned int la_objopen (struct link_map *__map, Lmid_t __lmid,
+ 				uintptr_t *__cookie);
++extern ElfW(Addr) _dl_fixup (struct link_map *, ElfW(Word));
+ 
+ #include <stdint.h>
+ #include <stddef.h>
+diff -ruN glibc-2.35.orig/sysdeps/generic/ldsodefs.h glibc-2.35/sysdeps/generic/ldsodefs.h
+--- glibc-2.35.orig/sysdeps/generic/ldsodefs.h	2025-09-15 14:37:58.736302894 +0100
++++ glibc-2.35/sysdeps/generic/ldsodefs.h	2025-09-15 14:38:09.592197003 +0100
+@@ -105,6 +105,8 @@
+    DT_PREINIT_ARRAY.  */
+ typedef void (*dl_init_t) (int, char **, char **);
+ 
++typedef void (*fini_t) (void);
++
+ /* On some architectures a pointer to a function is not just a pointer
+    to the actual code of the function but rather an architecture
+    specific descriptor. */
+diff -ruN glibc-2.35.orig/sysdeps/hppa/dl-fptr.c glibc-2.35/sysdeps/hppa/dl-fptr.c
+--- glibc-2.35.orig/sysdeps/hppa/dl-fptr.c	2025-09-15 14:37:58.752302738 +0100
++++ glibc-2.35/sysdeps/hppa/dl-fptr.c	2025-09-15 14:38:09.604196887 +0100
+@@ -321,8 +321,6 @@
+   map->l_mach.fptr_table = NULL;
+ }
+ 
+-extern ElfW(Addr) _dl_fixup (struct link_map *, ElfW(Word)) attribute_hidden;
+-
+ static inline Elf32_Addr
+ elf_machine_resolve (void)
+ {
+diff -ruN glibc-2.35.orig/sysdeps/x86_64/dl-trampoline.h glibc-2.35/sysdeps/x86_64/dl-trampoline.h
+--- glibc-2.35.orig/sysdeps/x86_64/dl-trampoline.h	2025-09-15 14:37:59.240297978 +0100
++++ glibc-2.35/sysdeps/x86_64/dl-trampoline.h	2025-09-15 14:38:10.100192049 +0100
+@@ -16,6 +16,14 @@
+    License along with the GNU C Library; if not, see
+    <https://www.gnu.org/licenses/>.  */
+ 
++#ifndef _FIXUP_STATE
++#define _FIXUP_STATE
++.hidden fixup_state
++
++	.data
++fixup_state: .long 0
++#endif
++
+ 	.text
+ #ifdef _dl_runtime_resolve
+ 
+@@ -123,7 +131,27 @@
+ 	# %rdi: link_map, %rsi: reloc_index
+ 	mov (LOCAL_STORAGE_AREA + 8)(%BASE), %RSI_LP
+ 	mov LOCAL_STORAGE_AREA(%BASE), %RDI_LP
+-	call _dl_fixup		# Call resolver.
++
++	// If run_fixup is resolved then proceed, otherwise call _dl_fixup
++	movq	fixup_state(%rip), %rax
++	cmpq 	$2, %rax
++	je  	2f
++	cmpq 	$1, %rax
++	je  	1f
++
++	addq	$1, fixup_state(%rip)
++	call 	run_fixup
++	jmp 	3f
++
++1:
++	addq	$1, fixup_state(%rip)
++	call 	_dl_fixup
++	jmp 	3f
++
++2:
++	call run_fixup		# Call resolver.
++
++3:
+ 	mov %RAX_LP, %R11_LP	# Save return value
+ 	# Get register content back.
+ # ifdef USE_FXSAVE

@@ -62,16 +62,21 @@ def process_results(dump, total_time):
     return (native_time * 100) / total_time
 
 
-def run(cmd):
+def run(command):
     start_time = time.perf_counter()
-    b_output = subprocess.check_output(cmd, shell=True)
+    byte_output = subprocess.check_output(command, shell=True)
     end_time = time.perf_counter()
 
-    output = b_output.decode().split("\n")            # -> array with lines as elements
-    dump = [s for s in output if 'timer' in s]        # -> filter output
+    # Decode output and split into lines
+    output_lines = byte_output.decode().split("\n")
 
-    return dump, (end_time - start_time) * 1_000_000
+    # Filter lines containing 'timer'
+    timer_lines = [line for line in output_lines if 'timer' in line]
 
+    # Calculate elapsed time in microseconds
+    elapsed_time_microseconds = (end_time - start_time) * 1_000_000
+
+    return timer_lines, elapsed_time_microseconds
 
 def main():
     command, times = parse_args()
@@ -85,7 +90,8 @@ def main():
     avg_native_percentage = np.sum(native_percentages) / times
 
     print("Average percentage of native execution: {:.2f}".format(avg_native_percentage))
-    print(f"Number of transitions per second: {len(results[0][0])/(avg_total_time/1000000)}") # number of transitions is fixed
+    print(f"Total number of transitions per invocation: {len(results[0][0])}") # number of transitions is fixed
+    print("Average function invocation time: {:.3f}".format(avg_total_time/1000)) # time in ms
 
 
 if __name__ == "__main__":
