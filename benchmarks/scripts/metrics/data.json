@@ -20,6 +20,7 @@
         "warmup_time": "4s",
         "benchmark_time": "4s",
         "kn_input": "{}",
+        "active_wait": "360",
         "cpus": "8",
         "memory": "8192" 
     },
@@ -32,6 +33,7 @@
         "warmup_time": "4s",
         "benchmark_time": "4s",
         "kn_input": "{}",
+        "active_wait": "360",
         "cpus": "8",
         "memory": "8192" 
     },
@@ -44,6 +46,7 @@
         "warmup_time": "4s",
         "benchmark_time": "4s",
         "kn_input": "{}",
+        "active_wait": "360",
         "cpus": "0.5",
         "memory": "512"
     },
@@ -56,6 +59,7 @@
         "warmup_time": "15s",
         "benchmark_time": "15s",
         "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
+        "active_wait": "3600",
         "cpus": "0.5",
         "memory": "512" 
     },
