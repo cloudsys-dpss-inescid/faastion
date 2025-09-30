@@ -1,5 +1,0 @@
-*.o
-benchmark
-domain-*
-access-*
-results/

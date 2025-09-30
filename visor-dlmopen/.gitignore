@@ -1,6 +1,0 @@
-libc_callgate_generated.c
-libc_headers.c
-visor
-app.log
-smaps_after
-smaps_before
