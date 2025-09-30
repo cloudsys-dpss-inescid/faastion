@@ -8,9 +8,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
 
-import net.bramp.ffmpeg.FFmpeg;
-import net.bramp.ffmpeg.FFmpegExecutor;
-import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import java.util.concurrent.TimeUnit;
 
 import java.util.HashMap;
 
@@ -31,19 +29,6 @@ public class VideoProcessing {
             return null;
         }
     }
-
-    private static void ffmpeg(String fileName) throws Exception{
-        FFmpegBuilder builder = new FFmpegBuilder()
-          .setInput(fileName) // Filename, or a FFmpegProbeResult
-          .overrideOutputFiles(true) // Override the output if it exists
-          .addOutput("out"+fileName) // Filename for the destination
-          .setFormat("mp4") // Format is inferred from filename, or can be set
-          .setVideoResolution(640, 480) // at 640x480 resolution
-          .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL) // Allow FFmpeg to use experimental specs
-          .done();
-        new FFmpegExecutor(new FFmpeg("./ffmpeg")).createJob(builder).run();
-    }
-
     
     public static HashMap<String, Object> main(Map<String, Object> args) {
         HashMap<String, Object> output = new HashMap<>();
@@ -61,21 +46,35 @@ public class VideoProcessing {
              } 
         }
         
-        try (FileOutputStream stream = new FileOutputStream("video.mp4")) {
-            stream.write(downloadBytes(video_url));
-        } catch (Exception e) {
-             output.put("output", e.getMessage());
-             e.printStackTrace();
-         }
+        byte[] bytes = downloadBytes(video_url);
+        if (!new File("video.mp4").exists()) {
+            try (FileOutputStream stream = new FileOutputStream("video.mp4")) {
+                stream.write(bytes);
+            } catch (Exception e) {
+                output.put("output", e.getMessage());
+                e.printStackTrace();
+            }
+        }
         
         try {
-            ffmpeg("video.mp4");
+            ProcessBuilder pb = new ProcessBuilder(
+                "./ffmpeg",
+                "-nostdin",
+                "-y",
+                "-i", "video.mp4",
+                "-s", "640x480",
+                "-c:a", "copy",
+                "outvideo.mp4"
+            );
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            p.waitFor();
+            output.put("output", String.valueOf(p.exitValue()));
         } catch (Exception e) {
             output.put("output", e.getMessage());
             e.printStackTrace();
         }
         
-        output.put("output", "video.mp4");
         return output;
     }
 
