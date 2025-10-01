@@ -13,6 +13,12 @@
 #endif
 #include "network-isolation.h"
 #include "svm-snapshot.h"
+
+// Faastion headers
+#include "memory_map.h"
+#include "pkru_sandbox.h"
+#include "hash_table.h"
+
 #include "org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface.h"
 
 #define PIPE_READ_END  0
@@ -20,6 +26,38 @@
 
 #define TRUE  1
 #define FALSE 0
+
+// TLS variable addressable via offset from FS
+static __thread pid_t cached_tid = 0;
+
+pid_t __get_cached_tid() {
+    return cached_tid;
+}
+
+void __set_cached_tid(pid_t tid) {
+    cached_tid = tid;
+}
+
+
+int lazy_isolation_enabled() {
+#ifdef LAZY_ISOLATION
+    initialize_seccomp();
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
+
+
+int pku_isolation_enabled() {
+    const char* env_var = getenv("pku_isolation");
+
+    if(env_var != NULL && !strcmp("on", env_var)) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
 
 int network_isolation_enabled() {
     const char* env_var = getenv("network_isolation");
@@ -53,11 +91,15 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     if (dummy >= 0) {
         close(dummy);
     }
-#ifdef LAZY_ISOLATION
-    initialize_seccomp();
-#endif
+    
+    if (lazy_isolation_enabled());
+
     if (network_isolation_enabled()) {
         initialize_network_isolation();
+    }
+
+    if (pku_isolation_enabled()) {
+        pkru_sandbox_init(__get_cached_tid, __set_cached_tid);
     }
 }
 
@@ -129,6 +171,20 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     }
 }
 
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_createNativePKUSandbox(JNIEnv *env, jobject thisObj) {
+    IsolateFunction *function;
+    pthread_t thread;
+
+    function = create_pkru_sandbox();
+    set_cached_pkru_sandbox(function);
+    hash_table_insert(proc_tbl, gettid(), function);
+    
+    pthread_create(&thread, NULL, jvm_monitor, (void *)function);
+    
+    function->notif_fd = install_jvm_filter();
+    pthread_detach(thread);
+}
+
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardownNativeProcessSandbox(JNIEnv *env, jobject thisObj) {
     if (network_isolation_enabled()) {
@@ -146,6 +202,10 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     if (network_isolation_enabled()) {
         delete_network_namespace();
     }
+}
+
+JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardownNativePKUSandbox(JNIEnv *env, jobject thisObj) {
+    hash_table_remove(proc_tbl, gettid(), NULL);
 }
 
 JNIEXPORT jstring JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_svmInvoke(
@@ -395,4 +455,17 @@ JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxI
         jobject thisObj,
         long fabi) {
     return dlclose(((function_abi_t*)fabi)->dlhandle);
+}
+
+JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_resetActiveWaitingCount(JNIEnv *env, jobject thisObj, int threshold) {
+    if (get_active_waiting_count() > threshold) {
+        reset_active_waiting_count();
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_getDomainUsage(JNIEnv *env, jobject thisObj) {
+    return get_domain_usage();
 }

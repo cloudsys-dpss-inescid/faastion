@@ -8,11 +8,17 @@ public class NativeSandboxInterface {
     public static native int  createNativeProcessSandbox(int[] childPipe, int[] parentPipe);
     public static native void createNativeIsolateSandbox();
     public static native void createNativeRuntimeSandbox();
+    public static native void createNativePKUSandbox();
     // TODO - createContextSandbox and createContextSnapshotSandbox.
 
     public static native void teardownNativeProcessSandbox();
     public static native void teardownNativeIsolateSandbox();
     public static native void teardownNativeRuntimeSandbox();
+    public static native void teardownNativePKUSandbox();
+
+    // Faastion LPI interface methods
+    public static native boolean resetActiveWaitingCount(int threshold);
+    public static native int getDomainUsage();
 
     // Methods to access svm-snapshot module (see svm-snapshot.h).
     public static native String svmInvoke(SnapshotSandboxHandle sandboxHandle, String args);
