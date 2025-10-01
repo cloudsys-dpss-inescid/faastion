@@ -25,6 +25,7 @@ import org.graalvm.argo.graalvisor.sandboxing.SnapshotSandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.IsolateSandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.ExecutableSandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.ProcessSandboxProvider;
+import org.graalvm.argo.graalvisor.sandboxing.PKUSandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.SandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.SnapshotProcessSandboxProvider;
 import org.graalvm.argo.graalvisor.utils.HttpUtils;
@@ -261,6 +262,8 @@ public abstract class RuntimeProxy {
                 return new ProcessSandboxProvider(function);
             } else if (sandboxName.equals("pgo")) {
                 return new ExecutableSandboxProvider(function, appDir);
+            } else if (sandboxName.equals("pku")) {
+                return new PKUSandboxProvider(function);
             } else {
                 System.err.println(String.format("Invalid sandbox %s for function %s", sandboxName, function.getName()));
                 return null;
