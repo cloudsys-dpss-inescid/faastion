@@ -2,8 +2,6 @@ package org.graalvm.argo.graalvisor.sandboxing;
 
 import java.io.IOException;
 
-import org.graalvm.argo.graalvisor.Main;
-
 public class IsolateSandboxHandle extends SandboxHandle {
 
     // Native function handle (pointer casted to long).
@@ -29,9 +27,5 @@ public class IsolateSandboxHandle extends SandboxHandle {
     @Override
     public String toString() {
         return Long.toString(iThreadHandle);
-    }
-
-    public boolean supportsLPI() {
-        return Main.LPI;
     }
 }

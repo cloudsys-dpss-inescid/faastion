@@ -1,8 +1,5 @@
 package org.graalvm.argo.graalvisor.sandboxing;
 
-import org.graalvm.argo.graalvisor.Main;
-import org.graalvm.argo.graalvisor.RuntimeProxy;
-
 import java.io.IOException;
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
@@ -11,24 +8,6 @@ public class IsolateSandboxProvider extends SandboxProvider {
 
     public IsolateSandboxProvider(PolyglotFunction function) {
         super(function);
-    }
-
-    @Override
-    public PolyglotFunction getQualifiedFuncion() {
-        String processFunctionName;
-        PolyglotFunction qualifiedFunction = null;
-
-        // LPI
-        // if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
-        //     processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
-        //     qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
-        // }
-
-        if (qualifiedFunction == null) {
-            qualifiedFunction = getFunction();
-        }
-
-        return qualifiedFunction;
     }
 
     @Override
