@@ -8,6 +8,8 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 function build_lazyisolation {
+    LAZY_DIR=$C_DIR/lazyisolation/src
+
     release=$(uname -r)
     major_version=${release%%.*}
     release=${release#*.}
@@ -28,6 +30,7 @@ function build_lazyisolation {
 }
 
 function build_svm_snapshot {
+    SNAP_DIR=$C_DIR/svm-snapshot
     # Build svm snapshot sub-project.
     make -C $SNAP_DIR
     # We don't want to include the main (which is used for testing).
@@ -40,34 +43,34 @@ function build_svm_snapshot {
 }
 
 function build_network_isolation {
+    NET_DIR=$C_DIR/network-isolation/src
     gcc -c -I"$NET_DIR" -o $LIB_DIR/network-isolation.o $NET_DIR/network-isolation.c
     LINKER_OPTIONS="$LINKER_OPTIONS -H:NativeLinkerOption="$LIB_DIR/network-isolation.o""
 }
 
+function build_pku_isolation {
+    if [ -z "$LIBC_HOME" ]
+    then
+        echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
+        exit 1
+    fi
+    LINKER_OPTIONS="$LINKER_OPTIONS -H:NativeLinkerOption=$LIB_DIR/libpkru.so"
+    LIBC_OPTIONS="-H:CLibraryPath=$LIBC_HOME/lib -H:LinkerRPath=$LIBC_HOME/lib -H:NativeLinkerOption=-Wl,--dynamic-linker=$LIBC_HOME/lib/ld-linux-x86-64.so.2"
+    make -C $C_DIR pku_sandbox
+}
+
 function build_nsi {
-    HEADER_DIR=$DIR/build/generated/sources/headers/java/main
     C_DIR=$DIR/src/main/c
-    LAZY_DIR=$C_DIR/lazyisolation/src
-    NET_DIR=$C_DIR/network-isolation/src
-    SNAP_DIR=$C_DIR/svm-snapshot
     LIB_DIR=$DIR/build/libs
+    
     # TODO - make these optional
     # Comment/Uncomment to disable/enable lazy isolation.
     #build_lazyisolation
+    build_pku_isolation
     build_network_isolation
     build_svm_snapshot
-    gcc -c \
-        -g \
-        -I"$JAVA_HOME/include" \
-        -I"$JAVA_HOME/include/linux" \
-        -I"$HEADER_DIR" \
-        -I"$LAZY_DIR" \
-        -I"$NET_DIR" \
-        -I"$SNAP_DIR" \
-        -o $LIB_DIR/NativeSandboxInterface.o \
-        $C_DIR/NativeSandboxInterface.c \
-        $NSI_FLAGS
-    ar rcs $LIB_DIR/libNativeSandboxInterface.a $LIB_DIR/NativeSandboxInterface.o
+    
+    make -C $C_DIR native_sandbox
 }
 
 function build_ni {
@@ -91,6 +94,7 @@ function build_ni {
         --enable-url-protocols=http \
         --initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
         -g \
+        $LIBC_OPTIONS \
         $LINKER_OPTIONS \
         -H:CLibraryPath=$LIB_DIR \
         $JAVA_OPTS \
@@ -116,12 +120,6 @@ then
     exit 1
 fi
 
-if [ -z "$LIBC_HOME" ]
-then
-    echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
-    exit 1
-fi
-
 cd "$DIR" || {
     echo "Redirection failed!"
     exit 1
@@ -133,9 +131,10 @@ then  # Build native image inside Docker container.
     docker run -it -v $JAVA_HOME:/jvm -v $ARGO_HOME:/argo --rm argo-builder /argo/graalvisor/build.sh "local"
     sudo chown -R $(id -u -n):$(id -g -n) $ARGO_HOME/graalvisor/build
 else  # Build native image locally (inside container or directly on host).
-    echo -e "${GREEN}Building graalvisor lib jar...${NC}"
+    echo -e "${GREEN}Building graalvisor-lib jar...${NC}"
     bash $ARGO_HOME/graalvisor-lib/build.sh
-    echo -e "${GREEN}Building graalvisor jar... done!${NC}"
+    echo -e "${GREEN}Building graalvisor-jar... done!${NC}"
+
     echo -e "${GREEN}Building graalvisor jar...${NC}"
     ./gradlew clean shadowJar
     echo -e "${GREEN}Building graalvisor jar... done!${NC}"

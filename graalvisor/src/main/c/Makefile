@@ -1,4 +1,4 @@
-.PHONY: all clean gen_wrappers
+.PHONY: all clean gen_wrappers native_sandbox pku_sandbox
 
 CC			= gcc
 CFLAGS		= -g -Wall -fPIC
@@ -10,10 +10,12 @@ MALLOC_DIR	= $(SRC_DIR)/dlmalloc
 LOADER_DIR 	= $(SRC_DIR)/loader
 WRAPPER_DIR = $(SRC_DIR)/jni
 NATIVE_INTERFACE_DIR = $(SRC_DIR)/native-interface
+NET_DIR 	= $(SRC_DIR)/network-isolation/src
+SNAP_DIR	= $(SRC_DIR)/svm-snapshot
 INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux \
 	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
 
-all: gen_wrappers
+pku_sandbox: gen_wrappers
 	$(CC) $(CFLAGS) $(INCLUDE) -DLOADER_LIB="\"$(LIB_DIR)/libloader.so\"" -DREMOVE_NNS_LIMIT -c -o $(LIB_DIR)/jni_handle.o $(NATIVE_INTERFACE_DIR)/jni_handle.c
 
 	$(CC) $(CFLAGS) $(INCLUDE) $(OPTIONS) -Wno-maybe-uninitialized -c -o $(LIB_DIR)/malloc.o $(MALLOC_DIR)/malloc.c
@@ -43,9 +45,12 @@ all: gen_wrappers
 		$(LIB_DIR)/memory_map.o $(LIB_DIR)/main.o $(LIB_DIR)/hash_table.o $(LIB_DIR)/sandbox.o \
 		$(LIB_DIR)/book_keeper.o $(LIB_DIR)/seccomp.o $(LIB_DIR)/worker.o $(LIB_DIR)/jni_monitor.o \
 		$(LIB_DIR)/jvm_monitor.o $(LIB_DIR)/jni_wrapper.o
-#
-	$(CC) $(INCLUDE) -c -o $(LIB_DIR)/NativeSandboxInterface.o $(SRC_DIR)/NativeSandboxInterface.c
+
+native_sandbox:
+	$(CC) $(INCLUDE) -I$(NET_DIR) -I$(SNAP_DIR) -c -o $(LIB_DIR)/NativeSandboxInterface.o $(SRC_DIR)/NativeSandboxInterface.c
 	ar rcs $(LIB_DIR)/libNativeSandboxInterface.a $(LIB_DIR)/NativeSandboxInterface.o
+
+all: pku_sandbox native_sandbox
 
 gen_wrappers: generate_libc_wrappers.sh generate_libc_wrappers.py
 	./generate_libc_wrappers.sh
