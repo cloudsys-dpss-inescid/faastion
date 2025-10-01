@@ -18,10 +18,11 @@ public class IsolateSandboxProvider extends SandboxProvider {
         String processFunctionName;
         PolyglotFunction qualifiedFunction = null;
 
-        if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
-            processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
-            qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
-        }
+        // LPI
+        // if (Main.LPI && NativeSandboxInterface.resetActiveWaitingCount(Main.ACTIVE_WAIT_CAP)) {
+        //     processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
+        //     qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
+        // }
 
         if (qualifiedFunction == null) {
             qualifiedFunction = getFunction();

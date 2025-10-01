@@ -9,14 +9,10 @@ import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface;
 
 public abstract class Main {
 
-    /**
-     * Location where function code will be placed.
-     */
-    public static String APP_DIR = System.getenv("app_dir");
-    public static boolean LAZY_ISOLATION_ENABLED = false;
-    public static boolean LAZY_ISOLATION_SUPPORTED = false;
-    public static boolean MEM_ISOLATION_ENABLED = false;
-    public static boolean MEM_ISOLATION_SUPPORTED = false;
+    public static String MINIO_URL = System.getenv("minio-url");
+    public static String MINIO_SERVER = "minio-storage";
+    public static String MINIO_USER = System.getenv("minio-user");
+    public static String MINIO_PASSWORD = System.getenv("minio-password");
 
     public static int ACTIVE_WAIT_CAP;
     public static boolean LPI;
@@ -66,6 +62,8 @@ public abstract class Main {
         LPI = enableLPI == null ? false : enableLPI.equals("true");
 
         if (System.getProperty("java.vm.name").equals("Substrate VM")) {
+            SubstrateVMProxy server = new SubstrateVMProxy(port, app_dir);
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     server.stop();
@@ -74,51 +72,51 @@ public abstract class Main {
             });
 
             // Initialize our native sandbox interface.
-            NativeSandboxInterface.ginit();
+            NativeSandboxInterface.initialize();
 
-            new Thread(() -> {
-                String poll = System.getenv("ACTIVE_WAIT_POLL");
-                long millis = poll == null ? 1000 : Long.parseLong(poll);
-                while (true) {
-                    try {
-                        Thread.sleep(millis);
-                        NativeSandboxInterface.resetActiveWaitingCount(0);
-                    } catch (InterruptedException e) {
-                        continue;
-                    }
+            // new Thread(() -> {
+            //     String poll = System.getenv("ACTIVE_WAIT_POLL");
+            //     long millis = poll == null ? 1000 : Long.parseLong(poll);
+            //     while (true) {
+            //         try {
+            //             Thread.sleep(millis);
+            //             NativeSandboxInterface.resetActiveWaitingCount(0);
+            //         } catch (InterruptedException e) {
+            //             continue;
+            //         }
                     
-                }
-            }).start();
+            //     }
+            // }).start();
 
-            new Thread(() -> {
-                String poll = System.getenv("DOMAIN_USAGE_POLL");
-                long millis = poll == null ? 100 : Long.parseLong(poll);
+            // new Thread(() -> {
+            //     String poll = System.getenv("DOMAIN_USAGE_POLL");
+            //     long millis = poll == null ? 100 : Long.parseLong(poll);
                 
-                FileOutputStream fos = null;
-                try {
-                    fos = new FileOutputStream("domain_usage.txt");
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
+            //     FileOutputStream fos = null;
+            //     try {
+            //         fos = new FileOutputStream("domain_usage.txt");
+            //     } catch (FileNotFoundException e) {
+            //         e.printStackTrace();
+            //         System.exit(-1);
+            //     }
 
-                int domainUsage;
-                String line;
-                while (true) {
-                    try {
-                        Thread.sleep(millis);
-                        domainUsage = NativeSandboxInterface.getDomainUsage();
-                        line = String.valueOf(domainUsage) + "\n";
-                        fos.write(line.getBytes());
-                    } catch (InterruptedException e) {
-                        continue;
-                    } catch (IOException e) {
-                        continue;
-                    }
-                }
-            }).start();
+            //     int domainUsage;
+            //     String line;
+            //     while (true) {
+            //         try {
+            //             Thread.sleep(millis);
+            //             domainUsage = NativeSandboxInterface.getDomainUsage();
+            //             line = String.valueOf(domainUsage) + "\n";
+            //             fos.write(line.getBytes());
+            //         } catch (InterruptedException e) {
+            //             continue;
+            //         } catch (IOException e) {
+            //             continue;
+            //         }
+            //     }
+            // }).start();
 
-            new SubstrateVMProxy(port).start();
+            server.start();
         } else {
            new HotSpotProxy(port, app_dir).start();
         }
