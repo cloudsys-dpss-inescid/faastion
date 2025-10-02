@@ -25,6 +25,10 @@ public abstract class SandboxProvider {
         return this.functionHandle;
     }
 
+    public boolean supportsLPI() {
+        return false;
+    }
+
     public abstract String getName();
 
     public abstract void loadProvider() throws IOException;

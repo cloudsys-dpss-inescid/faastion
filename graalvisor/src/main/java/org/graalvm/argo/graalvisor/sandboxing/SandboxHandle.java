@@ -24,10 +24,6 @@ public abstract class SandboxHandle {
         FileUtils.deleteDirectory(directoryName);
     }
 
-    public boolean supportsLPI() {
-        return false;
-    }
-
     @Override
     public abstract String toString();
 

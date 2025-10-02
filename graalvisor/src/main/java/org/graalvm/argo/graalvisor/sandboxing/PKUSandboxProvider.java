@@ -6,14 +6,15 @@ import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 
+import static org.graalvm.argo.graalvisor.RuntimeProxy.FTABLE;
+
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
 
 public class PKUSandboxProvider extends SandboxProvider {
 
-    public static int ACTIVE_WAIT_CAP;
-    public static boolean LPI;
-
+    private static int ACTIVE_WAIT_CAP;
+    private static boolean LPI;
     private static boolean pkuIsolationEnabled = false;
 
     public PKUSandboxProvider(PolyglotFunction function) {
@@ -86,6 +87,14 @@ public class PKUSandboxProvider extends SandboxProvider {
         }
     }
 
+    public static PolyglotFunction useProcess(String functionName) {
+        PolyglotFunction function = null;
+        if (NativeSandboxInterface.resetActiveWaitingCount(ACTIVE_WAIT_CAP)) {
+            function = FTABLE.get(functionName.replaceAll("[\\d.]", "") + "-proc");
+        }
+        return function;
+    }
+
     @Override
     public void loadProvider() throws IOException {
         if (!pkuIsolationEnabled)  {
@@ -117,5 +126,10 @@ public class PKUSandboxProvider extends SandboxProvider {
     @Override
     public String getName() {
         return "pku";
+    }
+
+    @Override
+    public boolean supportsLPI() {
+        return LPI;
     }
 }

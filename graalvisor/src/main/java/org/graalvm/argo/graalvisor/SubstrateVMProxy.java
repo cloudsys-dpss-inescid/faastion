@@ -17,8 +17,6 @@ import org.graalvm.argo.graalvisor.function.NativeFunction;
 
 import org.graalvm.argo.graalvisor.utils.FileUtils;
 
-import static org.graalvm.argo.graalvisor.RuntimeProxy.FTABLE;
-
 import com.sun.net.httpserver.HttpExchange;
 import org.graalvm.argo.graalvisor.utils.JsonUtils;
 
@@ -84,20 +82,9 @@ public class SubstrateVMProxy extends RuntimeProxy {
          */
         private boolean processRequest(SandboxHandle shandle, Request req) {
             try {
-                if (shandle.supportsLPI() && NativeSandboxInterface.resetActiveWaitingCount(PKUSandboxProvider.ACTIVE_WAIT_CAP)) {
-                    String procName = pipeline.getFunction().getName().replaceAll("[\\d.]", "") + "-proc";
-                    PolyglotFunction function = FTABLE.get(procName);
-                    if (function == null) {
-                        req.setOutput(String.format("{'Error': 'Function %s not registered!'}", procName));
-                        return false;
-                    } else {
-                        getFunctionPipeline(function).invokeInCachedSandbox(req);
-                    }
-                } else {
-                    // Extending the arguments JSON object to include sandbox-specific tmp directory.
-                    String arguments = JsonUtils.appendTmpDirectoryKey(req.getInput(), shandle.initSandboxTmpDirectory());
-                    req.setOutput(shandle.invokeSandbox(arguments));
-                }
+                // Extending the arguments JSON object to include sandbox-specific tmp directory.
+                String arguments = JsonUtils.appendTmpDirectoryKey(req.getInput(), shandle.initSandboxTmpDirectory());
+                req.setOutput(shandle.invokeSandbox(arguments));
                 return true;
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -267,6 +254,10 @@ public class SubstrateVMProxy extends RuntimeProxy {
     }
 
     protected static FunctionPipeline getFunctionPipeline(PolyglotFunction function) {
+        PolyglotFunction aux;
+        if (function.getSandboxProvider().supportsLPI() && (aux = PKUSandboxProvider.useProcess(function.getName())) != null) {
+            function = aux;
+        }
         FunctionPipeline pipeline = queues.get(function.getName());
 
         if (pipeline == null) {

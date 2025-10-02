@@ -30,8 +30,4 @@ public class PKUSandboxHandle extends SandboxHandle {
     public String toString() {
         return Long.toString(iThreadHandle);
     }
-
-    public boolean supportsLPI() {
-        return PKUSandboxProvider.LPI;
-    }
 }
