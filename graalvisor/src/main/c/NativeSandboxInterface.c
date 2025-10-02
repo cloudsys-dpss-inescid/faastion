@@ -459,8 +459,7 @@ JNIEXPORT int JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxI
 
 JNIEXPORT jboolean JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_resetActiveWaitingCount(JNIEnv *env, jobject thisObj, int threshold) {
     if (get_active_waiting_count() > threshold) {
-        reset_active_waiting_count();
-        return 1;
+        return reset_active_waiting_count(threshold);
     } else {
         return 0;
     }

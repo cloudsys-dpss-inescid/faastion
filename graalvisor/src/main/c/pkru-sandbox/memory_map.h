@@ -72,7 +72,7 @@ void destroy_pkru_sandbox(IsolateFunction *function);
 
 void start_active_waiting_count();
 
-void reset_active_waiting_count();
+int reset_active_waiting_count(int threshold);
 
 int get_active_waiting_count();
 

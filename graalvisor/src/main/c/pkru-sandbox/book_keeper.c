@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 static atomic_int active_waiting_count;
+static atomic_int in_queue;
 
 // FIXME: what happens if clone operation is not successful?
 void increment_sandbox_threads(IsolateFunction *function) {
@@ -34,10 +35,21 @@ void leave_sandbox_domain(IsolateFunction *function) {
 
 void start_active_waiting_count() {
     atomic_init(&active_waiting_count, 0);
+    atomic_init(&in_queue, 0);
 }
 
-void reset_active_waiting_count() {
-    atomic_store(&active_waiting_count, 0);
+int reset_active_waiting_count(int threshold) {
+    int prev = atomic_fetch_add(&in_queue, 1);
+    int place_in_queue = prev++;
+    
+    int t = atomic_load(&active_waiting_count); // make sure 1st in queue reads the updated value
+    if (place_in_queue == 1 && t > threshold) {
+        atomic_store(&active_waiting_count, 0);
+        atomic_store(&in_queue, 0);
+        return 1; // tell PKUSandboxProvider to use process isolation
+    }
+    
+    return 0;
 }
 
 int get_active_waiting_count() {
