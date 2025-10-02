@@ -87,23 +87,6 @@ public class PKUSandboxProvider extends SandboxProvider {
     }
 
     @Override
-    public PolyglotFunction getQualifiedFuncion() {
-        String processFunctionName;
-        PolyglotFunction qualifiedFunction = null;
-
-        if (LPI && NativeSandboxInterface.resetActiveWaitingCount(ACTIVE_WAIT_CAP)) {
-            processFunctionName = getFunction().getName().replaceAll("[\\d.]", "");
-            qualifiedFunction = RuntimeProxy.FTABLE.get(processFunctionName);
-        }
-
-        if (qualifiedFunction == null) {
-            qualifiedFunction = getFunction();
-        }
-
-        return qualifiedFunction;
-    }
-
-    @Override
     public void loadProvider() throws IOException {
         if (!pkuIsolationEnabled)  {
             throw new IOException("Cannot load PKUSandboxProvider: PKU isolation is disabled");
@@ -121,6 +104,7 @@ public class PKUSandboxProvider extends SandboxProvider {
     @Override
     public void destroySandbox(SandboxHandle shandle) throws IOException {
         PKUSandboxHandle pkhandle = (PKUSandboxHandle) shandle;
+        NativeSandboxInterface.teardownNativePKUSandbox();
         NativeSandboxInterface.destroySandbox(functionHandle, pkhandle.getIThreadHandle());
         pkhandle.destroyHandle();
     }

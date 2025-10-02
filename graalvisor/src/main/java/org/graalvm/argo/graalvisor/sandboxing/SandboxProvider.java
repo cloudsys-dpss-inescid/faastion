@@ -24,10 +24,6 @@ public abstract class SandboxProvider {
     public long getFunctionHandle() {
         return this.functionHandle;
     }
-    
-    public PolyglotFunction getQualifiedFuncion() {
-        return this.function;
-    }
 
     public abstract String getName();
 

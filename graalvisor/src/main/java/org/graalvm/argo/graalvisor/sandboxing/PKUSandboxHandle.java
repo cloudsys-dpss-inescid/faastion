@@ -27,12 +27,6 @@ public class PKUSandboxHandle extends SandboxHandle {
     }
 
     @Override
-    public void destroyHandle() throws IOException {
-        super.destroyHandle();
-        NativeSandboxInterface.teardownNativePKUSandbox();
-    }
-
-    @Override
     public String toString() {
         return Long.toString(iThreadHandle);
     }
