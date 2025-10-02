@@ -51,6 +51,10 @@ public abstract class Main {
         int port = Integer.parseInt(lambda_port);
 
         if (System.getProperty("java.vm.name").equals("Substrate VM")) {
+            // Initialize our native sandbox interface.
+            NativeSandboxInterface.initialize();
+            PKUSandboxProvider.initialize();
+
             SubstrateVMProxy server = new SubstrateVMProxy(port, app_dir);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -59,11 +63,6 @@ public abstract class Main {
                     NativeSandboxInterface.teardown();
                 }
             });
-
-            // Initialize our native sandbox interface.
-            NativeSandboxInterface.initialize();
-
-            PKUSandboxProvider.initialize();
 
             server.start();
         } else {

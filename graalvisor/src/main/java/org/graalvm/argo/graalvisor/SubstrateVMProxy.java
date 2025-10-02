@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.graalvm.argo.graalvisor.function.PolyglotFunction;
 import org.graalvm.argo.graalvisor.sandboxing.SandboxHandle;
+import org.graalvm.argo.graalvisor.sandboxing.PKUSandboxProvider;
 import org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterface; 
 import org.graalvm.argo.graalvisor.function.NativeFunction;
 
@@ -83,9 +84,20 @@ public class SubstrateVMProxy extends RuntimeProxy {
          */
         private boolean processRequest(SandboxHandle shandle, Request req) {
             try {
-                // Extending the arguments JSON object to include sandbox-specific tmp directory.
-                String arguments = JsonUtils.appendTmpDirectoryKey(req.getInput(), shandle.initSandboxTmpDirectory());
-                req.setOutput(shandle.invokeSandbox(arguments));
+                if (shandle.supportsLPI() && NativeSandboxInterface.resetActiveWaitingCount(PKUSandboxProvider.ACTIVE_WAIT_CAP)) {
+                    String procName = pipeline.getFunction().getName().replaceAll("[\\d.]", "") + "-proc";
+                    PolyglotFunction function = FTABLE.get(procName);
+                    if (function == null) {
+                        req.setOutput(String.format("{'Error': 'Function %s not registered!'}", procName));
+                        return false;
+                    } else {
+                        getFunctionPipeline(function).invokeInCachedSandbox(req);
+                    }
+                } else {
+                    // Extending the arguments JSON object to include sandbox-specific tmp directory.
+                    String arguments = JsonUtils.appendTmpDirectoryKey(req.getInput(), shandle.initSandboxTmpDirectory());
+                    req.setOutput(shandle.invokeSandbox(arguments));
+                }
                 return true;
             } catch (Exception e) {
                 e.printStackTrace(System.err);
