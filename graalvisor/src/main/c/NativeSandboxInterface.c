@@ -420,7 +420,7 @@ JNIEXPORT jstring JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSand
         jstring argsStr) {
     function_abi_t* fabi = (function_abi_t*) fabiPtr;
     graal_isolatethread_t* ithread = (graal_isolatethread_t*) ithreadPtr;
-    char fout[256];
+    char fout[256] = {0};
     const char* args = (*env)->GetStringUTFChars(env, argsStr, 0);
     fabi->sabi.entrypoint(ithread, args, fout, 256);
     (*env)->ReleaseStringUTFChars(env, argsStr, args);

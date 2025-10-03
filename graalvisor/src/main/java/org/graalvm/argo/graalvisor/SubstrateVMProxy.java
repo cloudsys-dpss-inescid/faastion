@@ -171,17 +171,9 @@ public class SubstrateVMProxy extends RuntimeProxy {
 
         private AtomicBoolean open = new AtomicBoolean(true);
 
-        private int maxFaastlaneWorkers;
-    
-        private boolean faastlane;
-
         public FunctionPipeline(PolyglotFunction function) {
             this.function = function;
             this.queue = new ConcurrentLinkedQueue<>();
-            String faastlane_mode = System.getenv("faastlane");
-            this.faastlane = faastlane_mode != null && faastlane_mode.equals("true");
-            String faastlane_workers = System.getenv("faastlane_workers");
-            this.maxFaastlaneWorkers = faastlane_workers == null ? 15 : Integer.parseInt(faastlane_workers);
         }
 
         public void invokeInCachedSandbox(Request req) {
@@ -192,12 +184,10 @@ public class SubstrateVMProxy extends RuntimeProxy {
             // Checks if we need to launch additional sandboxes.
             if (cWorkers < cActive && (cMaxWorkers == 0 || cWorkers < cMaxWorkers)) {
                 synchronized (this) {
-                    if (!faastlane || workers.intValue() < maxFaastlaneWorkers) {
-                        // Repeats the check to verify that we won the race.
-                        if (workers.intValue() < active.intValue()) {
-                            workers.incrementAndGet();
-                            new Worker(this).start();
-                        }
+                    // Repeats the check to verify that we won the race.
+                    if (workers.intValue() < active.intValue()) {
+                        workers.incrementAndGet();
+                        new Worker(this).start();
                     }
                 }
             }

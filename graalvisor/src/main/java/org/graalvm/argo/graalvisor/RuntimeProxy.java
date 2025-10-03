@@ -35,6 +35,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import java.util.concurrent.Semaphore;
+
 /**
  * The runtime proxy exposes a simple webserver that receives three types of requests:
  * - function registration;
@@ -101,7 +103,7 @@ public abstract class RuntimeProxy {
             long startTime,
             String arguments);
 
-   private void invokeWrapper(
+    private void invokeWrapper(
             HttpExchange he,
             String functionName,
             boolean cached,
@@ -116,7 +118,7 @@ public abstract class RuntimeProxy {
         } else {
             invoke(he, function, cached, warmupConc, warmupReqs, startTime, arguments);
         }
-   }
+    }
 
     protected static void sendReply(HttpExchange he, long startTime, String output) {
         long microLatency = (System.nanoTime() - startTime) / 1000;
@@ -143,6 +145,33 @@ public abstract class RuntimeProxy {
     }
 
     private class InvocationHandler implements ProxyHttpHandler {
+        
+        private static final int FAASTLANE_CONCURRENCY = 15;
+
+        private Semaphore sem;
+        private boolean faastlane;
+
+        protected InvocationHandler() {
+            String faastlane_mode = System.getenv("faastlane");
+            faastlane = faastlane_mode != null && faastlane_mode.equals("true");
+            if (faastlane) {
+                sem = new Semaphore(FAASTLANE_CONCURRENCY);
+            }
+        }
+
+        private boolean acquireFaastlaneLock() {
+            try {
+                sem.acquire();
+                return true;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        private void releaseFaastlaneLock() {
+            sem.release();
+        }
 
         @Override
         public void handleInternal(HttpExchange t) throws IOException {
@@ -150,7 +179,22 @@ public abstract class RuntimeProxy {
             String functionName = (String) input.get("name");
             String arguments = (String) input.get("arguments");
             boolean cached = input.get("cached") == null ? true : Boolean.parseBoolean((String)input.get("cached"));
+
+            if (faastlane && !acquireFaastlaneLock()) {
+                sendReply(
+                    t,
+                    System.nanoTime(),
+                    String.format("{'Error': 'Could not invoke %s, please try again.'}",
+                    functionName)
+                );
+                return;
+            }
+
             invokeWrapper(t, functionName, cached, 1, 1, arguments);
+
+            if (faastlane) {
+                releaseFaastlaneLock();
+            }
         }
     }
 
