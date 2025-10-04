@@ -50,7 +50,7 @@ JNIEXPORT void JNICALL Java_com_jni_ZIPCompression_compress(JNIEnv *env, jobject
         return;
     }
 
-    printHex(compressedData, compressedDataSize);
+    printHex(compressedData, 10 /* compressedDataSize */);
 
     free(inputData);
     free(compressedData);
