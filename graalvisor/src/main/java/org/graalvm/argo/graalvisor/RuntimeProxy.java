@@ -356,7 +356,7 @@ public abstract class RuntimeProxy {
 
                 // Register depending on the current vm type.
                 return System.getProperty("java.vm.name").equals("Substrate VM") ?
-                    handleSvmRegistration(functionName, functionPath, functionEntryPoint, functionLanguage, sandboxName, svmID, isExecutable) :
+                    handleSvmRegistration(functionName, functionPath, functionEntryPoint, functionLanguage, sandboxName, svmID, functionURL, isExecutable) :
                     handleHotSpotRegistration(functionName, functionPath, functionEntryPoint);
             } catch (IOException e) {
                 e.printStackTrace(System.err);
@@ -377,13 +377,38 @@ public abstract class RuntimeProxy {
             }
         }
 
-        private PolyglotFunction handleSvmRegistration(String functionName, String soFileName, String functionEntryPoint, String functionLanguage, String sandboxName, int svmID, boolean isExecutable) throws IOException {
+        private void
+        handleLpiRegistration(String functionName, String soFileName, String functionEntryPoint,
+            String functionLanguage, String functionURL, boolean isExecutable) throws IOException
+        {
+            String lpiFunctionName = functionName.replaceAll("[\\d.]", "") + "-proc";
+            if (FTABLE.get(lpiFunctionName) != null) {
+                return;
+            }
+
+            String lpiUrl = functionURL.substring(0, functionURL.length() - 3) + "_vanilla.so";
+            String lpiFileName = soFileName.substring(0, soFileName.length() - 3) + "_vanilla.so";
+            if (new File(lpiFileName).length() == 0) {
+                HttpUtils.downloadFile(lpiUrl, lpiFileName);
+            }
+
+            PolyglotFunction lpiFunction = new NativeFunction(lpiFunctionName,
+                functionEntryPoint, functionLanguage, lpiFileName, isExecutable);
+            ProcessSandboxProvider psp = new ProcessSandboxProvider(lpiFunction);
+            lpiFunction.setSandboxProvider(psp);
+            psp.loadProvider();
+        }
+
+        private PolyglotFunction handleSvmRegistration(String functionName, String soFileName, String functionEntryPoint, String functionLanguage, String sandboxName, int svmID, String functionURL, boolean isExecutable) throws IOException {
             PolyglotFunction function = new NativeFunction(functionName, functionEntryPoint, functionLanguage, soFileName, isExecutable);
             SandboxProvider sprovider = getSandboxProvider(function, sandboxName);
             if (sprovider == null) {
                 return null;
             } else if (sprovider instanceof SnapshotSandboxProvider) {
                 ((SnapshotSandboxProvider) sprovider).setSVMID(svmID);
+            } else if (sprovider.supportsLPI()) {
+                handleLpiRegistration(functionName, soFileName,
+                    functionEntryPoint, functionLanguage, functionURL, isExecutable);
             }
 
             function.setSandboxProvider(sprovider);
