@@ -299,7 +299,6 @@ public class DNAVisualization {
         String input = CTypeConversion.toJavaString(fin);
         Map<String, Object> map = jsonToMap(input);
         String output = main(map).toString();
-
         int len = Math.min((int) foutLen.rawValue() - 1, output.length());
         if (len > 0) {
             CTypeConversion.toCString(output.substring(0, len), fout, foutLen);

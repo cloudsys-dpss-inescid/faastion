@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -22,6 +23,14 @@ import java.util.Date;
 import java.util.Random;
 import java.text.SimpleDateFormat;
 import java.util.stream.Collectors;
+
+import org.graalvm.word.UnsignedWord;
+import org.graalvm.nativeimage.c.function.CEntryPoint;
+import org.graalvm.nativeimage.IsolateThread;
+import org.graalvm.nativeimage.c.type.CCharPointer;
+import org.graalvm.nativeimage.c.type.CTypeConversion;
+
+import com.fasterxml.jackson.jr.ob.JSON;
 
 public class DynamicHTML {
 
@@ -67,12 +76,9 @@ public class DynamicHTML {
         contents.put("random_numbers", new Random().ints(size, 0, 101)
                         .mapToObj(n -> String.valueOf(n))
                         .collect(Collectors.toList()));
-        try {
-            mustache.execute(new PrintWriter(System.out), contents).flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+        StringWriter sw = new StringWriter();
+        mustache.execute(sw, contents);
+        System.out.println(sw.getBuffer().substring(0,10));
         return true;
     }
 
@@ -94,5 +100,29 @@ public class DynamicHTML {
     public static void main(String[] args) {
         HashMap<String, Object> output = new HashMap<>();
         output = main(output);
+    }
+
+    public static Map<String, Object> jsonToMap(String jsonString) {
+        try {
+            if (jsonString != null && !jsonString.isEmpty()) {
+                return JSON.std.mapFrom(jsonString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+        }
+        return new HashMap<>();
+    }
+
+    /* For c-API invocations. */
+    @CEntryPoint(name = "entrypoint")
+    public static void main(IsolateThread thread, CCharPointer fin, CCharPointer fout, UnsignedWord foutLen) {
+        String input = CTypeConversion.toJavaString(fin);
+        Map<String, Object> map = jsonToMap(input);
+        String output = main(map).toString();
+
+        int len = Math.min((int) foutLen.rawValue() - 1, output.length());
+        if (len > 0) {
+            CTypeConversion.toCString(output.substring(0, len), fout, foutLen);
+        }
     }
 }

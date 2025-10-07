@@ -37,6 +37,7 @@ function build_native_binary {
 }
 
 function build_ni {
+	rm -f /tmp/apps/lib${FUNCTION_ID}.so &> /dev/null
 	cd build
 
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
@@ -52,6 +53,7 @@ function build_ni {
 		$NI_BIN_OPTS \
 		-H:Name=lib$FUNCTION_ID
 
+	cp lib${FUNCTION_ID}.so $RESOURCES_DIR/apps/.
 	cd -
 }
 
@@ -82,6 +84,12 @@ if [ -z "$JAVA_HOME" ]
 then
         echo "Please set JAVA_HOME first. It should be a GraalVM with native-image available."
         exit 1
+fi
+
+if [ -z "$RESOURCES_DIR" ]
+then
+	echo "Please set RESOURCES_DIR first."
+	exit 1
 fi
 
 # Build graalvisor lib.

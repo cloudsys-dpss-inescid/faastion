@@ -19,6 +19,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
 }
 
+dependencies {
+    implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
+}
+
 jar {
     manifest {
         attributes(
