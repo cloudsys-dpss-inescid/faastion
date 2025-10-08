@@ -17,6 +17,7 @@ shadowJar() {
 
 dependencies {
     implementation 'org.tensorflow:tensorflow:1.5.0'
+    implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
 }
 
 jar {

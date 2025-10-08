@@ -15,6 +15,14 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.graalvm.word.UnsignedWord;
+import org.graalvm.nativeimage.c.function.CEntryPoint;
+import org.graalvm.nativeimage.IsolateThread;
+import org.graalvm.nativeimage.c.type.CCharPointer;
+import org.graalvm.nativeimage.c.type.CTypeConversion;
+
+import com.fasterxml.jackson.jr.ob.JSON;
+
 public class Classify {
 
     private static final String model_url = "http://127.0.0.1:8000/tensorflow_inception_graph.pb";
@@ -93,8 +101,32 @@ public class Classify {
     
     public static void main(String[] args) throws Exception {
     	HashMap<String, Object> output = new HashMap<>();
+        output.put("tmpDir", "/tmp/sandbox-0");
         main(output);
     }
     
+    public static Map<String, Object> jsonToMap(String jsonString) {
+        try {
+            if (jsonString != null && !jsonString.isEmpty()) {
+                return JSON.std.mapFrom(jsonString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+        }
+        return new HashMap<>();
+    }
+
+    /* For c-API invocations. */
+    @CEntryPoint(name = "entrypoint")
+    public static void main(IsolateThread thread, CCharPointer fin, CCharPointer fout, UnsignedWord foutLen) {
+        String input = CTypeConversion.toJavaString(fin);
+        Map<String, Object> map = jsonToMap(input);
+        String output = main(map).toString();
+
+        int len = Math.min((int) foutLen.rawValue() - 1, output.length());
+        if (len > 0) {
+            CTypeConversion.toCString(output.substring(0, len), fout, foutLen);
+        }
+    }
 
 }

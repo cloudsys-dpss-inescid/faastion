@@ -1,6 +1,7 @@
 .PHONY: all clean
 
 SNIPPETS_DIR = build/snippets
+FUNCTION_DIR = build/$(BENCHMARK_NAME)-plugin
 
 SRCS = $(wildcard $(SNIPPETS_DIR)/*.c)
 OBJS = $(SRCS:.c=.o)
@@ -21,10 +22,12 @@ LIB_CFLAGS = -g -O0
 LIB_CFLAGS += -shared
 LIB_CFLAGS += -Wall -Wl,--no-undefined
 
-LIB_DIR = $(GRAALVISOR_HOME)/build/libs
+OBJ_DIR = $(GRAALVISOR_HOME)/build/obj
+LIB_DIR = $(GRAALVISOR_HOME)/shared
 
 all: $(OBJS)
-	$(CC) $(LIB_CFLAGS) -o $(LIB_DIR)/lib$(BENCHMARK_NAME)-wrapper.so $^ $(LIB_DIR)/jni_handle.o -L$(LIB_DIR) -lpkru
+	@mkdir -p $(LIB_DIR)
+	$(CC) $(LIB_CFLAGS) -o $(LIB_DIR)/lib$(BENCHMARK_NAME)-wrapper.so $^ $(OBJ_DIR)/jni_handle.o -L$(LIB_DIR) -lpkru
 
 clean:
 	rm -r $(SNIPPETS_DIR)/*.o

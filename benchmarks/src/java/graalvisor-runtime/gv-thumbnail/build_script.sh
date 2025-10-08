@@ -49,26 +49,32 @@ function build_native_binary {
 }
 
 function build_ni {
-	cd build
+	cd build/${FUNCTION_ID}
 
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 		--no-fallback \
 		--enable-url-protocols=http \
-		-cp $CLASS_PATH:libs/thumbnail-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
+		-cp $CLASS_PATH:../libs/thumbnail-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 		--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
-		-H:ConfigurationFileDirectories=../ni-agent-config,../config-dir \
+		-H:ConfigurationFileDirectories=../../ni-agent-config,../../config-dir \
 		-H:+ReportExceptionStackTraces \
 		$NI_BIN_OPTS \
 		-H:Name=lib$FUNCTION_ID
+
+	rm -rf /tmp/apps/${FUNCTION_ID} &> /dev/null
+	zipfile=lib${FUNCTION_ID}.zip
+	zip --junk-paths $zipfile *.so *.h
+	cp $zipfile $RESOURCES_DIR/apps/.
 
 	cd -
 }
 
 function build_faastion_image {
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"-plugin
+	mkdir -p build/${FUNCTION_ID}
 	manipulate_bytecode
 	build_snippets
 
@@ -78,10 +84,11 @@ function build_faastion_image {
 }
 
 function build_vanila_image {
+	FUNCTION_ID="$BENCHMARK_NAME"
+	mkdir -p build/${FUNCTION_ID}
+
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
-
 	build_ni
 }
 
@@ -93,7 +100,7 @@ function manipulate_bytecode {
 	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
 	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
 
-	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-wrapper.so
+	rm -f $GRAALVISOR_HOME/shared/lib${FUNCTION_ID}-wrapper.so
 
 	mkdir -p $DIR/build/snippets
 
@@ -117,6 +124,12 @@ if [ -z "$JAVA_HOME" ]
 then
         echo "Please set JAVA_HOME first. It should be a GraalVM with native-image available."
         exit 1
+fi
+
+if [ -z "$RESOURCES_DIR" ]
+then
+	echo "Please set RESOURCES_DIR first."
+	exit 1
 fi
 
 # Build graalvisor lib.

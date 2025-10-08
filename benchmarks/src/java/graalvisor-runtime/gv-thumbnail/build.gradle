@@ -17,6 +17,7 @@ shadowJar() {
 
 dependencies {
     implementation("org.openpnp:opencv:4.9.0-0")
+    implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0-rc2'
 }
 
 jar {

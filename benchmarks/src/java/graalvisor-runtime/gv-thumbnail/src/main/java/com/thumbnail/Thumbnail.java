@@ -19,6 +19,14 @@ import nu.pattern.OpenCV;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.graalvm.word.UnsignedWord;
+import org.graalvm.nativeimage.c.function.CEntryPoint;
+import org.graalvm.nativeimage.IsolateThread;
+import org.graalvm.nativeimage.c.type.CCharPointer;
+import org.graalvm.nativeimage.c.type.CTypeConversion;
+
+import com.fasterxml.jackson.jr.ob.JSON;
+
 public class Thumbnail {
     
     public static String IMG_FILENAME = String.format("img-%d.png", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
@@ -77,5 +85,29 @@ public class Thumbnail {
         output.put("tmpDir", "/tmp/sandbox-0");
         output = main(output);
         System.out.println(output);
+    }
+
+    public static Map<String, Object> jsonToMap(String jsonString) {
+        try {
+            if (jsonString != null && !jsonString.isEmpty()) {
+                return JSON.std.mapFrom(jsonString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+        }
+        return new HashMap<>();
+    }
+
+    /* For c-API invocations. */
+    @CEntryPoint(name = "entrypoint")
+    public static void main(IsolateThread thread, CCharPointer fin, CCharPointer fout, UnsignedWord foutLen) {
+        String input = CTypeConversion.toJavaString(fin);
+        Map<String, Object> map = jsonToMap(input);
+        String output = main(map).toString();
+
+        int len = Math.min((int) foutLen.rawValue() - 1, output.length());
+        if (len > 0) {
+            CTypeConversion.toCString(output.substring(0, len), fout, foutLen);
+        }
     }
 }

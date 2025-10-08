@@ -37,39 +37,44 @@ function build_native_binary {
 }
 
 function build_ni {
-	rm -f /tmp/apps/lib${FUNCTION_ID}.so &> /dev/null
-	cd build
+	cd build/${FUNCTION_ID}
 
 	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 		--no-fallback \
 		--enable-url-protocols=http \
-		-cp libs/dna-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
+		-cp ../libs/dna-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 		--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
-		-H:ConfigurationFileDirectories=../ni-agent-config \
+		-H:ConfigurationFileDirectories=../../ni-agent-config \
 		-H:+ReportExceptionStackTraces \
 		$NI_BIN_OPTS \
 		-H:Name=lib$FUNCTION_ID
 
-	cp lib${FUNCTION_ID}.so $RESOURCES_DIR/apps/.
+	rm -rf /tmp/apps/${FUNCTION_ID} &> /dev/null
+	zipfile=lib${FUNCTION_ID}.zip
+	zip --junk-paths $zipfile *.so *.h
+	cp $zipfile $RESOURCES_DIR/apps/.
+
 	cd -
 }
 
 function build_faastion_image {
+	FUNCTION_ID="$BENCHMARK_NAME"-plugin
+	mkdir -p build/${FUNCTION_ID}
+	
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/output"
-	FUNCTION_ID="$BENCHMARK_NAME"
-	
 	build_ni
 }
 
 function build_vanila_image {
+	FUNCTION_ID="$BENCHMARK_NAME"
+	mkdir -p build/${FUNCTION_ID}
+
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
-
 	build_ni
 }
 
