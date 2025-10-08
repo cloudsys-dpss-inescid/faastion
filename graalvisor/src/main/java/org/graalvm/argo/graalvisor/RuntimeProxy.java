@@ -317,8 +317,6 @@ public abstract class RuntimeProxy {
         public PolyglotFunction registerFunction(String functionName, Map<String, String> params) {
             // URL of the function code.
             String functionURL = params.get("url");
-            // Path in the local cache (appDir) where we will check if the file exists.
-            String functionPath = appDir + "/" + functionURL.substring(functionURL.lastIndexOf('/') + 1);
             // Function entrypoint (used in hotspot mode).
             String functionEntryPoint = params.get("entryPoint");
             // Function language.
@@ -331,32 +329,29 @@ public abstract class RuntimeProxy {
             final boolean isExecutable = Boolean.parseBoolean(params.get("isBinary"));
 
             try {
+                File functionDir;
+                // Path in the local cache (appDir) where we will check if the file exists.
+                String functionPath = appDir + "/" + functionName + "/"
+                        + functionURL.substring(functionURL.lastIndexOf('/') + 1);
+                // Note: this is a convention shared between the function registry and graalvisor.
+                String soFile = functionPath.replace(".zip", ".so");
                 // Download file if not on the local cache already.
-                if (new File(functionPath).length() == 0) {
+                if ((functionDir = new File(appDir + "/" + functionName)).length() == 0) {
                     System.out.println(String.format("Downloading %s", functionURL));
+                    functionDir.mkdirs();
                     HttpUtils.downloadFile(functionURL, functionPath);
-                    // Note: we rely on file extensions here.
-                    if (functionPath.endsWith(".zip")) {
-                        ZipUtils.unzip(functionPath, appDir);
-                        // Note: this is a convention shared between the function registry and graalvisor.
-                        functionPath = functionPath.replace(".zip", ".so");
-                    }
                 } else {
-                    if (functionPath.endsWith(".zip")) {
-                        // Note: this is a convention shared between the function registry and graalvisor.
-                        functionPath = functionPath.replace(".zip", ".so");
+                    System.out.println(String.format("Reusing %s", soFile));
+                }
 
-                        // If .so with the same name is not present already, then unzip.
-                        if (new File(functionPath).length() == 0) {
-                            ZipUtils.unzip(functionPath.replace(".so", ".zip"), appDir);
-                        }
-                    }
-                    System.out.println(String.format("Reusing %s", functionPath));
+                // Note: we rely on file extensions here.
+                if (functionPath.endsWith(".zip") && new File(soFile).length() == 0) {
+                    ZipUtils.unzip(functionPath, appDir + "/" + functionName);
                 }
 
                 // Register depending on the current vm type.
                 return System.getProperty("java.vm.name").equals("Substrate VM") ?
-                    handleSvmRegistration(functionName, functionPath, functionEntryPoint, functionLanguage, sandboxName, svmID, functionURL, isExecutable) :
+                    handleSvmRegistration(functionName, soFile, functionEntryPoint, functionLanguage, sandboxName, svmID, functionURL, isExecutable) :
                     handleHotSpotRegistration(functionName, functionPath, functionEntryPoint);
             } catch (IOException e) {
                 e.printStackTrace(System.err);
@@ -407,8 +402,8 @@ public abstract class RuntimeProxy {
             } else if (sprovider instanceof SnapshotSandboxProvider) {
                 ((SnapshotSandboxProvider) sprovider).setSVMID(svmID);
             } else if (sprovider.supportsLPI()) {
-                handleLpiRegistration(functionName, soFileName,
-                    functionEntryPoint, functionLanguage, functionURL, isExecutable);
+                // handleLpiRegistration(functionName, soFileName,
+                //     functionEntryPoint, functionLanguage, functionURL, isExecutable);
             }
 
             function.setSandboxProvider(sprovider);
