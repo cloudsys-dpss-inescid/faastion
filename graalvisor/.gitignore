@@ -15,6 +15,9 @@
 # Ignore Gradle build output directory
 build/
 
+# Ignore shared libs (including benchmarks libs)
+shared/
+
 *.i
 ffmpeg
 domain_usage.txt

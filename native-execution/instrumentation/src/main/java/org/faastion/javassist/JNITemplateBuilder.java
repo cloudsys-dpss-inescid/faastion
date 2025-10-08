@@ -166,7 +166,7 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		loaderLib = System.getenv("ARGO_HOME")
 				.concat("/graalvisor/build/libs/libloader.so");
 		wrapperLib = System.getenv("ARGO_HOME")
-				.concat("/graalvisor/build/libs/lib")
+				.concat("/graalvisor/shared/lib")
 				.concat(System.getenv("BENCHMARK_NAME"))
 				.concat("-wrapper.so");
 

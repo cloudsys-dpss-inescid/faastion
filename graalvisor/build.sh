@@ -54,8 +54,9 @@ function build_pku_isolation {
         echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
         exit 1
     fi
-    LINKER_OPTIONS="$LINKER_OPTIONS -H:NativeLinkerOption=$LIB_DIR/libpkru.so"
-    LIBC_OPTIONS="-H:CLibraryPath=$LIBC_HOME/lib -H:LinkerRPath=$LIBC_HOME/lib -H:NativeLinkerOption=-Wl,--dynamic-linker=$LIBC_HOME/lib/ld-linux-x86-64.so.2"
+    PKRU_DIR=$ARGO_HOME/graalvisor/shared
+    LINKER_OPTIONS="$LINKER_OPTIONS -H:NativeLinkerOption=$PKRU_DIR/libpkru.so"
+    LIBC_OPTIONS="-H:CLibraryPath=$LIBC_HOME/lib,$PKRU_DIR -H:LinkerRPath=$LIBC_HOME/lib -H:NativeLinkerOption=-Wl,--dynamic-linker=$LIBC_HOME/lib/ld-linux-x86-64.so.2"
     make -C $C_DIR pku_sandbox
 }
 
