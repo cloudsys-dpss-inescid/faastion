@@ -314,6 +314,27 @@ public abstract class RuntimeProxy {
             }
         }
 
+        private String downloadAndExtract(String functionURL, String functionPath, String dirName) throws IOException {     
+            // Note: this is a convention shared between the function registry and graalvisor.
+            String soFile = functionPath.replace(".zip", ".so");
+
+            // Download file if not on the local cache already.
+            if ((new File(dirName)).length() == 0) {
+                System.out.println(String.format("Downloading %s", functionURL));
+                new File(dirName).mkdirs();
+                HttpUtils.downloadFile(functionURL, functionPath);
+            } else {
+                System.out.println(String.format("Reusing %s", soFile));
+            }
+
+            // Note: we rely on file extensions here.
+            if (functionPath.endsWith(".zip") && new File(soFile).length() == 0) {
+                ZipUtils.unzip(functionPath, dirName);
+            }
+
+            return soFile;
+        }
+
         public PolyglotFunction registerFunction(String functionName, Map<String, String> params) {
             // URL of the function code.
             String functionURL = params.get("url");
@@ -327,28 +348,14 @@ public abstract class RuntimeProxy {
             int svmID = Integer.parseInt(params.getOrDefault("svmid", "0"));
             // Checks if the function code is an executable or a library (used in svm mode).
             final boolean isExecutable = Boolean.parseBoolean(params.get("isBinary"));
+            // Dedicated directory to cache the function code
+            String fileName = functionURL.substring(functionURL.lastIndexOf('/') + 1);
+            String dirName = appDir + "/" + fileName.substring(0, fileName.lastIndexOf('.'));
+            // Path in the local cache (appDir) where we will check if the file exists.
+            String functionPath = dirName + "/" + functionURL.substring(functionURL.lastIndexOf('/') + 1);
 
             try {
-                File functionDir;
-                // Path in the local cache (appDir) where we will check if the file exists.
-                String functionPath = appDir + "/" + functionName + "/"
-                        + functionURL.substring(functionURL.lastIndexOf('/') + 1);
-                // Note: this is a convention shared between the function registry and graalvisor.
-                String soFile = functionPath.replace(".zip", ".so");
-                // Download file if not on the local cache already.
-                if ((functionDir = new File(appDir + "/" + functionName)).length() == 0) {
-                    System.out.println(String.format("Downloading %s", functionURL));
-                    functionDir.mkdirs();
-                    HttpUtils.downloadFile(functionURL, functionPath);
-                } else {
-                    System.out.println(String.format("Reusing %s", soFile));
-                }
-
-                // Note: we rely on file extensions here.
-                if (functionPath.endsWith(".zip") && new File(soFile).length() == 0) {
-                    ZipUtils.unzip(functionPath, appDir + "/" + functionName);
-                }
-
+                String soFile = downloadAndExtract(functionURL, functionPath, dirName);
                 // Register depending on the current vm type.
                 return System.getProperty("java.vm.name").equals("Substrate VM") ?
                     handleSvmRegistration(functionName, soFile, functionEntryPoint, functionLanguage, sandboxName, svmID, functionURL, isExecutable) :
