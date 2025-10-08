@@ -22,7 +22,7 @@ function build_native_binary {
 	NI_BIN_OPTS="com.jni.BFS"
 	cd build
 
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/shared:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			-cp $CLASS_PATH:libs/bfs-1.0-all.jar \
@@ -36,28 +36,32 @@ function build_native_binary {
 }
 
 function build_ni {
-	rm -f /tmp/apps/lib${FUNCTION_ID}.so &> /dev/null
-	cd build
+	cd build/${FUNCTION_ID}
 
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/shared:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
-			-cp $CLASS_PATH:libs/bfs-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
+			-cp $CLASS_PATH:../libs/bfs-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
 			-DGraalVisorGuest=true \
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
 			--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
-			-H:ConfigurationFileDirectories=../ni-agent-config \
+			-H:ConfigurationFileDirectories=../../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
 			-H:Name=lib$FUNCTION_ID
 
-	cp lib${FUNCTION_ID}.so $RESOURCES_DIR/apps/.
+	rm -rf /tmp/apps/${FUNCTION_ID} &> /dev/null
+	zipfile=lib${FUNCTION_ID}.zip
+	zip --junk-paths $zipfile *.so *.h
+	cp $zipfile $RESOURCES_DIR/apps/.
+
 	cd -
 }
 
 function build_faastion_image {
-	FUNCTION_ID="$BENCHMARK_NAME"
+	FUNCTION_ID="$BENCHMARK_NAME"-plugin
+	mkdir -p build/${FUNCTION_ID}
 	manipulate_bytecode
 	build_snippets
 
@@ -67,10 +71,11 @@ function build_faastion_image {
 }
 
 function build_vanila_image {
+	FUNCTION_ID="$BENCHMARK_NAME"
+	mkdir -p build/${FUNCTION_ID}
+
 	NI_BIN_OPTS="--shared"
 	CLASS_PATH="$DIR/java/main"
-	FUNCTION_ID="$BENCHMARK_NAME"_vanilla
-
 	build_ni
 }
 
@@ -79,7 +84,7 @@ function build_java_agent {
 }
 
 function build_native_library {
-	gcc $CFLAGS -Wl,--no-undefined -I"${IGRAPH_HOME}/include/igraph" -L"${IGRAPH_HOME}/lib" -o $GRAALVISOR_HOME/build/libs/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/BFS.c -ligraph -lm -fopenmp -lstdc++	
+	gcc $CFLAGS -Wl,--no-undefined -I"${IGRAPH_HOME}/include/igraph" -L"${IGRAPH_HOME}/lib" -o $GRAALVISOR_HOME/shared/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/BFS.c -ligraph -lm -fopenmp -lstdc++	
 }
 
 function build_snippets {
@@ -90,7 +95,7 @@ function manipulate_bytecode {
 	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
 	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
 
-	rm -f $GRAALVISOR_HOME/build/libs/lib${FUNCTION_ID}-wrapper.so
+	rm -f $GRAALVISOR_HOME/shared/lib${FUNCTION_ID}-wrapper.so
 
 	mkdir -p $DIR/build/snippets
 
@@ -147,7 +152,7 @@ cd $DIR &> /dev/null
 # Build application.
 ./gradlew clean shadowJar assemble
 
-build_native_binary # for LPI
+# build_native_binary # for LPI
 
 build_native_library # compile jni code
 

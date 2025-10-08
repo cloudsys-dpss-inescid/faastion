@@ -380,7 +380,7 @@ public abstract class RuntimeProxy {
         }
 
         private void
-        handleLpiRegistration(String functionName, String soFileName, String functionEntryPoint,
+        handleLpiRegistration(String functionName, String functionEntryPoint,
             String functionLanguage, String functionURL, boolean isExecutable) throws IOException
         {
             String lpiFunctionName = functionName.replaceAll("[\\d.]", "") + "-proc";
@@ -388,14 +388,15 @@ public abstract class RuntimeProxy {
                 return;
             }
 
-            String lpiUrl = functionURL.substring(0, functionURL.length() - 3) + "_vanilla.so";
-            String lpiFileName = soFileName.substring(0, soFileName.length() - 3) + "_vanilla.so";
-            if (new File(lpiFileName).length() == 0) {
-                HttpUtils.downloadFile(lpiUrl, lpiFileName);
-            }
+            String lpiUrl = functionURL.replace("-plugin", "");
+            String fileName = lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
+            String dirName = appDir + "/" + fileName.substring(0, fileName.lastIndexOf('.'));
+            String functionPath = dirName + "/" + lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
+
+            String soFileName = downloadAndExtract(lpiUrl, functionPath, dirName);
 
             PolyglotFunction lpiFunction = new NativeFunction(lpiFunctionName,
-                functionEntryPoint, functionLanguage, lpiFileName, isExecutable);
+                functionEntryPoint, functionLanguage, soFileName, isExecutable);
             ProcessSandboxProvider psp = new ProcessSandboxProvider(lpiFunction);
             lpiFunction.setSandboxProvider(psp);
             psp.loadProvider();
@@ -409,8 +410,7 @@ public abstract class RuntimeProxy {
             } else if (sprovider instanceof SnapshotSandboxProvider) {
                 ((SnapshotSandboxProvider) sprovider).setSVMID(svmID);
             } else if (sprovider.supportsLPI()) {
-                // handleLpiRegistration(functionName, soFileName,
-                //     functionEntryPoint, functionLanguage, functionURL, isExecutable);
+                handleLpiRegistration(functionName, functionEntryPoint, functionLanguage, functionURL, isExecutable);
             }
 
             function.setSandboxProvider(sprovider);
