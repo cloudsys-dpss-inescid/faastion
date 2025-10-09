@@ -48,6 +48,7 @@ ENV ARGO_HOME=/faastion
 ENV DEF_JAVA_HOME=/graalvm-jdk-17.0.7+8.1/
 ENV JAVA_HOME=/graalvm-jdk-17.0.7+8.1/
 ENV LIBC_HOME=/glibc-2.35/build/install/
+ENV JAVASSIST_HOME=/faastion/native-execution/javassist/
 
 # Required by polyglot-proxy
 RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so.1.2.11 /usr/lib/x86_64-linux-gnu/libz.so
@@ -55,5 +56,8 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so.1.2.11 /usr/lib/x86_64-linux-gnu/lib
 RUN unzip faastion.zip && \
     cd faastion/graalvisor && \
     ./build.sh local
+
+RUN cd faastion/native-execution/instrumentation && \
+    ./build.sh
 
 ENTRYPOINT ["/graalvisor/start.sh"]
