@@ -84,7 +84,7 @@ function build_java_agent {
 }
 
 function build_native_library {
-	gcc $CFLAGS -Wl,--no-undefined -I"${IGRAPH_HOME}/include/igraph" -L"${IGRAPH_HOME}/lib" -o $GRAALVISOR_HOME/shared/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/BFS.c -ligraph -lm -fopenmp -lstdc++	
+	gcc $CFLAGS -Wl,--no-undefined -I"${IGRAPH_HEADERS}" -L"${IGRAPH_LIBS}" -o $GRAALVISOR_HOME/shared/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/BFS.c -ligraph -lm -fopenmp -lstdc++	
 }
 
 function build_snippets {
@@ -128,9 +128,14 @@ then
 	exit 1
 fi
 
-if [ -z "$IGRAPH_HOME" ]
-then
-	echo "Please set IGRAPH_HOME first."
+if [ "$IGRAPH_HOME" ]; then
+	IGRAPH_HEADERS=${IGRAPH_HOME}/include/igraph
+	IGRAPH_LIBS=${IGRAPH_HOME}/lib
+elif [ -z "$IGRAPH_HEADERS" ]; then
+	echo "Could not find igraph headers. Please set IGRAPH_HOME first."
+	exit 1
+elif [ -z "$IGRAPH_LIBS" ]; then
+	echo "Could not find igraph lib. Please set IGRAPH_HOME first."
 	exit 1
 fi
 
