@@ -31,21 +31,31 @@ void destroy_semaphore(futex_semaphore *sem) {
     munmap(sem, sizeof(futex_semaphore));
 }
 
+// TODO: create spin-locks
 void acquire(futex_semaphore *sem) {
-    do {
-        int semaphore_value = atomic_load(&sem->value);
-        if (semaphore_value == 0) {
-            continue;
-        }
+    int semaphore_value = 0;
+    for (;;) {
+        while ((semaphore_value = atomic_load(&sem->value)) == 0) ;
         if (atomic_compare_exchange_strong(&sem->value, &semaphore_value, semaphore_value-1)) {
             return;
         }
-    } while (futex(&sem->value, FUTEX_WAIT, 0, NULL, NULL, 0) == 0 || errno == EAGAIN);
+    }
+
+    // do {
+    //     int semaphore_value = atomic_load(&sem->value);
+    //     if (semaphore_value == 0) {
+    //         continue;
+    //     }
+    //     if (atomic_compare_exchange_strong(&sem->value, &semaphore_value, semaphore_value-1)) {
+    //         return;
+    //     }
+    // } while (futex(&sem->value, FUTEX_WAIT, 0, NULL, NULL, 0) == 0 || errno == EAGAIN);
 }
 
+// TODO: create spin-locks
 static inline void futex_release(futex_semaphore *sem, int waiters) {
     atomic_fetch_add(&sem->value, 1);
-    futex(&sem->value, FUTEX_WAKE, waiters, NULL, NULL, 0);
+    // futex(&sem->value, FUTEX_WAKE, waiters, NULL, NULL, 0);
 }
 
 void release(futex_semaphore *sem) {
