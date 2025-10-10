@@ -6,6 +6,9 @@ GRAALVISOR_HOME=$ARGO_HOME/graalvisor
 LIB_DIR=$GRAALVISOR_HOME/shared/
 GRAALVISOR_BINARY=$GRAALVISOR_HOME/build/native-image/polyglot-proxy
 
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
 if [ -z "$ARGO_HOME" ]; then
     echo "Please set ARGO_HOME first."
     exit 1
@@ -45,6 +48,12 @@ mv $ARGO_HOME/faastion.zip $DISK/.
 
 # Build docker.
 docker build -t faastion $DIR
+
+echo -e "${GREEN}Copying library to host...${NC}"
+docker run -d --rm --network host --name sbox -it --entrypoint sleep faastion infinity &> /dev/null
+docker cp sbox:/faastion/graalvisor/shared/ $DIR/../../graalvisor/
+docker container stop sbox &> /dev/null
+echo -e "${GREEN}Copying library to host... done!${NC}"
 
 # Remove directory used to create the image.
 rm -rf $DISK &> /dev/null

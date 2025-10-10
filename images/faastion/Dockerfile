@@ -6,7 +6,7 @@ RUN apt update && \
     apt install libgomp1 libxml2-dev \
     patchelf gcc wget make gawk python3.11 \
     bison patch cmake build-essential \
-    maven unzip -y
+    maven zip unzip -y
 
 RUN ln -s /usr/bin/python3.11 /usr/bin/python3
 
@@ -50,6 +50,7 @@ ENV JAVA_HOME=/graalvm-jdk-17.0.7+8.1/
 ENV LIBC_HOME=/glibc-2.35/build/install/
 ENV JAVASSIST_HOME=/faastion/native-execution/javassist/
 ENV IGRAPH_HOME=/usr/local
+ENV RESOURCES_DIR=/resources
 
 # Required by polyglot-proxy
 RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so.1.2.11 /usr/lib/x86_64-linux-gnu/libz.so
