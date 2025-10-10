@@ -130,6 +130,8 @@ if [ -z "$RESOURCES_DIR" ]
 then
 	echo "Please set RESOURCES_DIR first."
 	exit 1
+else
+	mkdir -p $RESOURCES_DIR/apps
 fi
 
 # Build graalvisor lib.
