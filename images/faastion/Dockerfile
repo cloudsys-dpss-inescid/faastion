@@ -56,10 +56,11 @@ ENV RESOURCES_DIR=/resources
 RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so.1.2.11 /usr/lib/x86_64-linux-gnu/libz.so
 
 RUN unzip faastion.zip && \
+    rm faastion.zip && \
     cd faastion/graalvisor && \
     ./build.sh local
 
 RUN cd faastion/native-execution/instrumentation && \
     ./build.sh
 
-ENTRYPOINT ["/graalvisor/start.sh"]
+ENTRYPOINT ["/start.sh"]

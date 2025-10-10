@@ -5,6 +5,7 @@
 **/build/
 **/test
 .vscode
+*.zip
 
 /resources/
 env.*
