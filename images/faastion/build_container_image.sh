@@ -22,12 +22,13 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 if [ "$1" = "--enable-lpi" ]; then
     export pku_isolation=on
     export LPI=true
+    ld_preload="LD_PRELOAD=libmem.so"
 elif [ "$1" = "--enable-early-booking" ]; then
     export faastlane=true
 fi
 
 library_path=/faastion/graalvisor/shared:/glibc-2.35/build/install/lib:/lib/x86_64-linux-gnu:/usr/local/lib
-env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" LD_PRELOAD=libmem.so ./faastion/graalvisor/build/native-image/polyglot-proxy
+env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" $ld_preload ./faastion/graalvisor/build/native-image/polyglot-proxy
 ' > $DISK/start.sh
 
 # Create faastion zip file

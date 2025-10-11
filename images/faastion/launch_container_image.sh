@@ -2,7 +2,7 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-if [ -z "ARGO_HOME" ]; then
+if [ -z "$ARGO_HOME" ]; then
 	echo "Please set ARGO_HOME first."
 	exit 1
 fi
