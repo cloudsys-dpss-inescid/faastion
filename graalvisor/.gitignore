@@ -24,3 +24,4 @@ domain_usage.txt
 log_resources.sh
 debug*
 run.sh
+run_hydra.sh
