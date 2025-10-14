@@ -205,6 +205,7 @@ void* realloc(void* ptr, size_t size) {
 
 size_t malloc_usable_size(const void* mem) {
     switch_privileged;
+    debug_dump("malloc_usable_size\n");
     size_t ret = mspace_usable_size(mem);
     switch_unprivileged;
     return ret;
@@ -213,6 +214,7 @@ size_t malloc_usable_size(const void* mem) {
 struct mallinfo mallinfo() {
     switch_privileged;
     int tid = get_current_tid();
+    debug_dump("[%d] mallinfo\n", tid);
     struct mallinfo ret = mspace_mallinfo(find_mspace(tid));
     switch_unprivileged;
     return ret;
@@ -220,6 +222,7 @@ struct mallinfo mallinfo() {
 
 int mallopt(int param_number, int value) {
     switch_privileged;
+    debug_dump("mallopt\n");
     int ret = mspace_mallopt(param_number, value);
     switch_unprivileged;
     return ret;
@@ -228,6 +231,7 @@ int mallopt(int param_number, int value) {
 void* memalign(size_t alignment, size_t bytes) {
     switch_privileged;
     int tid = get_current_tid();
+    debug_dump("[%d] memalign\n", tid);
     void *ret = mspace_memalign(find_mspace(tid), alignment, bytes);
     switch_unprivileged;
     return ret;
@@ -237,6 +241,7 @@ int posix_memalign(void **memptr, size_t alignment, size_t size) {
     switch_privileged;
     int ret = ENOMEM;
     int tid = get_current_tid();
+    debug_dump("[%d] posix_memalign\n", tid);
     void *mem = mspace_memalign(find_mspace(tid), alignment, size);
     if (mem) {
         *memptr = mem;        
@@ -249,6 +254,7 @@ int posix_memalign(void **memptr, size_t alignment, size_t size) {
 void* valloc(size_t size) {
     switch_privileged;
     int tid = get_current_tid();
+    debug_dump("[%d] valloc\n", tid);
     void *ret = mspace_memalign(find_mspace(tid), getpagesize(), size);
     switch_unprivileged;
     return ret;
@@ -258,6 +264,7 @@ void* pvalloc(size_t size) {
     switch_privileged;
     int tid = get_current_tid();
     int pagesize = getpagesize();
+    debug_dump("[%d] pvalloc\n", tid);
     void *ret = mspace_memalign(find_mspace(tid), pagesize, (size + pagesize - (size_t)1) & ~(pagesize - (size_t)1));
     switch_unprivileged;
     return ret;
@@ -266,6 +273,7 @@ void* pvalloc(size_t size) {
 void malloc_stats() {
     switch_privileged;
     int tid = get_current_tid();
+    debug_dump("[%d] malloc_stats\n", tid);
     mspace_malloc_stats(find_mspace(tid));
     switch_unprivileged;
 }
@@ -273,6 +281,7 @@ void malloc_stats() {
 int malloc_trim(size_t pad) {
     switch_privileged;
     int tid = get_current_tid();
+    debug_dump("[%d] malloc_trim\n", tid);
     int ret = mspace_trim(find_mspace(tid), pad);
     switch_unprivileged;
     return ret;
