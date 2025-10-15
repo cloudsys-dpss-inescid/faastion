@@ -6,7 +6,7 @@ RUN apt update && \
     apt install libgomp1 libxml2-dev \
     patchelf gcc wget make gawk python3.11 \
     bison patch cmake build-essential \
-    maven zip unzip -y
+    maven zip unzip zlib1g-dev -y
 
 RUN ln -s /usr/bin/python3.11 /usr/bin/python3
 
