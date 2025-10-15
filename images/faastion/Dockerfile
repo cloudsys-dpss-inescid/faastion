@@ -52,9 +52,6 @@ ENV JAVASSIST_HOME=/faastion/native-execution/javassist/
 ENV IGRAPH_HOME=/usr/local
 ENV RESOURCES_DIR=/resources
 
-# Required by polyglot-proxy
-RUN ln -s /usr/lib/x86_64-linux-gnu/libz.so.1.2.11 /usr/lib/x86_64-linux-gnu/libz.so
-
 RUN unzip faastion.zip && \
     rm faastion.zip && \
     cd faastion/graalvisor && \
