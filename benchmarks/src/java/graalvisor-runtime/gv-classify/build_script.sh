@@ -66,8 +66,9 @@ function build_ni {
 		$NI_BIN_OPTS \
 		-H:Name=lib$FUNCTION_ID
 
-	rm -rf /tmp/apps/${FUNCTION_ID} &> /dev/null
+	rm -rf /tmp/apps/lib${FUNCTION_ID} &> /dev/null
 	zipfile=lib${FUNCTION_ID}.zip
+	rm -f $RESOURCES_DIR/apps/$zipfile
 	zip --junk-paths $zipfile *.so *.h
 	cp $zipfile $RESOURCES_DIR/apps/.
 
