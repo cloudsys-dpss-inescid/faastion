@@ -108,3 +108,9 @@ function benchmark_hydra_si {
     local pid=$!
     wait $pid
 }
+
+function tput_hydra_si {
+    local benchmark=$1 log_dir=$2 c=$3
+    tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {if (NR == '$c') print sum}')
+    echo $tput
+}

@@ -57,3 +57,9 @@ function benchmark_hydra {
     response=$(curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary '{"name":"'$name'","async":"false","arguments":"{}"}')
     echo $response >> $ab_log
 }
+
+function tput_hydra {
+    local benchmark=$1 log_dir=$2 c=$3
+    tput=$(cat $log_dir/$c-ab.log | grep 'Requests per second:' | awk '{print $4}')
+    echo $tput
+}

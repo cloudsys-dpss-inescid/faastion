@@ -75,6 +75,17 @@ function benchmark_faastion {
     echo $response >> $ab_log
 }
 
+function tput_faastion {
+    local benchmark=$1 log_dir=$2 c=$3
+
+    if [ "$benchmark" = "gv_classify" ]; then
+	tput=$(faastion_tput_classify $log_dir $c)
+    else
+	tput=$(cat $log_dir/$c-ab.log | grep 'Requests per second:' | awk '{print $4}')
+    fi
+    echo $tput
+}
+
 ##############################################################################
 ###         Temporary workaround to handle classify in faastion            ###
 ##############################################################################
@@ -154,4 +165,10 @@ function faastion_register_classify {
 "&url=http://$WEBSERVER_IP:8000/apps/lib${name}-plugin.zip" &> /dev/null
     done
 
+}
+
+function faastion_tput_classify {
+    local log_dir=$1 c=$2
+    tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {if (NR == '$c') print sum}')
+    echo $tput
 }

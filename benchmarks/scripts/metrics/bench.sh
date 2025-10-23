@@ -7,18 +7,12 @@ EXPERIMENT_HOME="$DIR/experiments/$(date +%Y%m%d_%H%M%S)"
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-# Set LIMIT_RESOURCES=true to change cpu and memory limits inside the containers 
+# Set LIMIT_RESOURCES=true to change cpu and memory limits inside the containers
 LIMIT_RESOURCES=false
 
 source $DIR/hydra_bench.sh
 source $DIR/hydra_si_bench.sh
 source $DIR/faastion_bench.sh
-
-function print_tput {
-    local log_dir=$1 c=$2
-    tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {print sum}')
-    echo "Throughput is ~$tput req/s"
-}
 
 function log_resources {
     local log_dir=$1
@@ -36,7 +30,7 @@ function log_resources {
         echo $used_mem >> $mem_file
         echo $cpu_util >> $cpu_file
         sleep .100
-    done    
+    done
 }
 
 function stop_containers {
@@ -60,7 +54,7 @@ function run_attempt {
         stop_containers
         sleep 2
 
-        tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {print sum}')
+	tput=$(tput_$approach $benchmark $log_dir $c)
         if [ "$tput" ]; then
             echo "Throughput is ~$tput req/s"
             return
@@ -122,7 +116,7 @@ APPROACHES+=(hydra)
 APPROACHES+=(hydra_si)
 
 # Change to desired concurrency level
-CONCURRENCY=(1 8 14 20)
+CONCURRENCY=(1 8 14 20 32 48 64)
 
 for benchmark in ${BENCHMARKS[@]}
 do
