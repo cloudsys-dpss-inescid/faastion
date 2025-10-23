@@ -66,10 +66,10 @@
         "kn_image": "knative-jv/kn-compression",
         "warmup_time": "15s",
         "benchmark_time": "15s",
-        "warmup_req": "10",
-        "req": "100",
+        "warmup_req": "100",
+        "req": "1000",
         "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
-        "active_wait": "3600",
+        "active_wait": "360",
         "cpus": "0.5",
         "memory": "512" 
     },
