@@ -90,7 +90,7 @@ public class DynamicHTML {
 
         boolean success;
         if ((success = downloadFile(url, filePath))) {
-            success = renderTemplate(filePath, "testname", SMALL_INPUT);
+            success = renderTemplate(filePath, "testname", LARGE_INPUT);
         }
         output.put("success", success);
 
