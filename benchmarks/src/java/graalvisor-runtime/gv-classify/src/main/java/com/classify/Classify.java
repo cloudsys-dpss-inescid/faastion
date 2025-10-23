@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 
 import org.graalvm.word.UnsignedWord;
 import org.graalvm.nativeimage.c.function.CEntryPoint;
@@ -30,6 +31,7 @@ public class Classify {
     private static final String image_url = "http://127.0.0.1:8000/eagle.jpg";
 
     private static InceptionImageClassifier classifier = null;
+    private static BufferedImage image = null;
     public static String IMG_FILENAME = String.format("img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
 
     public static byte[] fromInputStream(InputStream is) throws Exception {
@@ -88,7 +90,20 @@ public class Classify {
                 stream.write(downloadBytes(image_url));
             }
 
-			output.put("prediction", classifier.predict_image(ImageIO.read(new FileInputStream(tmpImgPath))));
+            // FIXME: ImageIO executes a method from libjavajpeg.so which fails to read image
+            //   headers after the library is loaded on a different (parallel) sandbox. 
+            //   This problem can be reproduced when co-locating multiple pku sandboxes
+            //   in the same process.
+            //
+            //        Current workaround caches the BufferedImage in `image` to avoid calling
+            //   the crashing method from libjavajpeg.so.
+            //
+            //        Source of the problem is likely related to the native image artifacts.
+            if (image == null) {
+                image = ImageIO.read(new FileInputStream(tmpImgPath));
+            }
+
+			output.put("prediction", classifier.predict_image(image));
         } catch (Throwable e) {
 			output.put("exception", e.getMessage());
 			e.printStackTrace();
