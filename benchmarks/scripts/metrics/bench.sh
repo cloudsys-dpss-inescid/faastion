@@ -25,7 +25,8 @@ function log_resources {
     local c=$2
     mem_file=$log_dir/$c-mem.log
     cpu_file=$log_dir/$c-cpu_util.log
-    
+
+    rm -f $mem_file $cpu_file
     while :
     do
         out=$(free -m --si)
@@ -44,6 +45,32 @@ function stop_containers {
     done
 }
 
+function run_attempt {
+    local benchmark=$1 approach=$2 log_dir=$3 c=$4
+
+    echo "Running $c parallel requests..."
+
+    for try in $(seq 1 5)
+    do
+        launch_$approach $benchmark $c
+        log_resources $log_dir $c &
+        pid=$!
+        benchmark_$approach $benchmark $log_dir $c
+        kill $pid
+        stop_containers
+        sleep 2
+
+        tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {print sum}')
+        if [ "$tput" ]; then
+            echo "Throughput is ~$tput req/s"
+            return
+        else
+            rm -f $log_dir/$c-ab*.log
+            echo "Retrying"
+        fi
+    done
+}
+
 function run {
     local benchmark=$1
     local approach=$2
@@ -54,14 +81,7 @@ function run {
 
     for c in ${CONCURRENCY[@]}
     do
-        launch_$approach $benchmark $c
-        log_resources $log_dir $c &
-        pid=$!
-        benchmark_$approach $benchmark $log_dir $c
-        kill $pid
-        stop_containers
-        sleep 2
-        print_tput $log_dir $c
+        run_attempt $benchmark $approach $log_dir $c
     done
 }
 

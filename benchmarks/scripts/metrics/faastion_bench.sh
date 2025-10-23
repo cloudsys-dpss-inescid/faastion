@@ -49,8 +49,6 @@ function benchmark_faastion {
     local log_dir=$2
     local c=$3
 
-    echo "Running $c parallel requests..."
-
     if [ "$benchmark" = "gv_classify" ]; then
         faastion_benchmark_classify $benchmark $log_dir $c
         return

@@ -90,8 +90,6 @@ function benchmark_hydra_si {
     local log_dir=$2
     local c=$3
 
-    echo "Running $c parallel requests..."
-
     req=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.req')
     warmup_req=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.warmup_req')
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')

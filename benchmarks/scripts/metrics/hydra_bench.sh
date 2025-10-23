@@ -39,8 +39,6 @@ function benchmark_hydra {
     local c=$3
     ab_log=$log_dir/$c-ab.log
 
-    echo "Running $c parallel requests..."
-
     n=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.req')
     req=$(echo "$n * $c" | bc)
     n=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.warmup_req')
