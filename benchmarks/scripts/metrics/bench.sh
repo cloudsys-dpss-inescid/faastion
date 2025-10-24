@@ -39,6 +39,11 @@ function stop_containers {
     done
 }
 
+# If the benchmark reaches a certain time limit, then stop all containers and retry
+function health_check {
+    sleep 300 && stop_containers
+}
+
 function run_attempt {
     local benchmark=$1 approach=$2 log_dir=$3 c=$4
 
@@ -46,21 +51,39 @@ function run_attempt {
 
     for try in $(seq 1 5)
     do
+	if [ $try -gt 1 ]; then
+            rm -f $log_dir/$c-ab*.log
+            echo "Retrying"
+	fi
+
+	# Get CPU utilization and memory footprint while idle
+	log_resources $log_dir $c &
+        log_pid=$!
+	sleep 2
+
+	# Launch and register functions
         launch_$approach $benchmark $c
-        log_resources $log_dir $c &
-        pid=$!
+
+	# Monitor for system hangs
+	health_check &
+	hc_pid=$!
+
+	# Run benchmark
         benchmark_$approach $benchmark $log_dir $c
-        kill $pid
+
+	# Teardown
+	kill $log_pid
+	sleep_pid=$(ps --ppid $hc_pid | awk 'NR==2{print $1}')
+	kill $hc_pid
+	(kill $sleep_pid &> /dev/null)
         stop_containers
         sleep 2
 
+	# Return if no problems were found
 	tput=$(tput_$approach $benchmark $log_dir $c)
         if [ "$tput" ]; then
             echo "Throughput is ~$tput req/s"
             return
-        else
-            rm -f $log_dir/$c-ab*.log
-            echo "Retrying"
         fi
     done
 }
