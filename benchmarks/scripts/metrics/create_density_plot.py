@@ -11,20 +11,18 @@ if len(sys.argv) < 2:
 
 EXPERIMENTS_DIR = sys.argv[1]
 
-REQUESTS = [1, 8, 14, 20] # order of request concurrency 
-BENCHMARKS = ["gv_bfs", "gv_compression", "gv_mst", "gv_pagerank", "gv_dna", "gv_dynamic_html", "gv_uploader", "gv_classify", "gv_thumbnail"]
-BASELINES = ["faastion_lpi", "faastlane", "isolate", "hydra-si"]
+REQUESTS = [1, 8, 14, 20, 32, 48, 64] # order of request concurrency
+BENCHMARKS = ["gv_bfs", "gv_compression", "gv_mst", "gv_pagerank", "gv_dna", "gv_dynamic_html", "gv_uploader"]
+BASELINES = ["faastion", "hydra", "hydra_si"]
 COLORS = {
-    "faastion_lpi":mcolors.TABLEAU_COLORS['tab:blue'],
-    "faastlane":mcolors.TABLEAU_COLORS['tab:green'],
-    "isolate":mcolors.TABLEAU_COLORS['tab:purple'],
-    "hydra-si":mcolors.TABLEAU_COLORS['tab:orange']
+    "faastion":mcolors.TABLEAU_COLORS['tab:blue'],
+    "hydra":mcolors.TABLEAU_COLORS['tab:green'],
+    "hydra_si":mcolors.TABLEAU_COLORS['tab:purple'],
 }
 MARKERS = {
-    "faastion_lpi":"o",
-    "faastlane":"^",
-    "isolate":"x",
-    "hydra-si":"D"
+    "faastion":"o",
+    "hydra":"^",
+    "hydra_si":"x",
 }
 
 benchmarks = {}
@@ -35,14 +33,14 @@ for benchmark in BENCHMARKS:
         continue
 
     benchmarks[benchmark] = {}
-    
+
     for baseline in BASELINES:
         baseline_path = os.path.join(benchmark_path, baseline)
         if not os.path.isdir(baseline_path):
             continue
 
-        latency_file = os.path.join(baseline_path, "latency", "tput.txt")
-        memory_file = os.path.join(baseline_path, "memory", "max_footprint.txt")
+        latency_file = os.path.join(baseline_path, "tput.txt")
+        memory_file = os.path.join(baseline_path, "mem.txt")
 
         if not (os.path.exists(latency_file) and os.path.exists(memory_file)):
             continue
