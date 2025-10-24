@@ -37,9 +37,9 @@ import com.fasterxml.jackson.jr.ob.JSON;
 
 public class Uploader {
 
-    private static final String url = "http://127.0.0.1:8000/snap.png";
+    private static final String url = "http://127.0.0.1:8000/large.jpg";
     private static final String upload_url = "http://127.0.0.1:9696/upload";
-    public static String IMG_FILENAME = String.format("img-%d.png", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
+    public static String IMG_FILENAME = String.format("img-%d.jpg", ThreadLocalRandom.current().nextInt(0, 1024 + 1));
 
     public static boolean downloadFile(String url, String filePath) {
         InputStream is = null;
@@ -79,8 +79,8 @@ public class Uploader {
                 .addBinaryBody(
                     "file",
                     file,
-                    ContentType.create("image/png"),
-                    fileName + ".png" // System.currentTimeMillis() + ".png"
+                    ContentType.create("image/jpeg"),
+                    fileName + ".jpg" // System.currentTimeMillis() + ".png"
                 )
                 .build();
         httppost.setEntity(entity);
