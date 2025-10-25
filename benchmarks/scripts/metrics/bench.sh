@@ -41,7 +41,7 @@ function stop_containers {
 
 # If the benchmark reaches a certain time limit, then stop all containers and retry
 function health_check {
-    sleep 300 && stop_containers
+    sleep 900 && stop_containers && try=$(($try + 2))
 }
 
 function run_attempt {
@@ -49,9 +49,9 @@ function run_attempt {
 
     echo "Running $c parallel requests..."
 
-    for try in $(seq 1 5)
+    for ((try = 0; try < 5; try++))
     do
-	if [ $try -gt 1 ]; then
+	if [ $try -gt 0 ]; then
             rm -f $log_dir/$c-ab*.log
             echo "Retrying"
 	fi
