@@ -1,13 +1,9 @@
 #!/usr/bin/python3
 
 import argparse
-import numpy as np
 import subprocess
-import time
 
-from multiprocessing import Manager, cpu_count
-from concurrent.futures import ProcessPoolExecutor
-
+num_transitions = 0
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -31,67 +27,54 @@ def parse_args():
 
     return args.command.strip(), args.times
 
+def parse_total_time(line):
+    return int(line.split(" ")[4])
 
-def native_execution_us(values):
-    my_array = np.array(list(values))
-    return np.sum(my_array) / 1000  # nanoseconds to microseconds
+def parse_native_time(line):
+    return int(line.split(" ")[2]) // 1000
 
+def get_percentages(total_times, native_code_times):
+    percentages = []
+    for idx in range(len(total_times)):
+        native_time_total = sum(native_code_times[idx])
+        percentages.append((native_time_total / total_times[idx]) * 100)
+    return percentages
 
-def build_table(line, table):
-    if "timer" not in line: return
+def run(command, times):
+    global num_transitions
 
-    splitted = line.split(" ")
-    number = int(splitted[2])
-    method = splitted[0]
-
-    if method in table:
-        table[method] += number
-    else:
-        table[method] = number
-
-
-def process_results(dump, total_time):
-    with Manager() as manager:
-        table = manager.dict()
-
-        with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
-            executor.map(build_table, dump, [table] * len(dump))
-
-        native_time = native_execution_us(table.values())
-    
-    return (native_time * 100) / total_time
-
-
-def run(command):
-    start_time = time.perf_counter()
-    byte_output = subprocess.check_output(command, shell=True)
-    end_time = time.perf_counter()
+    byte_output = subprocess.check_output(command + " " + str(times), shell=True)
 
     # Decode output and split into lines
-    output_lines = byte_output.decode().split("\n")
+    output_lines = byte_output.decode().strip().split("\n")
 
-    # Filter lines containing 'timer'
-    timer_lines = [line for line in output_lines if 'timer' in line]
+    idx = 0
+    total_times = []
+    native_code_times = [[] for i in range(times)]
+    # Filter lines containing 'timer' or 'Total execution time'
+    for line in output_lines:
+        if 'Total execution time' in line:
+            total_times.append(parse_total_time(line))
+            idx += 1
+        elif 'timer' in line:
+            native_code_times[idx].append(parse_native_time(line))
 
-    # Calculate elapsed time in microseconds
-    elapsed_time_microseconds = (end_time - start_time) * 1_000_000
+    num_transitions = len(native_code_times[1])
+    percentages = get_percentages(total_times, native_code_times)
 
-    return timer_lines, elapsed_time_microseconds
+    return total_times, percentages
 
 def main():
     command, times = parse_args()
 
-    results = [(run(command)) for _ in range(times)]
+    total_times, percentages = run(command, times)
 
-    native_percentages = [process_results(result[0], result[1]) for result in results]
-    total_times = [result[1] for result in results]
-
-    avg_total_time = np.sum(total_times) / times
-    avg_native_percentage = np.sum(native_percentages) / times
+    avg_total_time = sum(total_times[1:]) / (times - 1)
+    avg_native_percentage = sum(percentages[1:]) / (times - 1)
 
     print("Average percentage of native execution: {:.2f}".format(avg_native_percentage))
-    print(f"Total number of transitions per invocation: {len(results[0][0])}") # number of transitions is fixed
-    print("Average function invocation time: {:.3f}".format(avg_total_time/1000)) # time in ms
+    print(f"Total number of transitions per invocation: {num_transitions}")
+    print("Average function invocation time: {:.3f}".format(avg_total_time)) # time in us
 
 
 if __name__ == "__main__":

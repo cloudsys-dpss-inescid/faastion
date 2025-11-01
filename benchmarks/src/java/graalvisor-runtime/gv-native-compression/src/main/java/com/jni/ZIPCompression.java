@@ -79,8 +79,18 @@ public class ZIPCompression {
     }
 
     public static void main(String[] args) {
-    	HashMap<String, Object> output = new HashMap<>();
-    	output = main(output);
+    	HashMap<String, Object> output;
+        long tstart, tend;
+
+        int iter = args.length > 0 ? Integer.parseInt(args[0]) : 1;
+        for (int i = 0; i < iter; i++) {
+            output = new HashMap<>();
+            output.put("tmpDir", "/tmp/sandbox-0");
+            tstart = System.nanoTime();
+            output = main(output);
+            tend = System.nanoTime();
+            System.out.println("Total execution time (us): " + ((tend - tstart) / 1000));
+        }
     }
 
     public static Map<String, Object> jsonToMap(String jsonString) {

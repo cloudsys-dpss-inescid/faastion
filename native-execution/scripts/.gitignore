@@ -4,6 +4,7 @@
 *.png
 *.pdf
 output/
+results/*
 !results/*.dat
 results.old/
 memory.log

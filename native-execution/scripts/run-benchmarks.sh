@@ -41,16 +41,17 @@ function setup_native-pagerank {
     entrypoint=com.jni.PageRank
 }
 
-function setup_thumbnail {
-    export FUNCTION_ID=thumbnail
-    export BENCHMARK_NAME=thumbnail
-    class_path=$BENCHMARKS_DIR/gv-$benchmark/build/libs/thumbnail-1.0-all.jar
-    entrypoint=com.thumbnail.Thumbnail
-}
+# FIXME
+# function setup_thumbnail {
+#     export FUNCTION_ID=thumbnail
+#     export BENCHMARK_NAME=thumbnail
+#     class_path=$BENCHMARKS_DIR/gv-$benchmark/build/libs/thumbnail-1.0-all.jar
+#     entrypoint=com.thumbnail.Thumbnail
+# }
 
 rm -rf $DIR/results
 
-for benchmark in classify native-bfs native-compression native-mst native-pagerank thumbnail
+for benchmark in classify native-bfs native-compression native-mst native-pagerank
 do
     setup_$benchmark
 
@@ -61,7 +62,7 @@ do
 
     # Run the java code with the agent: dynamic analysis
     CMD="$DEF_JAVA_HOME/bin/java -cp ${class_path} -javaagent:${JAVA_AGENT}=${TOOL}::output ${entrypoint}"
-    ../../native-benchmark.py -t 4 -c "$CMD" &> native-benchmark.log
+    LD_LIBRARY_PATH=$ARGO_HOME/graalvisor/shared ../../native-benchmark.py -t 5 -c "$CMD" &> native-benchmark.log
 
     # Run the java code with the agent: static analysis
     export SNIPPETS_DIR=$DIR/results/tmp
