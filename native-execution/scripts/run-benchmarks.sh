@@ -41,17 +41,16 @@ function setup_native-pagerank {
     entrypoint=com.jni.PageRank
 }
 
-# FIXME
-# function setup_thumbnail {
-#     export FUNCTION_ID=thumbnail
-#     export BENCHMARK_NAME=thumbnail
-#     class_path=$BENCHMARKS_DIR/gv-$benchmark/build/libs/thumbnail-1.0-all.jar
-#     entrypoint=com.thumbnail.Thumbnail
-# }
+function setup_thumbnail {
+    export FUNCTION_ID=thumbnail
+    export BENCHMARK_NAME=thumbnail
+    class_path=$BENCHMARKS_DIR/gv-$benchmark/build/libs/thumbnail-1.0-all.jar
+    entrypoint=com.thumbnail.Thumbnail
+}
 
 rm -rf $DIR/results
 
-for benchmark in classify native-bfs native-compression native-mst native-pagerank
+for benchmark in thumbnail # classify native-bfs native-compression native-mst native-pagerank
 do
     setup_$benchmark
 
