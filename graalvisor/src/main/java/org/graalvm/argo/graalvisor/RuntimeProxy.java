@@ -379,27 +379,37 @@ public abstract class RuntimeProxy {
             }
         }
 
-        private void
-        handleLpiRegistration(String functionName, String functionEntryPoint,
-            String functionLanguage, String functionURL, boolean isExecutable) throws IOException
-        {
-            String lpiFunctionName = functionName.replaceAll("[\\d.]", "") + "-proc";
-            if (FTABLE.get(lpiFunctionName) != null) {
+        private void handleLpiRegistration(String functionName, Map<String, String> params) {
+            PolyglotFunction function = FTABLE.get(functionName);
+            if (!function.getSandboxProvider().supportsLPI()) {
                 return;
             }
 
-            String lpiUrl = functionURL.replace("-plugin", "");
-            String fileName = lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
-            String dirName = appDir + "/" + fileName.substring(0, fileName.lastIndexOf('.'));
-            String functionPath = dirName + "/" + lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
+            String lpiFunctionName = functionName.replaceAll("[\\d.]", "") + "-proc";
+            FTABLE.computeIfAbsent(lpiFunctionName, n -> {
+                try {
+                    String functionURL          = params.get("url");
+                    boolean isExecutable        = function.isExecutable();
+                    String functionEntryPoint   = function.getEntryPoint();
+                    String functionLanguage     = function.getLanguage().toString();
 
-            String soFileName = downloadAndExtract(lpiUrl, functionPath, dirName);
+                    String lpiUrl = functionURL.replace("-plugin", "");
+                    String fileName = lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
+                    String dirName = appDir + "/" + fileName.substring(0, fileName.lastIndexOf('.'));
+                    String functionPath = dirName + "/" + lpiUrl.substring(lpiUrl.lastIndexOf('/') + 1);
 
-            PolyglotFunction lpiFunction = new NativeFunction(lpiFunctionName,
-                functionEntryPoint, functionLanguage, soFileName, isExecutable);
-            ProcessSandboxProvider psp = new ProcessSandboxProvider(lpiFunction);
-            lpiFunction.setSandboxProvider(psp);
-            psp.loadProvider();
+                    String soFileName = downloadAndExtract(lpiUrl, functionPath, dirName);
+
+                    PolyglotFunction lpiFunction = new NativeFunction(lpiFunctionName,
+                        functionEntryPoint, functionLanguage, soFileName, isExecutable);
+                    ProcessSandboxProvider psp = new ProcessSandboxProvider(lpiFunction);
+                    lpiFunction.setSandboxProvider(psp);
+                    psp.loadProvider();
+                    return lpiFunction;
+                } catch (IOException e) {
+                    return null;
+                }
+            });
         }
 
         private PolyglotFunction handleSvmRegistration(String functionName, String soFileName, String functionEntryPoint, String functionLanguage, String sandboxName, int svmID, String functionURL, boolean isExecutable) throws IOException {
@@ -409,8 +419,6 @@ public abstract class RuntimeProxy {
                 return null;
             } else if (sprovider instanceof SnapshotSandboxProvider) {
                 ((SnapshotSandboxProvider) sprovider).setSVMID(svmID);
-            } else if (sprovider.supportsLPI()) {
-                handleLpiRegistration(functionName, functionEntryPoint, functionLanguage, functionURL, isExecutable);
             }
 
             function.setSandboxProvider(sprovider);
@@ -430,6 +438,7 @@ public abstract class RuntimeProxy {
             System.out.println(String.format("Registering function %s: %s", functionName, params));
 
             if (FTABLE.computeIfAbsent(functionName, n -> registerFunction(functionName, params)) != null) {
+                handleLpiRegistration(functionName, params);
                 writeResponse(t, 200, String.format("Function %s registered!", functionName));
             } else {
                 errorResponse(t, "Failed to register function (see runtime logs for details).");
