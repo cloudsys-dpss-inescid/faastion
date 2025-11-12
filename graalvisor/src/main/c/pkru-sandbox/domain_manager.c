@@ -9,11 +9,19 @@
 #include <sys/syscall.h>
 #include <assert.h>
 
+#define VALUE_IFNOT_TEST(...) 0
+#define VALUE_IFNOT_TEST1(...) __VA_ARGS__
+#define VALUE_IFNOT(COND, ...) VALUE_IFNOT_TEST ## COND ( __VA_ARGS__ )
+
+#define COALESCE_2(a, b) ({\
+int res;\
+res = (res = (a)) ? res : (res = (b));\
+})
 
 // return first non zero
-#define COALESCE(a, b, c) ({\
+#define COALESCE(a, b, ...) ({\
 int res;\
-res = (res = (a)) ? res : (res = (b)) ? res : (c);\
+res = (res = (a)) ? res : (res = COALESCE_2(b, VALUE_IFNOT(__VA_OPT__(1), __VA_ARGS__)));\
 })
 
 // Global array of domains
@@ -83,6 +91,18 @@ int book_any_domain(IsolateFunction *function) {
     return 0;
 }
 
+int book_used_domain(IsolateFunction *function) {
+    int domain = function->prev_domain;
+    if (swap_sandbox_domain(domain, NULL, function)) {
+        pthread_mutex_lock(&domains[domain]->prev_function_lock);
+        domains[domain]->prev_function = function;
+        domain_usage++;
+        pthread_mutex_unlock(&domains[domain]->prev_function_lock);
+        return domain;
+    }
+    return 0;
+}
+
 int book_unused_domain(IsolateFunction *function) {
     for (int i = 2; i < DOMAINS; i++) {
         if (domains[i]->prev_function == NULL && swap_sandbox_domain(i, NULL, function)) {
@@ -114,11 +134,15 @@ int book_previous_domain(IsolateFunction *function) {
     return 0;
 }
 
+// TODO: Attempt to use different domains rather than the same old domain
 int book_available_domain(IsolateFunction *function)
 {
-    return COALESCE(book_previous_domain(function),
-            book_unused_domain(function),
-            book_any_domain(function));
+    if (function->prev_domain)
+        return book_used_domain(function);
+    else
+        return COALESCE(book_previous_domain(function),
+                book_unused_domain(function),
+                book_any_domain(function));
 }
 
 int initialize_domain(int pkey)
