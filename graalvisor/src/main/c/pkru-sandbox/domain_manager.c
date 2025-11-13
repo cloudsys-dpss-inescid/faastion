@@ -29,6 +29,8 @@ Domain *domains[DOMAINS];
 static int PAGE_SIZE;
 static long domain_usage;
 
+static atomic_int rnd_domain;
+
 
 int get_domain_usage() {
     return domain_usage;
@@ -91,6 +93,19 @@ int book_any_domain(IsolateFunction *function) {
     return 0;
 }
 
+int book_rnd_domain(IsolateFunction *function) {
+    int domain = (atomic_fetch_add(&rnd_domain, 1) % 14) + 2;
+    function->prev_domain = domain;
+    if (swap_sandbox_domain(domain, NULL, function)) {
+        pthread_mutex_lock(&domains[domain]->prev_function_lock);
+        domains[domain]->prev_function = function;
+        domain_usage++;
+        pthread_mutex_unlock(&domains[domain]->prev_function_lock);
+        return domain;
+    }
+    return 0;
+}
+
 int book_used_domain(IsolateFunction *function) {
     int domain = function->prev_domain;
     if (swap_sandbox_domain(domain, NULL, function)) {
@@ -142,7 +157,7 @@ int book_available_domain(IsolateFunction *function)
     else
         return COALESCE(book_previous_domain(function),
                 book_unused_domain(function),
-                book_any_domain(function));
+                book_rnd_domain(function));
 }
 
 int initialize_domain(int pkey)
@@ -190,6 +205,7 @@ int initialize_domain(int pkey)
 
 int initialize_all_domains()
 {
+    atomic_init(&rnd_domain, 0);
     PAGE_SIZE = getpagesize();
     for (int i = LOADER_DOMAIN; i < DOMAINS; i++) {
         if (initialize_domain(i) == -1) {
