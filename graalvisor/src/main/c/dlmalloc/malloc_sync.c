@@ -13,6 +13,7 @@
 typedef struct {
     int locked_tid;
     int value;
+    int n;
 } futex_semaphore;
 
 static int futex(int *uaddr, int futex_op, int val, const struct timespec *timeout, int *uaddr2, int val3) {
@@ -23,6 +24,7 @@ futex_semaphore *new_semaphore(int value) {
     futex_semaphore *sem = (futex_semaphore *)mmap(NULL, sizeof(futex_semaphore),
                 PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
     sem->value = value;
+    sem->n = 0;
     sem->locked_tid = 0;
     return sem;
 }

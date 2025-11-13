@@ -27,6 +27,7 @@ __wrpkrumem(privileged_pku)
 typedef struct {
     int locked_tid;
     int value;
+    int n;
 } futex_semaphore;
 
 static mspace mspace_table[MAX_MSPACE] = {0};

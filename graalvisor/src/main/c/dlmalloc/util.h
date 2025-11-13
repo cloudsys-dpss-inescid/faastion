@@ -21,9 +21,12 @@ void debug_dump(__attribute__((unused)) char *fmt, ...) {}
 #else
 #define acquire_lock() \
     futex_semaphore *sem = sem_table[mspace_id];                                    \
-    if (sem && sem->locked_tid != tid) {                                            \
-        acquire(sem);                                                               \
-        sem->locked_tid = tid;                                                      \
+    if (sem) {                                                                      \
+        if (sem->locked_tid != tid) {                                               \
+            acquire(sem);                                                           \
+            sem->locked_tid = tid;                                                  \
+        }                                                                           \
+        sem->n++;                                                                   \
     }
 #endif
 
@@ -34,8 +37,11 @@ void debug_dump(__attribute__((unused)) char *fmt, ...) {}
 #else
 #define release_lock() \
     if (sem) {                                                                      \
-        sem->locked_tid = 0;                                                        \
-        release(sem);                                                               \
+        sem->n--;                                                                   \
+        if (sem->n == 0) {                                                          \
+            sem->locked_tid = 0;                                                    \
+            release(sem);                                                           \
+        }                                                                           \
     }
 #endif
 
