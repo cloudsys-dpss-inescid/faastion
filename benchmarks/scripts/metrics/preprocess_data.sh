@@ -3,7 +3,7 @@
 DIR=$(cd $(dirname $0) && pwd)
 EXPERIMENTS_DIR=$1
 
-# process ab output and create file: tput.txt 
+# process ab output and create file: tput.txt
 function get_tput {
     tput_file=$baseline/tput.txt
     for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
@@ -13,14 +13,34 @@ function get_tput {
     done
 }
 
-# process `free` command output and create file: mem.txt 
+# process `free` command output and create file: mem.txt
 function get_memory {
+    local mem_arr m1=0
     mem_file=$baseline/mem.txt
     for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
     do
+        idle_mem=$(head -n 20 $baseline/logs/$c-mem.log | awk '{sum += $1} END {printf "%.2f\n", sum / 20}')
         max_mem=$(cat $baseline/logs/$c-mem.log | sort -n | tail -n 1)
-        mem=$(echo "scale=2; $max_mem - $IDLE_MEM" | bc)
-        echo $mem >> $mem_file
+        mem=$(echo "scale=2; $max_mem - $idle_mem" | bc)
+        mem_arr+=($mem)
+    done
+
+    # approximate memory of 1st invocation
+    threads=$(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    threads_arr=($threads)
+    for idx in ${!threads_arr[@]}
+    do
+        aux=$(echo "scale=2; $m1 + (${mem_arr[$idx]} / ${threads_arr[$idx]})" | bc)
+        m1=$aux
+    done
+    
+    if [ ${threads_arr[$idx]} -eq 1 ]; then
+        mem_arr[0]=$(echo "scale=2; $m1 / ${#threads_arr[@]}" | bc)
+    fi
+
+    for mem in ${mem_arr[@]}
+    do
+        echo "$mem" >> $mem_file
     done
 }
 
@@ -43,18 +63,8 @@ function get_cpu {
     done
 }
 
-function get_idle_mem {
-    for baseline in $(ls)
-    do
-        nr=$(($nr + $(ls $baseline/logs/ | grep mem.log | wc -l)))
-        idle_mem=$(($idle_mem + $(head -n 20 $baseline/logs/*-mem.log | awk '{sum += $1} END {print sum}')))
-    done
-    IDLE_MEM=$(echo "scale=2; $idle_mem / (20 * $nr)" | bc)
-}
-
 function preprocess_benchmark {
     cd $EXPERIMENTS_DIR/$benchmark
-    get_idle_mem
     for baseline in $(ls)
     do
         rm -f $baseline/{tput.txt,mem.txt,cpu.txt}
@@ -64,6 +74,11 @@ function preprocess_benchmark {
     done
     cd - &> /dev/null
 }
+
+if [ $# -lt 1 ]; then
+    echo "Usage: ./preprocess_data.sh <experiments_dir>"
+    exit 1
+fi
 
 for benchmark in $(ls $EXPERIMENTS_DIR)
 do
