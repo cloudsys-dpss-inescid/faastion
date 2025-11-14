@@ -13,6 +13,24 @@ function get_tput {
     done
 }
 
+function get_99p {
+    file=$baseline/99p.txt
+    for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    do
+        lat=$(cat $baseline/logs/$c-ab*.log | grep '99%' | awk '{sum += $2} END {if (NR > 0) print sum / NR}')
+        echo $lat >> $file
+    done
+}
+
+function get_lat {
+    file=$baseline/lat.txt
+    for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    do
+        lat=$(cat $baseline/logs/$c-ab*.log | grep 'Total:' | awk '{sum += $3} END {if (NR > 0) print sum / NR}')
+        echo $lat >> $file
+    done
+}
+
 # process `free` command output and create file: mem.txt
 function get_memory {
     local mem_arr m1=0
@@ -67,10 +85,12 @@ function preprocess_benchmark {
     cd $EXPERIMENTS_DIR/$benchmark
     for baseline in $(ls)
     do
-        rm -f $baseline/{tput.txt,mem.txt,cpu.txt}
+        rm -f $baseline/{tput.txt,mem.txt,cpu.txt,99p.txt,lat.txt}
         get_tput
         get_memory
         get_cpu
+        get_99p
+        get_lat
     done
     cd - &> /dev/null
 }
