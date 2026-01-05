@@ -1,6 +1,7 @@
 /.luarocks
 /experiments
 plots/
+debug/
 *.pdf
 *.png
 *.out
