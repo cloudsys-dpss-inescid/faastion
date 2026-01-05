@@ -11,6 +11,7 @@ NC='\033[0m' # No Color
 LIMIT_RESOURCES=false
 
 source $DIR/hydra_bench.sh
+source $DIR/knative_bench.sh
 source $DIR/hydra_si_bench.sh
 source $DIR/faastion_bench.sh
 
@@ -129,12 +130,13 @@ BENCHMARKS+=(gv_dynamic_html)
 BENCHMARKS+=(gv_mst)
 BENCHMARKS+=(gv_pagerank)
 BENCHMARKS+=(gv_uploader)
+BENCHMARKS+=(gv_thumbnail)
 
-# BENCHMARKS+=(gv_thumbnail) # FIXME: under high concurrency levels, platform crashes with segfault
 # BENCHMARKS+=(gv_videoprocessing) # FIXME: under high concurrency levels, some threads will receive stop signal randomly
 
 # Comment/uncomment to add or remove baselines
 APPROACHES+=(faastion)
+APPROACHES+=(knative)
 APPROACHES+=(hydra)
 APPROACHES+=(hydra_si)
 
@@ -146,7 +148,7 @@ do
 
     # faastion can only execute 14 concurrent classify requests because of dlmopen limit
     if [ "$benchmark" = "gv_classify" ]; then
-        CONCURRENCY=(1 8 14)
+        CONCURRENCY=(1 4 8 10 12 14)
     fi
 
     for approach in ${APPROACHES[@]}
