@@ -18,6 +18,8 @@ build/
 # Ignore shared libs (including benchmarks libs)
 shared/
 
+data/
+
 *.i
 ffmpeg
 domain_usage.txt

@@ -27,6 +27,18 @@
 #define TRUE  1
 #define FALSE 0
 
+static int GC_LOG;
+static int gc_log_cnt = 0;
+
+static char *gc_args[] = {
+	"-XX:+PrintGC",
+	"-XX:+VerboseGC",
+	"-XX:+PrintGCSummary",
+	// "-XX:+PrintHeapShape",
+	// "-XX:MinHeapSize=33554432",
+	// "-XX:MaxHeapSize=268435456"
+};
+
 // TLS variable addressable via offset from FS
 static __thread pid_t cached_tid = 0;
 
@@ -69,6 +81,13 @@ int network_isolation_enabled() {
     }
 }
 
+int log_gc_enabled() {
+	const char* env_var = getenv("log_gc");
+	int ret = FALSE;
+    if (env_var != NULL) ret = atoi(env_var);
+	return ret;
+}
+
 void close_parent_fds(int childWrite, int parentRead) {
     // TODO - we should try to get a sense for the used file descriptors.
     for (int fd = 3; fd < 1024; fd++) {
@@ -101,6 +120,8 @@ JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     if (pku_isolation_enabled()) {
         pkru_sandbox_init(__get_cached_tid, __set_cached_tid);
     }
+
+	GC_LOG = log_gc_enabled() ? : -1;
 }
 
 JNIEXPORT void JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandboxInterface_teardown(JNIEnv *env, jobject thisObj) {
@@ -373,9 +394,19 @@ JNIEXPORT long JNICALL Java_org_graalvm_argo_graalvisor_sandboxing_NativeSandbox
     graal_isolatethread_t* ithread = NULL;
 
     memset(&params, 0, sizeof(graal_create_isolate_params_t));
-    params.version = 1;
+    params.version = 3;
     // Note: this is where we may limit the size of a sandbox. E.g. (limit for 1GB):
     //params.reserved_address_space_size = 1*1024*1024*1024;
+
+	if (++gc_log_cnt == GC_LOG) { // only logs one isolate
+		int argc = sizeof(gc_args) / sizeof(char *);
+		params._reserved_1 = argc;
+		params._reserved_2 = malloc(sizeof(gc_args) + sizeof(char *));
+		for (int i = 0; i < argc; i++) {
+			params._reserved_2[i] = gc_args[i];
+		}
+		params._reserved_2[argc] = NULL;
+	}
 
     if (fabi->sabi.graal_create_isolate(&params, &isolate, &ithread) != 0) {
         fprintf(stderr, "error: failed to create isolate\n");
