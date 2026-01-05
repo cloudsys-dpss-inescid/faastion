@@ -12,17 +12,19 @@ if len(sys.argv) < 2:
 EXPERIMENTS_DIR = sys.argv[1]
 
 REQUESTS = [1, 8, 14, 20, 32, 48, 64] # order of request concurrency
-BENCHMARKS = ["gv_bfs", "gv_compression", "gv_mst", "gv_pagerank", "gv_dna", "gv_dynamic_html", "gv_uploader"]
-BASELINES = ["faastion", "hydra", "hydra_si"]
+BENCHMARKS = ["gv_bfs", "gv_mst", "gv_pagerank", "gv_compression", "gv_thumbnail", "gv_classify", "gv_dna", "gv_dynamic_html", "gv_uploader"]
+BASELINES = ["faastion", "hydra", "knative", "hydra_si"]
 COLORS = {
     "faastion":mcolors.TABLEAU_COLORS['tab:blue'],
     "hydra":mcolors.TABLEAU_COLORS['tab:green'],
     "hydra_si":mcolors.TABLEAU_COLORS['tab:purple'],
+    "knative":mcolors.TABLEAU_COLORS['tab:brown'],
 }
 MARKERS = {
     "faastion":"o",
     "hydra":"^",
     "hydra_si":"x",
+    "knative":"+",
 }
 
 benchmarks = {}
@@ -76,7 +78,7 @@ def create_subplot(benchmark, ax, data):
 
     ax.set_title(benchmark)
     ax.set_xticks(x)
-    ax.set_xticklabels(REQUESTS if benchmark != "gv_classify" and benchmark != "gv_thumbnail" else [1, 8, 14])
+    ax.set_xticklabels(REQUESTS if benchmark != "gv_classify" else [1, 8, 14])
 
 def create_plot():
     ncols = len(BENCHMARKS)
