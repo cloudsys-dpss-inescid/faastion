@@ -2,71 +2,115 @@
 
 import os
 import sys
-import numpy as np
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-
-concurrency_levels = [1, 2, 4, 8, 16, 32, 48, 64]
+import matplotlib.colors as mcolors
+import numpy as np
 
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
-base_dir = sys.argv[1]
-plots_dir = "plots"
-latency_unit = ""
+EXPERIMENTS_DIR = sys.argv[1]
 
-benchmarks = ['gv_native_factors', 'gv_filehashing', 'gv_aes_encryption', 'gv_native_hw', 'gv_hello_world']
+BENCHMARKS = ["gv_bfs", "gv_mst", "gv_pagerank", "gv_compression", "gv_thumbnail", "gv_classify", "gv_dna", "gv_dynamic_html", "gv_uploader"]
+BASELINES = ["hydra", "knative", "faastion", "hydra_si"]
+BASELINE_NAMES = ["Hydra", "Knative", "Faastion", "OpenWhisk"]
+BENCHMARK_NAMES = ["BFS", "MST", "PageRank", "Zip-Compression", "Thumbnailer", "Image-Recognition", "DNA-Visualization", "Dynamic-HTML", "Uploader"]
+COLORS = {
+    "faastion":mcolors.TABLEAU_COLORS['tab:blue'],
+    "hydra":mcolors.TABLEAU_COLORS['tab:orange'],
+    "hydra_si":mcolors.TABLEAU_COLORS['tab:purple'],
+    "knative":mcolors.TABLEAU_COLORS['tab:green'],
+}
+MARKERS = {
+    "faastion":"\\\\",
+    "hydra":"//",
+    "hydra_si":"xx",
+    "knative":"||",
+}
 
-approaches = ['isolate', 'faastion_lpi', 'faastion', 'process']
+benchmarks = {}
 
-cmap = plt.get_cmap('viridis')
-colors = [cmap(i / len(approaches)) for i in range(len(approaches))]
+for benchmark in BENCHMARKS:
+    benchmark_path = os.path.join(EXPERIMENTS_DIR, benchmark)
+    if not os.path.isdir(benchmark_path):
+        continue
 
+    benchmarks[benchmark] = {}
 
-def get_unit_latency(latency):
-    global latency_unit
-    unit = latency[-2:] 
-    res = float(latency[:-2]) if unit == "ms" or unit == "us" else float(latency[:-1])
-    if unit != latency_unit:
-        res *= 1000
-    return res
+    for baseline in BASELINES:
+        baseline_path = os.path.join(benchmark_path, baseline)
+        if not os.path.isdir(baseline_path):
+            continue
 
-def read_latency_data(filepath):
-    global latency_unit
-    with open(filepath, 'r') as f:
-        latencies = [line.strip() for line in f.readlines()][:len(concurrency_levels)]
-        if latency_unit == "":
-            latency_unit = latencies[0][-2:]
-        latencies = [get_unit_latency(latency) for latency in latencies]
-    return latencies
+        tput_file = os.path.join(baseline_path, "tput.txt")
+        latency_file = os.path.join(baseline_path, "99p.txt")
+        memory_file = os.path.join(baseline_path, "mem.txt")
 
-for benchmark in benchmarks:
-    plt.figure()
+        if not (os.path.exists(tput_file) and os.path.exists(latency_file) and os.path.exists(memory_file)):
+            continue
+
+        with open(tput_file) as f:
+            tputs = [float(line.strip()) for line in f.read().split()][-1]
+
+        with open(latency_file) as f:
+            latencies = [float(line.strip()) for line in f.read().split()][-1]
+
+        with open(memory_file) as f:
+            memories = [float(line.strip()) / 1000 for line in f.read().split()][-1]
+
+        benchmarks[benchmark][baseline] = {
+            "tput": tputs,
+            "99p": latencies,
+            "memory": memories
+        }
+
+print_debug_msg = False
+def debug(msg):
+    if print_debug_msg:
+        print(msg)
+
+def create_subplot(benchmark, ax):
+    baselines = benchmarks[benchmark].keys()
+    workload_size = len(benchmarks[benchmark][list(benchmarks[benchmark].keys())[0]]['latency'])
+    debug(workload_size)
+    x = np.arange(1, workload_size+1)
+
+    debug(x)
+
+    for baseline in baselines:
+        debug(baseline)
+        debug(benchmarks[benchmark][baseline]['latency'])
+        ax.bar(benchmarks[benchmark][baseline]['tput'], benchmarks[benchmark][baseline]['latency'], label=baseline, color=COLORS[baseline], marker=MARKERS[baseline])
+
+    ax.set_title(benchmark)
+
+def create_plot(metric, name, title, lbl):
+    fig, ax = plt.subplots()
+
+    ax.set_ylabel(lbl)
+    # ax.set_xlabel("Requests/sec")
 
     bar_width = 0.2
-    spacing_factor = 1.5  # Factor to increase space between groups
-    index = np.arange(len(concurrency_levels)) * spacing_factor  # Base x locations for bars with spacing
+    spacing_factor = 1.2
+    index = np.arange(len(BENCHMARKS)) * spacing_factor
 
-    for i, approach in enumerate(approaches):
-        latency_file = os.path.join(base_dir, benchmark, 'results', approach, 'latency', '90p.txt')
+    for i, baseline in enumerate(BASELINES):
+        bars = [0 if baseline == 'hydra' and benchmark == 'gv_classify' else benchmarks[benchmark][baseline][metric] for benchmark in BENCHMARKS]
+        ax.bar(index + i * bar_width, bars, bar_width, label=baseline, color=COLORS[baseline], edgecolor='black', hatch=MARKERS[baseline], linewidth=0.5)
 
-        if os.path.exists(latency_file):
-            latencies = read_latency_data(latency_file)
-            plt.bar(index + i * bar_width, latencies, bar_width, label=approach, color=colors[i])
-        else:
-            print(f"Missing file: {latency_file}")
+    ax.set_xticks(index + bar_width*len(BASELINES)/2 - bar_width/2, BENCHMARK_NAMES, rotation=45)
+    ax.grid(axis='y')
+    ax.set_axisbelow(True)
 
-    plt.xlabel('Concurrency Level')
-    plt.ylabel(f'Average Latency ({latency_unit})')
-    plt.title(f'90 Percentile vs Concurrency - {benchmark}')
-    plt.xticks(index + bar_width * (len(approaches) - 1) / 2, concurrency_levels)  # Center x-ticks under bars
-    plt.legend()  # Show a legend for the approaches
-
-    output_dir = os.path.join(plots_dir, benchmark)
-    output_file = os.path.join(output_dir, '90p.pdf')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    plt.savefig(output_file)
+    if metric == 'tput':
+        ax.set_yscale('log')
+    fig.legend(BASELINE_NAMES, loc='upper left', bbox_to_anchor=(0.09, 0.98))
+    # fig.suptitle(title)
+    plt.tight_layout()
+    plt.savefig(name + ".pdf", bbox_inches="tight")
+    plt.savefig(name + ".png", bbox_inches="tight")
     plt.close()
 
-print("Plots generated.")
+create_plot('tput', 'throughput', 'Throughput per Benchmark', "Throughput (Requests/sec)")
+create_plot('99p', 'tail_latency', 'Tail Latency per Benchmark', "99% Tail Latency (ms)")
+create_plot('memory', 'memory', 'Memory Footprint per Benchmark', "Memory Footprint (GB)")

@@ -22,6 +22,15 @@ function get_99p {
     done
 }
 
+function get_90p {
+    file=$baseline/90p.txt
+    for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    do
+        lat=$(cat $baseline/logs/$c-ab*.log | grep '90%' | awk '{sum += $2} END {if (NR > 0) print sum / NR}')
+        echo $lat >> $file
+    done
+}
+
 function get_lat {
     file=$baseline/lat.txt
     for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
@@ -85,11 +94,12 @@ function preprocess_benchmark {
     cd $EXPERIMENTS_DIR/$benchmark
     for baseline in $(ls)
     do
-        rm -f $baseline/{tput.txt,mem.txt,cpu.txt,99p.txt,lat.txt}
+        rm -f $baseline/{tput.txt,mem.txt,cpu.txt,99p.txt,lat.txt,90p.txt}
         get_tput
         get_memory
         get_cpu
         get_99p
+	    get_90p
         get_lat
     done
     cd - &> /dev/null
