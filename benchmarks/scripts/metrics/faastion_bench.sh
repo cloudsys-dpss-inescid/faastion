@@ -44,6 +44,18 @@ function launch_faastion {
     faastion_registration $benchmark $c
 }
 
+function log_subprocesses {
+    local logfile=$1
+
+    rm -f $logfile
+    sleep 1
+    while nc -z localhost 8080
+    do
+        docker exec sbox ps aux | grep -E -v 'ps aux|start.sh' | wc -l | xargs printf "%d - 2\n" | bc &>> $logfile
+        sleep 1
+    done
+}
+
 function benchmark_faastion {
     local benchmark=$1
     local log_dir=$2
@@ -54,7 +66,10 @@ function benchmark_faastion {
         return
     fi
 
+    proc_log=$log_dir/$c-proc_count.log
     ab_log=$log_dir/$c-ab.log
+
+    log_subprocesses $proc_log &
 
     n=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.req')
     req=$(echo "$n * $c" | bc)
