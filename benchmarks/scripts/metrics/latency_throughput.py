@@ -108,8 +108,8 @@ def create_plot():
     baseline_names = [BASELINE_NAMES[lbl] for lbl in labels]
     fig.legend(handles, baseline_names, loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.02), borderaxespad=0.)
     plt.tight_layout()
-    plt.savefig("latency_throughput_2.pdf", bbox_inches="tight")
-    plt.savefig("latency_throughput_2.png", bbox_inches="tight")
+    plt.savefig("latency_throughput.pdf", bbox_inches="tight")
+    plt.savefig("latency_throughput.png", bbox_inches="tight")
     plt.close()
 
 create_plot()
