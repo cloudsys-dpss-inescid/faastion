@@ -12,20 +12,23 @@ if len(sys.argv) < 2:
 EXPERIMENTS_DIR = sys.argv[1]
 
 BENCHMARKS = ["gv_bfs", "gv_mst", "gv_pagerank", "gv_compression", "gv_thumbnail", "gv_classify", "gv_dna", "gv_dynamic_html", "gv_uploader"]
-BASELINES = ["faastion", "hydra", "knative", "hydra_si"]
-BASELINE_NAMES = {"hydra":"Hydra", "knative":"Knative", "faastion":"Faastion", "hydra_si":"OpenWhisk"}
+#BASELINES = ["faastion", "hydra", "knative", "hydra_si"]
+BASELINES = ["faastion", "faastlane"]
+BASELINE_NAMES = {"hydra":"Hydra", "knative":"Knative", "faastion":"Faastion", "hydra_si":"OpenWhisk", "faastlane":"MPK-only"}
 BENCHMARK_NAMES = ["BFS", "MST", "PageRank", "Zip-Compression", "Thumbnailer", "Image-Recognition", "DNA-Visualization", "Dynamic-HTML", "Uploader"]
 COLORS = {
     "faastion":mcolors.TABLEAU_COLORS['tab:blue'],
     "hydra":mcolors.TABLEAU_COLORS['tab:orange'],
     "hydra_si":mcolors.TABLEAU_COLORS['tab:purple'],
     "knative":mcolors.TABLEAU_COLORS['tab:green'],
+    "faastlane":mcolors.CSS4_COLORS['navy'],
 }
 MARKERS = {
     "faastion":"o",
     "hydra":"v",
     "hydra_si":"d",
     "knative":"_",
+    "faastlane":"s",
 }
 
 benchmarks = {}
@@ -105,8 +108,8 @@ def create_plot():
     baseline_names = [BASELINE_NAMES[lbl] for lbl in labels]
     fig.legend(handles, baseline_names, loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.02), borderaxespad=0.)
     plt.tight_layout()
-    plt.savefig("latency_throughput.pdf", bbox_inches="tight")
-    plt.savefig("latency_throughput.png", bbox_inches="tight")
+    plt.savefig("latency_throughput_2.pdf", bbox_inches="tight")
+    plt.savefig("latency_throughput_2.png", bbox_inches="tight")
     plt.close()
 
 create_plot()
