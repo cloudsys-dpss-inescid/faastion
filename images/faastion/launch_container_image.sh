@@ -13,7 +13,8 @@ if [ -z "$RESOURCES_DIR" ]; then
 fi
 
 docker run --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared \
-	-v $ARGO_HOME/benchmarks/src/java/graalvisor-runtime:/faastion/benchmarks/src/java/graalvisor-runtime \
+	-v $ARGO_HOME/benchmarks/src/java/SeBS:/faastion/benchmarks/src/java/SeBS \
 	-v $RESOURCES_DIR:/resources \
+	-w /faastion/benchmarks/ \
 	--network host \
 	-it --entrypoint bash faastion

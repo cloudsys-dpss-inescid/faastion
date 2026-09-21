@@ -50,7 +50,7 @@ function setup_thumbnail {
 
 rm -rf $DIR/results
 
-for benchmark in thumbnail # classify native-bfs native-compression native-mst native-pagerank
+for benchmark in thumbnail classify native-bfs native-compression native-mst native-pagerank
 do
     setup_$benchmark
 
