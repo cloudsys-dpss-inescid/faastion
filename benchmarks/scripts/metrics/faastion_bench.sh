@@ -37,11 +37,23 @@ function launch_faastion {
     fi
 
     docker run -d --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared --network host $active_wait_env $resources --name sbox faastion --enable-lpi &> /dev/null
-    
+
     while ! nc -z localhost 8080; do sleep 0.01; done
     sleep 2
 
     faastion_registration $benchmark $c
+}
+
+function log_subprocesses {
+	local log_dir=$1
+	local c=$2
+
+	sleep 1
+	while nc -z localhost 8080
+	do
+		docker exec sbox ps aux | grep -E -v 'ps aux|start.sh' | wc -l | xargs printf "%d - 2\n" | bc &>> $log_dir/$c-proc_count.log
+		sleep 1
+	done
 }
 
 function benchmark_faastion {
@@ -53,6 +65,8 @@ function benchmark_faastion {
         faastion_benchmark_classify $benchmark $log_dir $c
         return
     fi
+
+	log_subprocesses $log_dir $c &
 
     ab_log=$log_dir/$c-ab.log
 
