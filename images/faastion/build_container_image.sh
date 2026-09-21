@@ -20,11 +20,13 @@ echo '#!/bin/bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 if [ "$1" = "--enable-lpi" ]; then
-    export pku_isolation=on
     export LPI=true
+    export pku_isolation=on
     ld_preload="LD_PRELOAD=libmem.so"
-elif [ "$1" = "--enable-early-booking" ]; then
+elif [ "$1" = "--mpk-only" ]; then
     export faastlane=true
+    export pku_isolation=on
+    ld_preload="LD_PRELOAD=libmem.so"
 fi
 
 library_path=/faastion/graalvisor/shared:/glibc-2.35/build/install/lib:/lib/x86_64-linux-gnu:/usr/local/lib

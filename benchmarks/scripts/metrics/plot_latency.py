@@ -2,6 +2,7 @@
 
 import os
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -85,7 +86,8 @@ def create_subplot(benchmark, ax):
     ax.set_title(benchmark)
 
 def create_plot(metric, name, title, lbl):
-    fig, ax = plt.subplots()
+    matplotlib.rcParams.update({'font.size': 16})
+    fig, (ax) = plt.subplots(figsize=(10, 6))
 
     ax.set_ylabel(lbl)
     # ax.set_xlabel("Requests/sec")
@@ -102,9 +104,8 @@ def create_plot(metric, name, title, lbl):
     ax.grid(axis='y')
     ax.set_axisbelow(True)
 
-    if metric == 'tput':
-        ax.set_yscale('log')
-    fig.legend(BASELINE_NAMES, loc='upper left', bbox_to_anchor=(0.09, 0.98))
+    ax.set_yscale('log')
+    fig.legend(BASELINE_NAMES, loc='upper left', bbox_to_anchor=(0.1, 0.96))
     # fig.suptitle(title)
     plt.tight_layout()
     plt.savefig(name + ".pdf", bbox_inches="tight")

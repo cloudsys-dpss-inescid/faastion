@@ -142,11 +142,12 @@ APPROACHES+=(hydra)
 APPROACHES+=(hydra_si)
 #APPROACHES+=(faastlane)
 
-# Change to desired concurrency level
-CONCURRENCY=(1 8 14 20 32 48 64)
 
 for benchmark in ${BENCHMARKS[@]}
 do
+    # Change to desired concurrency level
+    CONCURRENCY=(1 8 14 20 32 48 64)
+
     # faastion can only execute 14 concurrent classify requests because of dlmopen limit
     if [ "$benchmark" = "gv_classify" ]; then
         CONCURRENCY=(1 4 8 10 12 14)

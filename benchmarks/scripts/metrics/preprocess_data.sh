@@ -60,7 +60,7 @@ function get_memory {
         aux=$(echo "scale=2; $m1 + (${mem_arr[$idx]} / ${threads_arr[$idx]})" | bc)
         m1=$aux
     done
-    
+
     if [ ${threads_arr[$idx]} -eq 1 ]; then
         mem_arr[0]=$(echo "scale=2; $m1 / ${#threads_arr[@]}" | bc)
     fi
@@ -92,13 +92,13 @@ function get_cpu {
 
 function count_subproc {
 	if [ "$baseline" != "faastion" ]; then
-		return
+    	return
 	fi
 
-	nproc_file=$baseline/nproc.txt
-	for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    nproc_file=$baseline/nproc.txt
+    for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
     do
-		nproc=$(cat $baseline/logs/$c-proc_count.log | sort -n -r | head -n1)
+    	nproc=$(cat $baseline/logs/$c-proc_count.log | sort -n -r | head -n1)
         echo $nproc >> $nproc_file
     done
 }
@@ -112,9 +112,9 @@ function preprocess_benchmark {
         get_memory
         get_cpu
         get_99p
-	    get_90p
+		get_90p
         get_lat
-		count_subproc
+        count_subproc
     done
     cd - &> /dev/null
 }

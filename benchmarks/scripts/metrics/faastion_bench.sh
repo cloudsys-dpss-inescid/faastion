@@ -45,15 +45,15 @@ function launch_faastion {
 }
 
 function log_subprocesses {
-	local log_dir=$1
-	local c=$2
+    local logfile=$1
 
-	sleep 1
-	while nc -z localhost 8080
-	do
-		docker exec sbox ps aux | grep -E -v 'ps aux|start.sh' | wc -l | xargs printf "%d - 2\n" | bc &>> $log_dir/$c-proc_count.log
-		sleep 1
-	done
+    rm -f $logfile
+    sleep 1
+    while nc -z localhost 8080
+    do
+        docker exec sbox ps aux | grep -E -v 'ps aux|start.sh' | wc -l | xargs printf "%d - 2\n" | bc &>> $logfile
+        sleep 1
+    done
 }
 
 function benchmark_faastion {
@@ -66,9 +66,10 @@ function benchmark_faastion {
         return
     fi
 
-	log_subprocesses $log_dir $c &
-
+    proc_log=$log_dir/$c-proc_count.log
     ab_log=$log_dir/$c-ab.log
+
+    log_subprocesses $proc_log &
 
     n=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.req')
     req=$(echo "$n * $c" | bc)

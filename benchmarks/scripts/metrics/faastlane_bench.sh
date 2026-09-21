@@ -65,18 +65,18 @@ function benchmark_faastlane {
     jq -n --arg name $name -f $DIR/template.json > $DIR/post.json
 
     # warmup
-#    ab -l -p $DIR/post.json -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
+    ab -l -p $DIR/post.json -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
 
     # collect results
     ab -l -p $DIR/post.json -T application/json -c $c -n $req localhost:8080/ &> $ab_log
 
-#    for i in $(seq 1 10); do
-#	tput=$(tput_faastion $benchmark $log_dir $c)
-#	if [ -z "$tput" ]; then
-#	    echo "rerun ab"
-#	    ab -l -p $DIR/post.json -T application/json -c $c -n $req localhost:8080/ &> $ab_log
-#        fi
-#    done
+    # for i in $(seq 1 10); do
+    #     tput=$(tput_faastion $benchmark $log_dir $c)
+    #     if [ -z "$tput" ]; then
+    #         echo "rerun ab"
+    #         ab -l -p $DIR/post.json -T application/json -c $c -n $req localhost:8080/ &> $ab_log
+    #     fi
+    # done
 
     # validate response content
     response=$(curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary '{"name":"'$name'","async":"false","arguments":"{}"}')
@@ -87,9 +87,9 @@ function tput_faastlane {
     local benchmark=$1 log_dir=$2 c=$3
 
     if [ "$benchmark" = "gv_classify" ]; then
-	tput=$(faastlane_tput_classify $log_dir $c)
+        tput=$(faastlane_tput_classify $log_dir $c)
     else
-	tput=$(cat $log_dir/$c-ab.log | grep 'Requests per second:' | awk '{print $4}')
+        tput=$(cat $log_dir/$c-ab.log | grep 'Requests per second:' | awk '{print $4}')
     fi
     echo $tput
 }
