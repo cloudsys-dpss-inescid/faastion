@@ -128,17 +128,5 @@
         "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
         "cpus": "0.5",
         "memory": "512"
-    },
-    "gv_videoprocessing": {
-        "lib_name": "videoprocessing",
-        "dir": "gv-video-processing",
-        "entrypoint": "com.videoprocessing.VideoProcessing",
-        "kn_dir": "kn-video-processing",
-        "kn_image": "knative-jv/kn-video-processing",
-        "warmup_time": "60s",
-        "benchmark_time": "60s",
-        "kn_input": "{ \"ffmpeg\": \"http://\($webserver):8000/ffmpeg\", \"video\": \"http://\($webserver):8000/video.mp4\" }",
-        "cpus": "0.5",
-        "memory": "512"
     }
 }
