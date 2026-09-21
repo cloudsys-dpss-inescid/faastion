@@ -77,13 +77,16 @@ function benchmark_faastion {
     warmup_req=$(echo "$n * $c" | bc)
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')
 
-    jq -n --arg name $name -f $DIR/template.json > $DIR/post.json
+    mkdir -p /tmp/faastion
+    JSON_FILE=/tmp/faastion/post.json
+
+    jq -n --arg name $name -f $COMMON/template.json > $JSON_FILE
 
     # warmup
-    ab -l -p $DIR/post.json -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
+    ab -l -p $JSON_FILE -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
 
     # collect results
-    ab -l -p $DIR/post.json -T application/json -c $c -n $req localhost:8080/ &> $ab_log
+    ab -l -p $JSON_FILE -T application/json -c $c -n $req localhost:8080/ &> $ab_log
 
     # validate response content
     response=$(curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary '{"name":"'$name'","async":"false","arguments":"{}"}')
@@ -109,7 +112,8 @@ function faastion_warmup_classify {
     local warmup_req=$1 c=$2
     for i in $(seq 1 $c)
     do
-        ab -l -p $DIR/post-$i.json -T application/json -c 1 -n $warmup_req localhost:8080/ &> /dev/null &
+        JSON_FILE=/tmp/faastion/post-$i.json
+        ab -l -p $JSON_FILE -T application/json -c 1 -n $warmup_req localhost:8080/ &> /dev/null &
     done
     wait
 }
@@ -119,7 +123,8 @@ function faastion_collect_classify_results {
     for i in $(seq 1 $c)
     do
         ab_log=$log_dir/$c-ab-$i.log
-        ab -l -p $DIR/post-$i.json -T application/json -c 1 -n $req localhost:8080/ &> $ab_log &
+        JSON_FILE=/tmp/faastion/post-$i.json
+        ab -l -p $JSON_FILE -T application/json -c 1 -n $req localhost:8080/ &> $ab_log &
     done
     wait
 }
@@ -143,9 +148,12 @@ function faastion_benchmark_classify {
     warmup_req=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.warmup_req')
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')
 
+    mkdir -p /tmp/faastion
+
     for i in $(seq 1 $c)
     do
-        jq -n --arg name ${name}${i} -f $DIR/template.json > $DIR/post-$i.json
+        JSON_FILE=/tmp/faastion/post-$i.json
+        jq -n --arg name ${name}${i} -f $COMMON/template.json > $JSON_FILE
     done
 
     # make sure that each sandbox initializes tensorflow

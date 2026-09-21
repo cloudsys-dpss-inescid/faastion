@@ -45,13 +45,16 @@ function benchmark_hydra {
     warmup_req=$(echo "$n * $c" | bc)
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')
 
-    jq -n --arg name $name -f $DIR/template.json > $DIR/post.json
+    mkdir -p /tmp/faastion
+    JSON_FILE=/tmp/faastion/post.json
+
+    jq -n --arg name $name -f $COMMON/template.json > $JSON_FILE
 
     # warmup
-    ab -l -p $DIR/post.json -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
+    ab -l -p $JSON_FILE -T application/json -c $c -n $warmup_req localhost:8080/ &> /dev/null
 
     # collect results
-    ab -l -p $DIR/post.json -T application/json -c $c -n $req localhost:8080/ &> $ab_log
+    ab -l -p $JSON_FILE -T application/json -c $c -n $req localhost:8080/ &> $ab_log
 
     # validate response content
     response=$(curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary '{"name":"'$name'","async":"false","arguments":"{}"}')

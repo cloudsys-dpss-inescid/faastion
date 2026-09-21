@@ -53,7 +53,7 @@ function warmup_hydra_si {
     for i in $(seq 1 $c)
     do
         port=$((8080 + $i))
-        ab -l -p $DIR/post.json -T application/json -c 1 -n $warmup_req localhost:$port/ &> /dev/null &
+        ab -l -p $JSON_FILE -T application/json -c 1 -n $warmup_req localhost:$port/ &> /dev/null &
     done
 
     wait
@@ -66,7 +66,7 @@ function collect_results_hydra_si {
     do
         port=$((8080 + $i))
         ab_log=$log_dir/$c-ab-$i.log
-        ab -l -p $DIR/post.json -T application/json -c 1 -n $req localhost:$port/ &> $ab_log &
+        ab -l -p $JSON_FILE -T application/json -c 1 -n $req localhost:$port/ &> $ab_log &
     done
 
     wait
@@ -94,7 +94,10 @@ function benchmark_hydra_si {
     warmup_req=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.warmup_req')
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')
 
-    jq -n --arg name $name -f $DIR/template.json > $DIR/post.json
+    mkdir -p /tmp/faastion
+    JSON_FILE=/tmp/faastion/post.json
+
+    jq -n --arg name $name -f $COMMON/template.json > $JSON_FILE
 
     warmup_hydra_si $warmup_req $c &
     local pid=$!
