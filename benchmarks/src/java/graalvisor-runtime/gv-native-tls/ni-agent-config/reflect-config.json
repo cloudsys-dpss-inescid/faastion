@@ -1,6 +1,0 @@
-[
-{
-  "name":"com.jni.TLS",
-  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
-}
-]
