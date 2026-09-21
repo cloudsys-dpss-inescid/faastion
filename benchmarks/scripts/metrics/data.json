@@ -123,6 +123,8 @@
         "kn_image": "knative-jv/kn-thumbnail",
         "warmup_time": "10s",
         "benchmark_time": "4s",
+		"warmup_req": "100",
+		"req": "100",
         "kn_input": "{ \"url\": \"http://\($webserver):8000/snap.png\" }",
         "cpus": "0.5",
         "memory": "512"
