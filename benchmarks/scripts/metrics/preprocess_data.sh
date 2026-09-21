@@ -90,17 +90,31 @@ function get_cpu {
     done
 }
 
+function count_subproc {
+	if [ "$baseline" != "faastion" ]; then
+		return
+	fi
+
+	nproc_file=$baseline/nproc.txt
+	for c in $(ls $baseline/logs/ | awk -F- '{print $1}' | sort -u -n)
+    do
+		nproc=$(cat $baseline/logs/$c-proc_count.log | sort -n -r | head -n1)
+        echo $nproc >> $nproc_file
+    done
+}
+
 function preprocess_benchmark {
     cd $EXPERIMENTS_DIR/$benchmark
     for baseline in $(ls)
     do
-        rm -f $baseline/{tput.txt,mem.txt,cpu.txt,99p.txt,lat.txt,90p.txt}
+        rm -f $baseline/{tput.txt,mem.txt,cpu.txt,99p.txt,lat.txt,90p.txt,nproc.txt}
         get_tput
         get_memory
         get_cpu
         get_99p
 	    get_90p
         get_lat
+		count_subproc
     done
     cd - &> /dev/null
 }
