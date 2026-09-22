@@ -80,6 +80,6 @@ This project repository contains the source code and benchmarks related to [the 
 - `benchmarks/gc-pressure`: micro-benchmark used to evaluate the GC pressure (e.g., in DNA-Visualization or Dynamic-HTML);
 - `resources`: contains useful scripts to initialize a simple http server (for Thumbnailer, Dynamic-HTML) and a flask server (for Uploader).
 
-## Acknowledgements
+## Acknowledgments
 
 [native-image]: https://www.graalvm.org/latest/reference-manual/native-image/

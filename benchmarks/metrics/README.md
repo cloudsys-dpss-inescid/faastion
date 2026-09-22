@@ -27,7 +27,7 @@ Once the experiments have finished runnig, the results will be placed under `exp
 
 ## Large Scale Experiment
 
-The Large Scale Experiment (LSE) replicates the experiment in [Hydra](hydra). You will first need to setup the [hydra-scheduler](hydra-scheduler).
+The Large Scale Experiment (LSE) replicates the experiment in [Hydra][hydra]. You will first need to setup the [hydra-scheduler][hydra-scheduler].
 
 [hydra]: https://dl.acm.org/doi/10.1145/3772052.3772267
 [hydra-scheduler]: https://github.com/cloudsys-dpss-inescid/hydra-scheduler/tree/si/faastion
