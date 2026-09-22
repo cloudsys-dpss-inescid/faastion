@@ -10,7 +10,7 @@ Faastion is well-tested on Ubuntu 22.04.4 LTS and Debian 13.0. It relies primari
 
 ## Requirements
 
-We recommend using the provided [Dockerfile][docker-file] to build the Docker image of the full Faastion system. The Docker image implements our `libc` patch, providing an easy setup with the required configurations for running Faastion.
+We recommend using the provided [Dockerfile](images/faastion/Dockerfile) to build the Docker image of the full Faastion system. The Docker image implements our `libc` patch, providing an easy setup with the required configurations for running Faastion.
 
 Once the image has been built, you can compile and run your own applications within the Faastion environment.
 
@@ -54,7 +54,7 @@ curl -s -X POST "127.0.0.1:8080/register?"\
 ``` 
 
 > [!NOTE]
-> Faastion receives a url to download the function code from, in this case `http://127.0.0.1:8000/apps/libbfs-plugin.zip`. You can use the provided [scripts](webserver) to make this avaible.
+> Faastion receives a url to download the function code from, in this case `http://127.0.0.1:8000/apps/libbfs-plugin.zip`. You can use the provided [scripts](resources/host_webserver.sh) to make this avaible.
 
 You should receive confirmation that the function code was successfully uploaded. Now you can start making requests, like so:
 ```bash
@@ -75,15 +75,11 @@ This project repository contains the source code and benchmarks related to [the 
 - `common`: contains API shared between the Faastion runtime and the benchmarks;
 
 ### Benchmarks
-- `benchmarks/src`: directory containing the source code for the multiple SeBS benchmarks. You can find more details on how to create your own functions in [benchmarks/src/java/SeBS](sebs-readme);
-- `benchmarks/metrics`: scripts used to evaluate the system. You can find more details on how to reproduce the experiments in [benchmarks/metrics](metrics-readme);
+- `benchmarks/src`: directory containing the source code for the multiple SeBS benchmarks. You can find more details on how to create your own functions in [benchmarks/src/java/SeBS](benchmarks/src/java/SeBS/README.md);
+- `benchmarks/metrics`: scripts used to evaluate the system. You can find more details on how to reproduce the experiments in [benchmarks/metrics](benchmarks/metrics/README.md);
 - `benchmarks/gc-pressure`: micro-benchmark used to evaluate the GC pressure (e.g., in DNA-Visualization or Dynamic-HTML);
 - `resources`: contains useful scripts to initialize a simple http server (for Thumbnailer, Dynamic-HTML) and a flask server (for Uploader).
 
 ## Acknowledgements
 
-[docker-file]: images/faastion/Dockerfile
 [native-image]: https://www.graalvm.org/latest/reference-manual/native-image/
-[webserver]: resources/host_webserver.sh
-[sebs-readme]: benchmarks/src/java/SeBS/README.md
-[metrics-readme]: benchmarks/metrics/README.md
