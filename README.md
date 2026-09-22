@@ -82,8 +82,8 @@ This project repository contains the source code and benchmarks related to [the 
 
 ## Acknowledgements
 
-[docker-file]: https://github.com/cloudsys-dpss-inescid/faastion/images/faastion/Dockerfile
+[docker-file]: images/faastion/Dockerfile
 [native-image]: https://www.graalvm.org/latest/reference-manual/native-image/
-[webserver]: https://github.com/cloudsys-dpss-inescid/faastion/resources/host_webserver.sh
-[sebs-readme]: https://github.com/cloudsys-dpss-inescid/faastion/benchmarks/src/java/SeBS/README.md
-[metrics-readme]: https://github.com/cloudsys-dpss-inescid/faastion/benchmarks/metrics/README.md
+[webserver]: resources/host_webserver.sh
+[sebs-readme]: benchmarks/src/java/SeBS/README.md
+[metrics-readme]: benchmarks/metrics/README.md
