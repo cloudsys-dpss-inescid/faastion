@@ -7,7 +7,7 @@
 
 # Ignore java binary files
 *.class
-#*.jar
+*.jar
 
 # Ignore Gradle project-specific cache directory
 .gradle
