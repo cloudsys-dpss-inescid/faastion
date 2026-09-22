@@ -1,6 +1,6 @@
 # Faastion: Elastic and Scalable Native Library Isolation for High-Density Serverless Platforms
 
-**Faastion** is a project designed to bridge the gap between language- and hardware-based isolation, enabling high-concurrency and high-density serverless platforms. You can find more details in ["Faastion: Elastic and Scalable Native Library Isolation for High-Density Serverless Platforms"]().
+**Faastion** is a project designed to bridge the gap between language- and hardware-based isolation, enabling high-concurrency and high-density serverless platforms. You can find more details in ["Faastion: Elastic and Scalable Native Library Isolation for High-Density Serverless Platforms"](faastion-paper).
 
 Faastion leverages [GraalVM Native Image](native-image) isolates  and Memory Protection Keys (MPK) to colocate multiple functions within the same address space. As a result, Faastion provides invocations at a massive scale, resulting in reduced latency and memory footprint compared to traditional serverless platforms.
 
@@ -26,7 +26,7 @@ To follow this guide, make sure the following utilities are installed:
 
 ## Setup
 
-The following scripts will build Faastion image and compile all the SeBS benchmarks enumerated in the paper. This step may take a while due to native-image AOT compiling and Javassist bytecode analysis.
+The following scripts will build Faastion image and compile all the SeBS benchmarks enumerated in the paper. This step may take a while due to native-image AOT compilation and Javassist bytecode analysis.
 
 ```bash
 cd images/faastion
@@ -50,8 +50,11 @@ curl -s -X POST "127.0.0.1:8080/register?"\
 "&language=java"\
 "&name=function_name"\
 "&sandbox=pku"\
-"&url=http://$WEBSERVER_IP:8000/apps/libbfs-plugin.zip"
+"&url=http://127.0.0.1:8000/apps/libbfs-plugin.zip"
 ``` 
+
+> [!NOTE]
+> Faastion receives a url to download the function code from, in this case `http://127.0.0.1:8000/apps/libbfs-plugin.zip`. You can use the provided [scripts](webserver) to make this avaible.
 
 You should receive confirmation that the function code was successfully uploaded. Now you can start making requests, like so:
 ```bash
@@ -60,7 +63,7 @@ curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary
 
 ## Repository Overview
 
-This project repository contains the source code and benchmarks related to the paper [full paper]() referenced above. The contents of the repository are organized as such:
+This project repository contains the source code and benchmarks related to [the paper](faastion-paper) referenced above. The contents of the repository are organized as such:
 
 ### Instrumentation
 - `native-execution/instrumentation`: performs static analysis, locates all native function calls (regardless of whether or not they are used), creates wrapper functions for native libraries and replaces native function calls with stub calls;
@@ -72,12 +75,15 @@ This project repository contains the source code and benchmarks related to the p
 - `common`: contains API shared between the Faastion runtime and the benchmarks;
 
 ### Benchmarks
-- `benchmarks/src`: directory containing the source code for the multiple SeBS benchmarks;
-- `benchmarks/metrics`: scripts used to evaluate the system;
+- `benchmarks/src`: directory containing the source code for the multiple SeBS benchmarks. You can find more details on how to create your own functions in [benchmarks/src/java/SeBS](sebs-readme);
+- `benchmarks/metrics`: scripts used to evaluate the system. You can find more details on how to reproduce the experiments in [benchmarks/metrics](metrics-readme);
 - `benchmarks/gc-pressure`: micro-benchmark used to evaluate the GC pressure (e.g., in DNA-Visualization or Dynamic-HTML);
 - `resources`: contains useful scripts to initialize a simple http server (for Thumbnailer, Dynamic-HTML) and a flask server (for Uploader).
 
 ## Acknowledgements
 
 [docker-file]: https://github.com/cloudsys-dpss-inescid/faastion/images/faastion/Dockerfile
-[native-image]: https://www.graalvm.org/latest/reference-manual/native-image/ 
+[native-image]: https://www.graalvm.org/latest/reference-manual/native-image/
+[webserver]: https://github.com/cloudsys-dpss-inescid/faastion/resources/host_webserver.sh
+[sebs-readme]: https://github.com/cloudsys-dpss-inescid/faastion/benchmarks/src/java/SeBS/README.md
+[metrics-readme]: https://github.com/cloudsys-dpss-inescid/faastion/benchmarks/metrics/README.md
