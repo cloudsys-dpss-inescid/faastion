@@ -1,83 +1,58 @@
-# Adding a JNI Benchmark to Faastion
+# Building an app in Faastion
 
-This guide provides step-by-step instructions on how to add a new JNI benchmark to Faastion, compile it, and execute it. Follow these instructions to ensure a smooth integration of your benchmark into the Faastion project.
+This guide provides step-by-step instructions on how to build a new Java app for Faastion.
 
-## Prerequisites
+## Setting Up Application Folders
 
-Before you start, make sure you have the following prerequisites installed on your system:
+1. Create a new folder, following the structure of the existing applications (in this guide, we will use `gv-native-bfs` as an example).
 
-- [Musl libc](https://musl.libc.org/)
-- Linux version >= 5.10 with Seccomp notifications support
-- CPU with MPK (Memory Protection Keys) support
-- [Java](https://www.java.com/en/)
-- [Maven](https://maven.apache.org/)
+2. Inside the newly created folder, you should have the following files (we will use gradle to build your application):
+    - [build.gradle](gv-native-bfs/build.gradle)
+    - [gradle](gv-native-bfs/gradle/)
+    - [gradlew](gv-native-bfs/gradlew)
+    - [settings.gradle](gv-native-bfs/settings.gradle) \
+    You should also have a build script and Makefile to help automate the build process:
+    - [build_script.sh](gv-native-bfs/build_script.sh)
+    - [Makefile](gv-native-bfs/Makefile)
 
-## Setting Up Benchmark Folders
+3. Create a `src` directory to package your source code, and develop your application. Following the same structure as `gv-native-bfs`, you can have a `src/main/java` directory for Java code and `src/main/c` for C code.
 
-1. Create a folder in the [benchmarks/src/java](.) directory and name it `gv-<benchmark-name>`.
+4. Update `build.gradle`, change the "Main-Class" qualified package name and dependencies if necessary. \
+Update `settings.gradle`  if you wish to change the name of the final jar file. \
+Update `build_script.sh`. Make sure to change the `build_native_library` function to compile your C library with the required dependencies and flags. Make sure to change `build_ni` and `build_native_binary` functions if you changed the qualified package name and the name of the final jar file.
 
-2. Inside the newly created folder, create a `src` directory where the benchmark's code will reside. This should have a structure similar to [gv-native-hw/src](./gv-native-hw/src).
-
-3. Copy the following files into your benchmark folder:
-   - [build_script.sh](./gv-native-hw/build_script.sh)
-   - [build.gradle](./gv-native-hw/build.gradle)
-   - [settings.gradle](./gv-native-hw/settings.gradle)
-
-4. Within the `java` directory (inside the `src/main` directory), place your main Java code. In the `c` directory, put your native library along with the JNI generated (or not) header file.
-    >Note: In the [HelloJNI.java](./gv-native-hw/src/main/java/com/jni/HelloJNI.java) file, despite having the native method, it is not being loaded in the `System.LoadLibrary` (to be fixed later). Don't worry; it still works this way.
-
-6. Update the `build.gradle` and `settings.gradle` files according to your benchmark's desired name. Also, do the same for `build_script.sh` and make sure every `$CLASS_PATH` environment variable is set according to your needs. In the `build_native_library` function of `build_script.sh`, update the targets to compile your native library.
+> [!NOTE]
+> Because we use the docker image to build the application, make sure that any C libraries and dependencies are available in the container.
 
 ## Compilation
 
-To compile your benchmark, execute your `build_script.sh`. During the compilation process, you will encounter three questions, you should respond "y" for the third one.
-
-Additionally, you need to compile [Faastion](../../../faastion/) by executing the following command inside its directory:
-
+To compile your applications, use the docker image created during setup. Execute [launch_container_image.sh](../../../../images/faastion/launch_container_image.sh) and move to the application's folder you wish to build. 
 ```bash
-$ ./build.sh local
+cd src/java/SeBS/gv-native-bfs
+./build_script.sh
+```
+Once finished, you can terminate the container. The build process has generated 2 zip files: `libbfs.zip` and `libbfs-plugin.zip`. The former contains the original jar file, and the latter contains a modified jar file (with trampoline calls to the native functions).
+
+If you run the build script inside the docker image, then you will notice that the `Makefile` also takes care of compiling the wrapper libraries (using the modified libc).
+
+After you build your application, you can run the following commands to register the function in Faastion:
+```bash
+# register original function (no bytecode transformation)
+curl -s -X POST "127.0.0.1:8080/register?"\
+"entryPoint=com.jni.BFS"\
+"&language=java"\
+"&name=bfs0"\
+"&sandbox=isolate"\
+"&url=http://127.0.0.1:8000/apps/libbfs.zip"
+
+# register modified function (with wrapper libraries)
+```bash
+curl -s -X POST "127.0.0.1:8080/register?"\
+"entryPoint=com.jni.BFS"\
+"&language=java"\
+"&name=bfs1"\
+"&sandbox=pku"\
+"&url=http://127.0.0.1:8000/apps/libbfs-plugin.zip"
 ```
 
-Type anything other than "y" to the prompted questions.
-
-## Update benchmarks scripts 
-
-To integrate your benchmark, follow these steps to update the relevant scripts:
-
-1. Create a function in the [benchmark.sh](../../scripts/benchmarks.sh) script that is similar to the existing functions (e.g., `gv_java_native_hw`). Duplicate and modify everything within this function according to your benchmark's requirements.
-
-2. Update the newly created function with all the necessary details specific to your benchmark. This includes setting paths, configuring parameters, and any other relevant information.
-
-In addition to the `benchmark.sh` script, you'll also need to make adjustments to the [shared.sh](../../scripts/shared.sh) script. Follow these additional steps:
-
-3. Locate the function called `start_svm` within the [shared.sh](../../scripts/shared.sh) script.
-
-4. Update the `LD_LIBRARY_PATH` variable with the path to your benchmark's build directory to ensure that the necessary libraries are loaded correctly.
-
-5. Don't forget to update the `JNI_DIR` variable with the same path to ensure the JNI components are found and utilized properly in your benchmark.
-
-These updates will help your benchmark script run smoothly within the Faastion project.
-
-## Execution
-
-Once you've added your benchmark and updated the `benchmark.sh` script, you can execute your benchmark using the following commands:
-
-### Sequential Invocations
-
-```bash
-$ ./benchmark-faastion.sh svm <your-function> test 1
-```
-
-Example:
-
-```bash
-$ ./benchmark-faastion.sh svm gv_java_native_hw test 1
-```
-
-### Parallel Invocations
-
-```bash
-$ ./benchmark-faastion.sh svm <your-function> benchmark 1
-```
-
-Please make sure to replace <your-function> with the actual name you've assigned to your benchmark's function in the `benchmarks.sh` script.
+Notice that the original function uses an `isolate` sandbox type, and the modified function uses a `pku` (hybrid) sandbox. The original function provides the url for `libbfs.zip`, while the modified function provides the url for `libbfs-plugin.zip`.
