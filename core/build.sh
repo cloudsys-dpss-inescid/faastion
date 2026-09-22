@@ -1,8 +1,8 @@
 #!/bin/bash
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-GRAALVISOR_HOME=$DIR/build/native-image
-GRAALVISOR_JAR=$DIR/build/libs/graalvisor-1.0-all.jar
+NATIVE_IMAGE=$DIR/build/native-image
+FAASTION_JAR=$DIR/build/libs/faastion-1.0-all.jar
 
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -54,7 +54,7 @@ function build_pku_isolation {
         echo "Please set LIBC_HOME first. It should point to a C library compiled with support for run_constructor."
         exit 1
     fi
-    PKRU_DIR=$ARGO_HOME/graalvisor/shared
+    PKRU_DIR=$ARGO_HOME/core/shared
     LINKER_OPTIONS="$LINKER_OPTIONS -H:NativeLinkerOption=$PKRU_DIR/libpkru.so"
     LIBC_OPTIONS="-H:CLibraryPath=$LIBC_HOME/lib,$PKRU_DIR -H:LinkerRPath=$LIBC_HOME/lib -H:NativeLinkerOption=-Wl,--dynamic-linker=$LIBC_HOME/lib/ld-linux-x86-64.so.2"
     make -C $C_DIR pku_sandbox
@@ -75,8 +75,8 @@ function build_nsi {
 }
 
 function build_ni {
-    mkdir -p $GRAALVISOR_HOME &> /dev/null
-    cd $GRAALVISOR_HOME
+    mkdir -p $NATIVE_IMAGE &> /dev/null
+    cd $NATIVE_IMAGE
     JAVA_OPTS="$JAVA_OPTS --add-exports org.graalvm.nativeimage.builder/com.oracle.svm.core.os=ALL-UNNAMED"
     JAVA_OPTS="$JAVA_OPTS --add-exports org.graalvm.nativeimage.builder/com.oracle.svm.core.jni=ALL-UNNAMED"
     JAVA_OPTS="$JAVA_OPTS --add-exports org.graalvm.nativeimage.builder/com.oracle.svm.core.posix=ALL-UNNAMED"
@@ -93,15 +93,15 @@ function build_ni {
         --no-fallback \
         --install-exit-handlers \
         --enable-url-protocols=http \
-        --initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
+        --initialize-at-run-time=com.oracle.svm.faastion.utils.JsonUtils \
         -g \
         $LIBC_OPTIONS \
         $LINKER_OPTIONS \
         -H:CLibraryPath=$LIB_DIR \
         $JAVA_OPTS \
-        --features=org.graalvm.argo.graalvisor.sandboxing.NativeSandboxInterfaceFeature \
-        -cp $GRAALVISOR_JAR \
-        org.graalvm.argo.graalvisor.Main \
+        --features=org.graalvm.argo.faastion.sandboxing.NativeSandboxInterfaceFeature \
+        -cp $FAASTION_JAR \
+        org.graalvm.argo.faastion.Main \
         polyglot-proxy \
         -H:+ReportExceptionStackTraces
 }
@@ -129,22 +129,22 @@ cd "$DIR" || {
 EXECUTION_ENVIRONMENT=$1
 if [[ "$EXECUTION_ENVIRONMENT" != "local" ]]
 then  # Build native image inside Docker container.
-    docker run -it -v $JAVA_HOME:/jvm -v $ARGO_HOME:/argo --rm argo-builder /argo/graalvisor/build.sh "local"
-    sudo chown -R $(id -u -n):$(id -g -n) $ARGO_HOME/graalvisor/build
+    docker run -it -v $JAVA_HOME:/jvm -v $ARGO_HOME:/argo --rm argo-builder /argo/core/build.sh "local"
+    sudo chown -R $(id -u -n):$(id -g -n) $ARGO_HOME/core/build
 else  # Build native image locally (inside container or directly on host).
-    echo -e "${GREEN}Building graalvisor-lib jar...${NC}"
-    bash $ARGO_HOME/graalvisor-lib/build.sh
-    echo -e "${GREEN}Building graalvisor-jar... done!${NC}"
+    echo -e "${GREEN}Building faastion-lib jar...${NC}"
+    bash $ARGO_HOME/common/build.sh
+    echo -e "${GREEN}Building faastion-lib jar... done!${NC}"
 
-    echo -e "${GREEN}Building graalvisor jar...${NC}"
+    echo -e "${GREEN}Building faastion jar...${NC}"
     ./gradlew clean shadowJar
-    echo -e "${GREEN}Building graalvisor jar... done!${NC}"
+    echo -e "${GREEN}Building faastion jar... done!${NC}"
 
-    echo -e "${GREEN}Building graalvisor native sandbox interface...${NC}"
+    echo -e "${GREEN}Building faastion native sandbox interface...${NC}"
     build_nsi
-    echo -e "${GREEN}Building graalvisor native sandbox interface... done!${NC}"
+    echo -e "${GREEN}Building faastion native sandbox interface... done!${NC}"
 
-    echo -e "${GREEN}Building graalvisor Native Image...${NC}"
+    echo -e "${GREEN}Building faastion Native Image...${NC}"
     build_ni
-    echo -e "${GREEN}Building graalvisor Native Image... done!${NC}"
+    echo -e "${GREEN}Building faastion Native Image... done!${NC}"
 fi

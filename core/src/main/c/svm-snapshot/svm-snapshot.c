@@ -628,8 +628,8 @@ void redirect_child_io() {
     }
     close(fd);
 
-    // Redirecting stdout and stderr to graalvisor-<pid>.log.
-    snprintf(fpath, 256, "graalvisor-%d.log", getpid());
+    // Redirecting stdout and stderr to faastion-<pid>.log.
+    snprintf(fpath, 256, "faastion-%d.log", getpid());
     fd = open(fpath, O_WRONLY | O_CREAT, mode);
     if (fd < 0) {
         err("error: failed to redirect output to %s (errno %d)", fpath, errno);

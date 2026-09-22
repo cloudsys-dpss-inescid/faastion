@@ -3,9 +3,9 @@
 CC			= gcc
 CFLAGS		= -g -Wall -fPIC
 OPTIONS		= -DHAVE_MORECORE=0 -DUSE_DL_PREFIX -DMSPACES -DMALLOC_INSPECT_ALL=1 -DUSE_DLMALLOC_MALLOC_TRIM -DFOOTERS=1 # for mspace_inspect_all
-OBJ_DIR		= $(ARGO_HOME)/graalvisor/build/obj
-LIB_DIR		= $(ARGO_HOME)/graalvisor/shared
-SRC_DIR		= $(ARGO_HOME)/graalvisor/src/main/c
+OBJ_DIR		= $(ARGO_HOME)/core/build/obj
+LIB_DIR		= $(ARGO_HOME)/core/shared
+SRC_DIR		= $(ARGO_HOME)/core/src/main/c
 PKRU_DIR	= $(SRC_DIR)/pkru-sandbox
 MALLOC_DIR	= $(SRC_DIR)/dlmalloc
 LOADER_DIR 	= $(SRC_DIR)/loader
@@ -14,7 +14,7 @@ NATIVE_INTERFACE_DIR = $(SRC_DIR)/native-interface
 NET_DIR 	= $(SRC_DIR)/network-isolation/src
 SNAP_DIR	= $(SRC_DIR)/svm-snapshot
 INCLUDE 	= -I$(LIBC_HOME)/include -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux \
-	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/graalvisor/build/generated/sources/headers/java/main
+	-I$(PKRU_DIR) -I$(MALLOC_DIR) -I$(WRAPPER_DIR) -I$(ARGO_HOME)/core/build/generated/sources/headers/java/main
 
 pku_sandbox: create_dirs gen_wrappers
 	$(CC) $(CFLAGS) $(INCLUDE) -DLOADER_LIB="\"$(LIB_DIR)/libloader.so\"" -DREMOVE_NNS_LIMIT -c -o $(OBJ_DIR)/jni_handle.o $(NATIVE_INTERFACE_DIR)/jni_handle.c
@@ -49,7 +49,7 @@ pku_sandbox: create_dirs gen_wrappers
 
 native_sandbox: create_dirs
 	$(CC) $(INCLUDE) -I$(NET_DIR) -I$(SNAP_DIR) -c -o $(OBJ_DIR)/NativeSandboxInterface.o $(SRC_DIR)/NativeSandboxInterface.c
-	ar rcs $(ARGO_HOME)/graalvisor/build/libs/libNativeSandboxInterface.a $(OBJ_DIR)/NativeSandboxInterface.o
+	ar rcs $(ARGO_HOME)/core/build/libs/libNativeSandboxInterface.a $(OBJ_DIR)/NativeSandboxInterface.o
 
 all: create_dirs pku_sandbox native_sandbox
 

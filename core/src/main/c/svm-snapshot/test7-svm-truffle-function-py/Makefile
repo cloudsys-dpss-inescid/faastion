@@ -9,9 +9,9 @@ libcompression.so: src/main/java/com/compression/Compression.java
 	${JAVA_HOME}/bin/native-image \
 		-H:-AllowVMInternalThreads \
 		-cp build/libs/compression-1.0-all.jar \
-		-Dcom.oracle.svm.graalvisor.polyglotengine.language=python \
-		-Dcom.oracle.svm.graalvisor.polyglotengine.entrypoint=main \
-		-Dcom.oracle.svm.graalvisor.polyglotengine.source=$(shell pwd)/src/main/python/main.py \
+		-Dcom.oracle.svm.core.polyglotengine.language=python \
+		-Dcom.oracle.svm.core.polyglotengine.entrypoint=main \
+		-Dcom.oracle.svm.core.polyglotengine.source=$(shell pwd)/src/main/python/main.py \
 		--initialize-at-build-time=com.compression.Compression \
 		--language:python \
 		--shared \

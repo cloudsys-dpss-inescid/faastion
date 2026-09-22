@@ -9,7 +9,7 @@
 #include <dlfcn.h>
 
 #ifndef LOADER_LIB
-#error "LOADER_LIB is not defined. Export LOADER_LIB first: it should point to graalvisor/build/libs"
+#error "LOADER_LIB is not defined. Export LOADER_LIB first: it should point to core/build/libs"
 #endif
 
 static __thread void *(*DLL_open)(const char *) = NULL;

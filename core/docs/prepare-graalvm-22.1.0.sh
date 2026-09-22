@@ -13,7 +13,7 @@ fi
 $JAVA_HOME/bin/gu install native-image python nodejs
 
 # Install graalpy packages in virtual env.
-VENV=$JAVA_HOME/graalvisor-python-venv
+VENV=$JAVA_HOME/faastion-python-venv
 $JAVA_HOME/bin/graalpython -m venv $VENV
 source $VENV/bin/activate
 graalpython -m ginstall list

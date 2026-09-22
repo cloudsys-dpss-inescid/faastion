@@ -16,7 +16,7 @@ ITERS=1
 
 #export BENCHMARKS="$BENCHMARKS $ARGO_HOME/benchmarks/data/apps/gv-js-dynamic-html.so"
 #export BENCHMARKS="$BENCHMARKS $ARGO_HOME/benchmarks/data/apps/gv-js-hello-world.so"
-export BENCHMARKS="$BENCHMARKS $ARGO_HOME/graalvisor/src/main/c/svm-snapshot/tmpapp/gv-js-thumbnail.so"
+export BENCHMARKS="$BENCHMARKS $ARGO_HOME/core/src/main/c/svm-snapshot/tmpapp/gv-js-thumbnail.so"
 #export BENCHMARKS="$BENCHMARKS $ARGO_HOME/benchmarks/data/apps/gv-js-uploader.so"
 #export BENCHMARKS="$BENCHMARKS $ARGO_HOME/benchmarks/data/apps/gv-jv-file-hashing.so"
 #export BENCHMARKS="$BENCHMARKS $ARGO_HOME/benchmarks/data/apps/gv-jv-hello-world.so"
