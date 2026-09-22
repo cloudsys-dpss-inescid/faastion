@@ -1,12 +1,12 @@
 # Faastion: Elastic and Scalable Native Library Isolation for High-Density Serverless Platforms
 
-**Faastion** is a project designed to bridge the gap between language- and hardware-based isolation, providing scalable and secure serverless runtimes. You can find more details in [full paper]().
+**Faastion** is a project designed to bridge the gap between language- and hardware-based isolation, enabling high-concurrency and high-density serverless platforms. You can find more details in ["Faastion: Elastic and Scalable Native Library Isolation for High-Density Serverless Platforms"]().
 
-Faastion combines LBI and HFI, a high-performance serverless platform powered by technology developed by the GraalVM team. By combining the concepts of Native Image, Isolate, and Truffle, Faastion colocates function invocations at a massive scale, resulting in reduced latency and memory footprint compared to traditional serverless platforms.
+Faastion leverages [GraalVM Native Image](native-image) isolates  and Memory Protection Keys (MPK) to colocate multiple functions within the same address space. As a result, Faastion provides invocations at a massive scale, resulting in reduced latency and memory footprint compared to traditional serverless platforms.
 
 ## Supported Platforms
 
-Faastion is well-tested on Ubuntu 22.04.2 LTS and Debian 13.0. It relies primarily on Linux kernel version >= 5.10 (for Seccomp notifications) and a CPU with MPK (Memory Protection Keys) support.
+Faastion is well-tested on Ubuntu 22.04.4 LTS and Debian 13.0. It relies primarily on Linux kernel version >= 5.10 (for Seccomp notifications) and a CPU with MPK (Memory Protection Keys) support.
 
 ## Requirements
 
@@ -80,3 +80,4 @@ This project repository contains the source code and benchmarks related to the p
 ## Acknowledgements
 
 [docker-file]: https://github.com/cloudsys-dpss-inescid/faastion/images/faastion/Dockerfile
+[native-image]: https://www.graalvm.org/latest/reference-manual/native-image/ 
