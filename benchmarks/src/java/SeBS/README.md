@@ -46,7 +46,6 @@ curl -s -X POST "127.0.0.1:8080/register?"\
 "&url=http://127.0.0.1:8000/apps/libbfs.zip"
 
 # register modified function (with wrapper libraries)
-```bash
 curl -s -X POST "127.0.0.1:8080/register?"\
 "entryPoint=com.jni.BFS"\
 "&language=java"\
