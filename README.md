@@ -29,6 +29,7 @@ To follow this guide, make sure the following utilities are installed:
 The following scripts will build Faastion image and compile all the SeBS benchmarks enumerated in the paper. This step may take a while due to native-image AOT compilation and Javassist bytecode analysis.
 
 ```bash
+source run/sources.sh
 cd images/faastion
 ./build_container_image.sh
 ./build_benchmarks.sh
