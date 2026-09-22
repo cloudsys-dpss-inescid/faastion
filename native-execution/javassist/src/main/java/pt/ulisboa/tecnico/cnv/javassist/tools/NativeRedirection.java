@@ -267,7 +267,7 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\t\t\t\texit(EXIT_FAILURE);\n");
 			writer.write("\t\t\t\t};\n");
 			writer.write("\t\t\t\tchar buffer[BUFFER_SIZE];\n");
-			writer.write("\t\t\t\tchar *argv = \"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName
+			writer.write("\t\t\t\tchar *argv = \"" + System.getenv("ARGO_HOME") + "/core/build/libs/" + methodName
 					+ "-proc" + "\";\n");
 			writer.write("\t\t\t\tsnprintf(buffer, sizeof(buffer), \"%s\", argv);\n");
 			writer.write("\t\t\t\twrite(fd, buffer, strlen(buffer));\n");
@@ -306,7 +306,7 @@ public class NativeRedirection extends CodeDumper {
 			writer.write("\t\texit(EXIT_FAILURE);\n");
 			writer.write("\t}\n");
 
-			writer.write("\tchar *argv[] = {\"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/" + methodName
+			writer.write("\tchar *argv[] = {\"" + System.getenv("ARGO_HOME") + "/core/build/libs/" + methodName
 					+ "-proc" + "\", NULL};\n");
 			writer.write("\tchar **environ = {NULL};\n\n");
 
@@ -336,7 +336,7 @@ public class NativeRedirection extends CodeDumper {
 
 			writer.write("int main() {\n");
 			writer.write("\tvoid *open_lib;\n");
-			writer.write("\topen_lib = dlopen(\"" + System.getenv("ARGO_HOME") + "/graalvisor/build/libs/lib"
+			writer.write("\topen_lib = dlopen(\"" + System.getenv("ARGO_HOME") + "/core/build/libs/lib"
 					+ System.getenv("BENCHMARK_NAME") + "-jni.so\", RTLD_LAZY);\n");
 			writer.write("\tif (!open_lib) {\n");
 			writer.write("\t\tfprintf(stderr, \"Error: %s\", dlerror());\n");

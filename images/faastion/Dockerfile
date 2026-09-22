@@ -54,7 +54,7 @@ ENV RESOURCES_DIR=/resources
 
 RUN unzip faastion.zip && \
     rm faastion.zip && \
-    cd faastion/graalvisor && \
+    cd faastion/core && \
     ./build.sh local
 
 RUN cd faastion/native-execution/instrumentation && \

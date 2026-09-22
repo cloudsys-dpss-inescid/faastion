@@ -2,7 +2,7 @@
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-GRAALVISOR_HOME=$ARGO_HOME/graalvisor
+CORE_DIR=$ARGO_HOME/core
 
 JAVA_AGENT="$JAVASSIST_HOME/target/JavassistWrapper-1.0-jar-with-dependencies.jar"
 
@@ -11,7 +11,7 @@ ERIM_INCLUDE="-I$ERIM_HOME/src/erim -I$ERIM_HOME/src/common"
 
 CFLAGS="-Wall -g -fPIC -shared $JNI_INCLUDE -I/usr/include/"
 CFLAGS_PROC="-Wall -g -fPIC $JNI_INCLUDE"
-SFLAGS="$CFLAGS -O0 -fno-inline -I$GRAALVISOR_HOME/src/main/c/pkru-sandbox -I$GRAALVISOR_HOME/src/main/c/dlmalloc"
+SFLAGS="$CFLAGS -O0 -fno-inline -I$CORE_DIR/src/main/c/pkru-sandbox -I$CORE_DIR/src/main/c/dlmalloc"
 
 BENCHMARK_NAME="zip"
 SNIPPETS_DIR="$DIR/build/snippets"
@@ -20,7 +20,7 @@ function build_native_binary {
 	NI_BIN_OPTS="com.jni.ZIPCompression"
 	cd build
 
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$CURRENT_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$CORE_DIR/build/libs:libs:$CURRENT_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			--enable-url-protocols=http \
@@ -29,7 +29,7 @@ function build_native_binary {
 			-H:ConfigurationFileDirectories=../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
-			-H:Name=$GRAALVISOR_HOME/build/libs/$BENCHMARK_NAME-proc
+			-H:Name=$CORE_DIR/build/libs/$BENCHMARK_NAME-proc
 
 	cd -
 }
@@ -37,15 +37,15 @@ function build_native_binary {
 function build_ni {
 	cd build/${FUNCTION_ID}
 
-	export LD_LIBRARY_PATH=$GRAALVISOR_HOME/build/libs:libs:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$CORE_DIR/build/libs:libs:$LD_LIBRARY_PATH
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			--enable-url-protocols=http \
-			-cp $CLASS_PATH:../libs/zip-1.0-all.jar:$ARGO_HOME/graalvisor-lib/build/libs/graalvisor-lib-1.0-guest.jar \
+			-cp $CLASS_PATH:../libs/zip-1.0-all.jar:$ARGO_HOME/common/build/libs/faastion-lib-1.0-guest.jar \
 			-DGraalVisorGuest=true \
 			-Djava.library.path=$LD_LIBRARY_PATH \
-			-Dcom.oracle.svm.graalvisor.libraryPath=$ARGO_HOME/graalvisor-lib/build/resources/main/com.oracle.svm.graalvisor.headers \
-			--initialize-at-run-time=com.oracle.svm.graalvisor.utils.JsonUtils \
+			-Dcom.oracle.svm.faastion.libraryPath=$ARGO_HOME/common/build/resources/main/com.oracle.svm.faastion.headers \
+			--initialize-at-run-time=com.oracle.svm.faastion.utils.JsonUtils \
 			-H:ConfigurationFileDirectories=../../ni-agent-config \
 			-H:+ReportExceptionStackTraces \
 			$NI_BIN_OPTS \
@@ -85,7 +85,7 @@ function build_java_agent {
 }
 
 function build_native_library {
-	gcc $CFLAGS -o $GRAALVISOR_HOME/shared/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/ZIPCompression.c -lz
+	gcc $CFLAGS -o $CORE_DIR/shared/lib$BENCHMARK_NAME-jni.so $DIR/src/main/c/ZIPCompression.c -lz
 }
 
 function build_snippets {
@@ -96,7 +96,7 @@ function manipulate_bytecode {
 	CLASS_PATH=$ARGO_HOME/native-execution/instrumentation/target/BytecodeTransformer-1.0-jar-with-dependencies.jar
 	ENTRYPOINT=org.faastion.javassist.BytecodeTransformer
 
-	rm -f $GRAALVISOR_HOME/shared/lib${FUNCTION_ID}-wrapper.so
+	rm -f $CORE_DIR/shared/lib${FUNCTION_ID}-wrapper.so
 
 	mkdir -p $DIR/build/snippets
 
@@ -136,9 +136,6 @@ then
 else
 	mkdir -p $RESOURCES_DIR/apps
 fi
-
-# Build graalvisor lib.
-# bash $ARGO_HOME/graalvisor-lib/build.sh
 
 # Build java agent.
 # build_java_agent

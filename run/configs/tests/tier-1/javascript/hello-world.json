@@ -23,7 +23,7 @@
           "function_language": "javascript",
           "function_entry_point": "main",
           "function_memory": "512",
-          "function_runtime": "graalvisor",
+          "function_runtime": "faastion",
           "source": "../../../../../../graalvm-argo-benchmarks/src/javascript/gv-hello-world/hello-world.js"
         },
         {

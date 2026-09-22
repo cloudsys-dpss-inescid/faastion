@@ -2,7 +2,7 @@
 import os.path
 import sys
 
-from run_globals import LAMBDA_MANAGER_DIR, PROXY_DIR, GRAALVISOR_LIB_DIR, BUILD_SCRIPT, CLUSTER_MANAGER_DIR, LOAD_BALANCER_DIR
+from run_globals import LAMBDA_MANAGER_DIR, PROXY_DIR, FAASTION_LIB_DIR, BUILD_SCRIPT, CLUSTER_MANAGER_DIR, LOAD_BALANCER_DIR
 from run_utils import print_message, MessageType
 
 
@@ -35,11 +35,11 @@ def build_lambda_manager():
     print_message("Building lambda manager...done", MessageType.INFO)
 
 
-def build_graalvisor_library():
-    print_message("Building graalvisor library...", MessageType.INFO)
-    os.system("bash {graalvisor_library_build_script}".format(
-        graalvisor_library_build_script=os.path.join(GRAALVISOR_LIB_DIR, BUILD_SCRIPT)))
-    print_message("Building graalvisor library...done", MessageType.INFO)
+def build_faastion_library():
+    print_message("Building faastion library...", MessageType.INFO)
+    os.system("bash {faastion_library_build_script}".format(
+        faastion_library_build_script=os.path.join(FAASTION_LIB_DIR, BUILD_SCRIPT)))
+    print_message("Building faastion library...done", MessageType.INFO)
 
 
 def do(filter_list):
@@ -54,7 +54,7 @@ def do(filter_list):
     if "lm" in filter_set or filter_list_empty:
         build_lambda_manager()
     if "gv-lib" in filter_set or filter_list_empty:
-        build_graalvisor_library()
+        build_faastion_library()
 
 
 # Main function.

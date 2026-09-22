@@ -13,7 +13,7 @@ for i in $(seq 1 $NUM_THREADS)
 do
   for n in $(seq 1 $ITER)
   do
-    LD_LIBRARY_PATH=$ARGO_HOME/graalvisor/shared/ $DEF_JAVA_HOME/bin/java -cp build/libs/bfs-1.0-all.jar com.jni.BFS >> jvm-$i.out
+    LD_LIBRARY_PATH=$ARGO_HOME/core/shared/ $DEF_JAVA_HOME/bin/java -cp build/libs/bfs-1.0-all.jar com.jni.BFS >> jvm-$i.out
   done &
 done
 

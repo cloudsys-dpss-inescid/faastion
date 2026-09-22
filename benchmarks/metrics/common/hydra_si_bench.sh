@@ -34,7 +34,7 @@ function launch_hydra_si {
     for i in $(seq 1 $c)
     do
         port=$((8080 + $i))
-        docker run -d --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared -e lambda_port=$port --network host $resources --name sbox-$i faastion &> /dev/null
+        docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared -e lambda_port=$port --network host $resources --name sbox-$i faastion &> /dev/null
     done
     
     for i in $(seq 1 $c)

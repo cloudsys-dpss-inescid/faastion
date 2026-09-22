@@ -11,18 +11,18 @@ CFLAGS = -Wall
 CFLAGS += -fPIC -fno-inline
 CFLAGS += -I$(DEF_JAVA_HOME)/include -I$(DEF_JAVA_HOME)/include/linux
 
-GRAALVISOR_HOME 	= $(ARGO_HOME)/graalvisor
-JNI_WRAPPER_SRC_DIR	= $(GRAALVISOR_HOME)/src/main/c/jni
-JNI_HANDLE_SRC_DIR	= $(GRAALVISOR_HOME)/src/main/c/native-interface
-PKRU_SRC_DIR 		= $(GRAALVISOR_HOME)/src/main/c/pkru-sandbox
+CORE_DIR 	= $(ARGO_HOME)/core
+JNI_WRAPPER_SRC_DIR	= $(CORE_DIR)/src/main/c/jni
+JNI_HANDLE_SRC_DIR	= $(CORE_DIR)/src/main/c/native-interface
+PKRU_SRC_DIR 		= $(CORE_DIR)/src/main/c/pkru-sandbox
 CFLAGS += -I$(PKRU_SRC_DIR) -I$(JNI_WRAPPER_SRC_DIR) -I$(JNI_HANDLE_SRC_DIR)
 
 LIB_CFLAGS = -g -O0
 LIB_CFLAGS += -shared
 LIB_CFLAGS += -Wall -Wl,--no-undefined
 
-OBJ_DIR = $(GRAALVISOR_HOME)/build/obj
-LIB_DIR = $(GRAALVISOR_HOME)/shared
+OBJ_DIR = $(CORE_DIR)/build/obj
+LIB_DIR = $(CORE_DIR)/shared
 
 all: $(OBJS)
 	@mkdir -p $(LIB_DIR)

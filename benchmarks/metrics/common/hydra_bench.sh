@@ -25,7 +25,7 @@ function launch_hydra {
         resources="--cpus=\"$cpus\" --memory=\"{$memory}m\""
     fi
 
-    docker run -d --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared --network host $resources --name sbox faastion &> /dev/null
+    docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared --network host $resources --name sbox faastion &> /dev/null
     
     while ! nc -z localhost 8080; do sleep 0.01; done
     sleep 2

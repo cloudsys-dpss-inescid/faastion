@@ -36,7 +36,7 @@ function launch_faastlane {
         resources="--cpus=\"$cpus\" --memory=\"{$memory}m\""
     fi
 
-    docker run -d --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared --network host $active_wait_env $resources --name sbox faastion --mpk-only &> /dev/null
+    docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared --network host $active_wait_env $resources --name sbox faastion --mpk-only &> /dev/null
 
     while ! nc -z localhost 8080; do sleep 0.01; done
     sleep 2

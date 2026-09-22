@@ -22,12 +22,12 @@ else
     usage
 fi
 
-BIN=$ARGO_HOME/graalvisor/build/native-image/polyglot-proxy  
+BIN=$ARGO_HOME/core/build/native-image/polyglot-proxy  
 RESULTS_DIR="results/$NAME"
 ISOLATE_CSV=$RESULTS_DIR/isolate_sandbox.csv
 CONTEXT_CSV=$RESULTS_DIR/context_sandbox.csv
 
-library_path="$HOME/usr/lib:$ARGO_HOME/graalvisor/shared:$LIBC_HOME/lib:/lib/x86_64-linux-gnu"
+library_path="$HOME/usr/lib:$ARGO_HOME/core/shared:$LIBC_HOME/lib:/lib/x86_64-linux-gnu"
 
 function hydra_registration {
     curl -s -X POST "127.0.0.1:8080/register?"\

@@ -1,6 +1,6 @@
-# Adding a JNI Benchmark to Graalvisor
+# Adding a JNI Benchmark to Faastion
 
-This guide provides step-by-step instructions on how to add a new JNI benchmark to Graalvisor, compile it, and execute it. Follow these instructions to ensure a smooth integration of your benchmark into the Graalvisor project.
+This guide provides step-by-step instructions on how to add a new JNI benchmark to Faastion, compile it, and execute it. Follow these instructions to ensure a smooth integration of your benchmark into the Faastion project.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ Before you start, make sure you have the following prerequisites installed on yo
 
 To compile your benchmark, execute your `build_script.sh`. During the compilation process, you will encounter three questions, you should respond "y" for the third one.
 
-Additionally, you need to compile [Graalvisor](../../../graalvisor/) by executing the following command inside its directory:
+Additionally, you need to compile [Faastion](../../../faastion/) by executing the following command inside its directory:
 
 ```bash
 $ ./build.sh local
@@ -56,7 +56,7 @@ In addition to the `benchmark.sh` script, you'll also need to make adjustments t
 
 5. Don't forget to update the `JNI_DIR` variable with the same path to ensure the JNI components are found and utilized properly in your benchmark.
 
-These updates will help your benchmark script run smoothly within the Graalvisor project.
+These updates will help your benchmark script run smoothly within the Faastion project.
 
 ## Execution
 
@@ -65,19 +65,19 @@ Once you've added your benchmark and updated the `benchmark.sh` script, you can 
 ### Sequential Invocations
 
 ```bash
-$ ./benchmark-graalvisor.sh svm <your-function> test 1
+$ ./benchmark-faastion.sh svm <your-function> test 1
 ```
 
 Example:
 
 ```bash
-$ ./benchmark-graalvisor.sh svm gv_java_native_hw test 1
+$ ./benchmark-faastion.sh svm gv_java_native_hw test 1
 ```
 
 ### Parallel Invocations
 
 ```bash
-$ ./benchmark-graalvisor.sh svm <your-function> benchmark 1
+$ ./benchmark-faastion.sh svm <your-function> benchmark 1
 ```
 
 Please make sure to replace <your-function> with the actual name you've assigned to your benchmark's function in the `benchmarks.sh` script.

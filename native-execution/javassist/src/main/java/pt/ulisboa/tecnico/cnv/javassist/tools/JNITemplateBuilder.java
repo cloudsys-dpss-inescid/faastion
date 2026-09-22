@@ -94,11 +94,11 @@ public class JNITemplateBuilder extends TemplateBuilder {
 		functionID = System.getenv("FUNCTION_ID");
 		templateDir = System.getenv("SNIPPETS_DIR");
 		nativeLibName = System.getenv("ARGO_HOME")
-				.concat("/graalvisor/build/libs/lib")
+				.concat("/core/build/libs/lib")
 				.concat(System.getenv("BENCHMARK_NAME"))
 				.concat("-jni.so");
 		loaderLib = System.getenv("ARGO_HOME")
-				.concat("/graalvisor/build/libs/libloader.so");
+				.concat("/core/build/libs/libloader.so");
 
 		// default variables to escape the preprocessor directives in C
 		setTemplateVariable("include", "#include");

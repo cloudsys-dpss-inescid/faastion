@@ -13,7 +13,7 @@ for i in $(seq 1 $NUM_THREADS)
 do
     for n in $(seq 1 $ITER)
     do
-	LD_LIBRARY_PATH=$ARGO_HOME/graalvisor/shared/ ./build/bfs-proc >> ni-$i.out
+	LD_LIBRARY_PATH=$ARGO_HOME/core/shared/ ./build/bfs-proc >> ni-$i.out
     done &
 done
 

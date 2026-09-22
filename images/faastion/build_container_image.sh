@@ -29,8 +29,8 @@ elif [ "$1" = "--mpk-only" ]; then
     ld_preload="LD_PRELOAD=libmem.so"
 fi
 
-library_path=/faastion/graalvisor/shared:/glibc-2.35/build/install/lib:/lib/x86_64-linux-gnu:/usr/local/lib
-env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" $ld_preload ./faastion/graalvisor/build/native-image/polyglot-proxy
+library_path=/faastion/core/shared:/glibc-2.35/build/install/lib:/lib/x86_64-linux-gnu:/usr/local/lib
+env GLIBC_TUNABLES="glibc.rtld.nns=16" LD_LIBRARY_PATH="$library_path" $ld_preload ./faastion/core/build/native-image/polyglot-proxy
 ' > $DISK/start.sh
 
 # Create faastion zip file
@@ -48,7 +48,7 @@ docker build -t faastion $DIR
 
 echo -e "${GREEN}Copying library to host...${NC}"
 docker run -d --rm --network host --name sbox -it --entrypoint sleep faastion infinity &> /dev/null
-docker cp sbox:/faastion/graalvisor/shared/ $DIR/../../graalvisor/
+docker cp sbox:/faastion/core/shared/ $DIR/../../core/
 docker container stop sbox &> /dev/null
 echo -e "${GREEN}Copying library to host... done!${NC}"
 

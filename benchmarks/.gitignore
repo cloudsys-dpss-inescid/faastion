@@ -12,5 +12,3 @@ __pycache__
 /virtualization/**/*.pdf
 /virtualization/**/*.png
 /virtualization/**/*.log
-
-src/java/graalvisor-runtime/gv-sleeep

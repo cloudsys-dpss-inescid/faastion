@@ -17,10 +17,10 @@ SETUP_DB_VM_LOC = os.path.join(LAMBDA_MANAGER_DIR, "src", "scripts", "qemu-jvm")
 SETUP_DB_VM_FILE = "setup_debian_vm.sh"
 
 # Proxy global variables.
-PROXY_DIR = os.path.join(LAMBDA_MANAGER_DIR, "..", "graalvisor")
+PROXY_DIR = os.path.join(LAMBDA_MANAGER_DIR, "..", "core")
 
-# GraalVisor library global variables.
-GRAALVISOR_LIB_DIR = os.path.join(LAMBDA_MANAGER_DIR, "..", "graalvisor-lib")
+# Faastion library global variables.
+FAASTION_LIB_DIR = os.path.join(LAMBDA_MANAGER_DIR, "..", "common")
 
 # Cluster manage global variables.
 CLUSTER_MANAGER_DIR = os.path.join(LAMBDA_MANAGER_DIR, "..", "cluster-manager")

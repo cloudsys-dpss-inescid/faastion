@@ -12,7 +12,7 @@ if [ -z "$RESOURCES_DIR" ]; then
 	exit 1
 fi
 
-docker run --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared \
+docker run --rm -v $ARGO_HOME/core/shared:/faastion/core/shared \
 	-v $ARGO_HOME/benchmarks/src/java/SeBS:/faastion/benchmarks/src/java/SeBS \
 	-v $RESOURCES_DIR:/resources \
 	-w /faastion/benchmarks/ \

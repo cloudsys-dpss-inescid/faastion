@@ -2,7 +2,7 @@
 
 **Faastion** is a project designed to bridge the gap between language- and hardware-based isolation, providing scalable and secure serverless runtimes. You can find more details in [full paper]().
 
-Faastion extends Graalvisor, a high-performance serverless platform powered by technology developed by the GraalVM team. By combining the concepts of Native Image, Isolate, and Truffle, Graalvisor colocates function invocations at a massive scale, resulting in reduced latency and memory footprint compared to traditional serverless platforms.
+Faastion combines LBI and HFI, a high-performance serverless platform powered by technology developed by the GraalVM team. By combining the concepts of Native Image, Isolate, and Truffle, Faastion colocates function invocations at a massive scale, resulting in reduced latency and memory footprint compared to traditional serverless platforms.
 
 ## Supported Platforms
 
@@ -40,7 +40,7 @@ You can run the scripts in the `benchmarks` directory to evaluate the system or 
 
 To launch Faastion, run:
 ```bash
-docker run -d --rm -v $ARGO_HOME/graalvisor/shared:/faastion/graalvisor/shared --network host faastion --enable-lpi &> /dev/null
+docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared --network host faastion --enable-lpi &> /dev/null
 ```
 
 Faastion should be listening on port 8080 and waiting for clients to upload function code. Register a function, e.g.: BFS
@@ -67,9 +67,9 @@ This project repository contains the source code and benchmarks related to the p
 - `native-execution/javassist`: generates bytecode at runtime to characterize benchmarks, such as number of real native switches in BFS throughout total execution, measures % of time in native code;  
 - `native-execution/scripts`: uses the previous bytecode generation tools to create a collection of results characterizing the benchmarks (Table 1).
 
-### Graalvisor
-- `graalvisor/src`: platform's code, handling function deployment, scaling, and MPK management;
-- `graalvisor-lib`: contains API shared between the Graalvisor runtime and the benchmarks;
+### Faastion
+- `core`: platform's code, handling function deployment, scaling, and MPK management;
+- `common`: contains API shared between the Faastion runtime and the benchmarks;
 
 ### Benchmarks
 - `benchmarks/src`: directory containing the source code for the multiple SeBS benchmarks;
