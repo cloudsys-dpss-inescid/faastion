@@ -42,7 +42,6 @@ function build_ni {
 	$JAVA_HOME/bin/native-image \
 			--no-fallback \
 			-cp $CLASS_PATH:../libs/pagerank-1.0-all.jar:$ARGO_HOME/common/build/libs/faastion-lib-1.0-guest.jar \
-			-DGraalVisorGuest=true \
 			-Djava.library.path=$LD_LIBRARY_PATH \
 			-Dcom.oracle.svm.faastion.libraryPath=$ARGO_HOME/common/build/resources/main/com.oracle.svm.faastion.headers \
 			--initialize-at-run-time=com.oracle.svm.faastion.utils.JsonUtils \

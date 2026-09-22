@@ -56,7 +56,6 @@ function build_ni {
 		--no-fallback \
 		--enable-url-protocols=http \
 		-cp ../libs/uploader-1.0-all.jar:$ARGO_HOME/common/build/libs/faastion-lib-1.0-guest.jar \
-		-DGraalVisorGuest=true \
 		-Dcom.oracle.svm.faastion.libraryPath=$ARGO_HOME/common/build/resources/main/com.oracle.svm.faastion.headers \
 		--initialize-at-run-time=com.oracle.svm.faastion.utils.JsonUtils \
 		-H:ConfigurationFileDirectories=../../ni-agent-config,../../config-dir \
