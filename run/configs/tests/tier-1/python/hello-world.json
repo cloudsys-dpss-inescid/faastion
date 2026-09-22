@@ -23,7 +23,7 @@
           "function_language": "python",
           "function_entry_point": "main",
           "function_memory": "512",
-          "function_runtime": "faastion",
+          "function_runtime": "graalvisor",
           "source": "../../../../../../graalvm-argo-benchmarks/src/python/gv-hello-world/hello-world.py"
         },
         {

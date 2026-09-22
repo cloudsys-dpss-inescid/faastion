@@ -23,7 +23,7 @@
           "function_language": "java",
           "function_entry_point": "com.hello_world.HelloWorld",
           "function_memory": "512",
-          "function_runtime": "faastion",
+          "function_runtime": "graalvisor",
           "source": "../../../../../../graalvm-argo-benchmarks/src/java/gv-hello-world/build/libhelloworld.so"
         },
         {
