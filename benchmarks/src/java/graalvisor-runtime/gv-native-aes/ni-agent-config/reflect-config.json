@@ -1,6 +1,0 @@
-[
-{
-  "name":"com.jni.AESEncryption",
-  "methods":[{"name":"main","parameterTypes":["java.util.Map"] }]
-}
-]

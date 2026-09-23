@@ -50,7 +50,7 @@ function setup_thumbnail {
 
 rm -rf $DIR/results
 
-for benchmark in thumbnail # classify native-bfs native-compression native-mst native-pagerank
+for benchmark in thumbnail classify native-bfs native-compression native-mst native-pagerank
 do
     setup_$benchmark
 
@@ -61,7 +61,7 @@ do
 
     # Run the java code with the agent: dynamic analysis
     CMD="$DEF_JAVA_HOME/bin/java -cp ${class_path} -javaagent:${JAVA_AGENT}=${TOOL}::output ${entrypoint}"
-    LD_LIBRARY_PATH=$ARGO_HOME/graalvisor/shared ../../native-benchmark.py -t 5 -c "$CMD" &> native-benchmark.log
+    LD_LIBRARY_PATH=$ARGO_HOME/core/shared ../../native-benchmark.py -t 5 -c "$CMD" &> native-benchmark.log
 
     # Run the java code with the agent: static analysis
     export SNIPPETS_DIR=$DIR/results/tmp
