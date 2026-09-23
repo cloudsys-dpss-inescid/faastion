@@ -27,6 +27,9 @@ elif [ "$1" = "--mpk-only" ]; then
     export faastlane=true
     export pku_isolation=on
     ld_preload="LD_PRELOAD=libmem.so"
+elif [ "$1" = "--enable-pku" ]; then
+    export pku_isolation=on
+    ld_preload="LD_PRELOAD=libmem.so"
 fi
 
 library_path=/faastion/core/shared:/glibc-2.35/build/install/lib:/lib/x86_64-linux-gnu:/usr/local/lib
