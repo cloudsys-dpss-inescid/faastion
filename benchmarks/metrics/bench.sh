@@ -15,6 +15,7 @@ source $COMMON/hydra_bench.sh
 source $COMMON/knative_bench.sh
 source $COMMON/hydra_si_bench.sh
 source $COMMON/faastion_bench.sh
+source $COMMON/mini_faastion_bench.sh # for ablation study
 source $COMMON/faastlane_bench.sh # for ablation study
 
 function log_resources {
@@ -125,32 +126,32 @@ trap 'cleanup_resources' SIGINT
 
 # Comment/uncomment to add or remove benchmarks
 BENCHMARKS+=(gv_bfs)
-# BENCHMARKS+=(gv_classify)
-# BENCHMARKS+=(gv_compression)
-# BENCHMARKS+=(gv_dna)
-# BENCHMARKS+=(gv_dynamic_html)
-# BENCHMARKS+=(gv_mst)
-# BENCHMARKS+=(gv_pagerank)
-# BENCHMARKS+=(gv_uploader)
-# BENCHMARKS+=(gv_thumbnail)
+BENCHMARKS+=(gv_classify)
+BENCHMARKS+=(gv_compression)
+BENCHMARKS+=(gv_dna)
+BENCHMARKS+=(gv_dynamic_html)
+BENCHMARKS+=(gv_mst)
+BENCHMARKS+=(gv_pagerank)
+BENCHMARKS+=(gv_uploader)
+BENCHMARKS+=(gv_thumbnail)
 
 # Comment/uncomment to add or remove baselines
 APPROACHES+=(faastion)
 APPROACHES+=(knative)
 APPROACHES+=(hydra)
 APPROACHES+=(hydra_si)
-APPROACHES+=(faastlane)
+APPROACHES+=(mini_faastion) # for ablation study
+APPROACHES+=(faastlane) # for ablation study
 
 for benchmark in ${BENCHMARKS[@]}
 do
     # Change to desired concurrency level
-#    CONCURRENCY=(1 8 14 20 32 48 64)
-	CONCURRENCY=(1 32 64)
+   CONCURRENCY=(1 8 14 20 32 48 64)
 
     # faastion can only execute 14 concurrent classify requests because of dlmopen limit
-    if [ "$benchmark" = "gv_classify" ]; then
-        CONCURRENCY=(1 4 8 10 12 14)
-    fi
+   if [ "$benchmark" = "gv_classify" ]; then
+       CONCURRENCY=(1 4 8 10 12 14)
+   fi
 
     for approach in ${APPROACHES[@]}
     do

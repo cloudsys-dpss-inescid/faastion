@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function faastion_registration {
+function mini_faastion_registration {
     local benchmark=$1
     local c=$2
 
@@ -8,7 +8,7 @@ function faastion_registration {
     name=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.lib_name')
 
     if [ "$benchmark" = "gv_classify" ]; then
-        faastion_register_classify $entrypoint $name $c
+        mini_faastion_register_classify $entrypoint $name $c
     else
     curl -s -X POST "127.0.0.1:8080/register?"\
 "entryPoint=$entrypoint"\
@@ -20,28 +20,23 @@ function faastion_registration {
 
 }
 
-function launch_faastion {
+function launch_mini_faastion {
     local benchmark=$1
     local c=$2
 
     cpus=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.cpus')
     memory=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.memory')
-    active_wait=$(jq -n --arg webserver "$WEBSERVER_IP" -f $DIR/data.json | jq -r '.'$benchmark'.active_wait')
-
-    if [ "$active_wait" != "null" ]; then
-        active_wait_env="-e ACTIVE_WAIT_CAP=$active_wait"
-    fi
 
     if [ "$LIMIT_RESOURCES" = "true" ]; then
         resources="--cpus=\"$cpus\" --memory=\"{$memory}m\""
     fi
 
-    docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared --network host $active_wait_env $resources --name sbox faastion --enable-pku &> /dev/null
+    docker run -d --rm -v $ARGO_HOME/core/shared:/faastion/core/shared --network host $resources --name sbox faastion --enable-pku &> /dev/null
 
     while ! nc -z localhost 8080; do sleep 0.01; done
     sleep 2
 
-    faastion_registration $benchmark $c
+    mini_faastion_registration $benchmark $c
 }
 
 function log_subprocesses {
@@ -56,13 +51,13 @@ function log_subprocesses {
     done
 }
 
-function benchmark_faastion {
+function benchmark_mini_faastion {
     local benchmark=$1
     local log_dir=$2
     local c=$3
 
     if [ "$benchmark" = "gv_classify" ]; then
-        faastion_benchmark_classify $benchmark $log_dir $c
+        mini_faastion_benchmark_classify $benchmark $log_dir $c
         return
     fi
 
@@ -93,11 +88,11 @@ function benchmark_faastion {
     echo $response >> $ab_log
 }
 
-function tput_faastion {
+function tput_mini_faastion {
     local benchmark=$1 log_dir=$2 c=$3
 
     if [ "$benchmark" = "gv_classify" ]; then
-	tput=$(faastion_tput_classify $log_dir $c)
+	tput=$(mini_faastion_tput_classify $log_dir $c)
     else
 	tput=$(cat $log_dir/$c-ab.log | grep 'Requests per second:' | awk '{print $4}')
     fi
@@ -108,7 +103,7 @@ function tput_faastion {
 ###         Temporary workaround to handle classify in faastion            ###
 ##############################################################################
 
-function faastion_warmup_classify {
+function mini_faastion_warmup_classify {
     local warmup_req=$1 c=$2
     for i in $(seq 1 $c)
     do
@@ -118,7 +113,7 @@ function faastion_warmup_classify {
     wait
 }
 
-function faastion_collect_classify_results {
+function mini_faastion_collect_classify_results {
     local log_dir=$1 req=$2 c=$3
     for i in $(seq 1 $c)
     do
@@ -129,7 +124,7 @@ function faastion_collect_classify_results {
     wait
 }
 
-function faastion_validate_classify {
+function mini_faastion_validate_classify {
     local log_dir=$1 name=$2 c=$3
     for i in $(seq 1 $c)
     do
@@ -139,7 +134,7 @@ function faastion_validate_classify {
     wait
 }
 
-function faastion_benchmark_classify {
+function mini_faastion_benchmark_classify {
     local benchmark=$1
     local log_dir=$2
     local c=$3
@@ -162,20 +157,20 @@ function faastion_benchmark_classify {
         curl -s -X POST localhost:8080 -H 'Content-Type: application/json' --data-binary '{"name":"'${name}${i}'","async":"false","arguments":"{}"}' &> /dev/null
     done
 
-    faastion_warmup_classify $warmup_req $c &
+    mini_faastion_warmup_classify $warmup_req $c &
     local pid=$!
     wait $pid
 
-    faastion_collect_classify_results $log_dir $req $c &
+    mini_faastion_collect_classify_results $log_dir $req $c &
     local pid=$!
     wait $pid
 
-    faastion_validate_classify $log_dir $name $c &
+    mini_faastion_validate_classify $log_dir $name $c &
     local pid=$!
     wait $pid
 }
 
-function faastion_register_classify {
+function mini_faastion_register_classify {
     local entrypoint=$1 name=$2 c=$3
 
     for i in $(seq 1 $c)
@@ -190,7 +185,7 @@ function faastion_register_classify {
 
 }
 
-function faastion_tput_classify {
+function mini_faastion_tput_classify {
     local log_dir=$1 c=$2
     tput=$(cat $log_dir/$c-ab*.log | grep 'Requests per second:' | awk '{sum += $4} END {if (NR == '$c') print sum}')
     echo $tput
