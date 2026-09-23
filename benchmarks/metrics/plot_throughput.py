@@ -9,11 +9,14 @@ import numpy as np
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
+base_dir = sys.argv[1]
+dir_path = os.path.dirname(os.path.realpath(__file__))
+plots_dir = os.path.join(dir_path, 'plots')
+
 EXPERIMENTS_DIR = sys.argv[1]
 
 BENCHMARKS = ["gv_bfs", "gv_mst", "gv_pagerank", "gv_compression", "gv_thumbnail", "gv_classify", "gv_dna", "gv_dynamic_html", "gv_uploader"]
-#BASELINES = ["faastion", "hydra", "knative", "hydra_si"]
-BASELINES = ["faastion", "faastlane"]
+BASELINES = ["faastion", "hydra", "knative", "hydra_si"]
 BASELINE_NAMES = {"hydra":"Hydra", "knative":"Knative", "faastion":"Faastion", "hydra_si":"OpenWhisk", "faastlane":"MPK-only"}
 BENCHMARK_NAMES = ["BFS", "MST", "PageRank", "Zip-Compression", "Thumbnailer", "Image-Recognition", "DNA-Visualization", "Dynamic-HTML", "Uploader"]
 COLORS = {
@@ -108,8 +111,14 @@ def create_plot():
     baseline_names = [BASELINE_NAMES[lbl] for lbl in labels]
     fig.legend(handles, baseline_names, loc="upper center", ncol=4, bbox_to_anchor=(0.5, 1.02), borderaxespad=0.)
     plt.tight_layout()
-    plt.savefig("latency_throughput.pdf", bbox_inches="tight")
-    plt.savefig("latency_throughput.png", bbox_inches="tight")
+        
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+    
+    pdf_file = os.path.join(plots_dir, 'throughput.pdf')
+    png_file = os.path.join(plots_dir, 'throughput.png')
+    plt.savefig(pdf_file, bbox_inches="tight")
+    plt.savefig(png_file, bbox_inches="tight")
     plt.close()
 
 create_plot()
