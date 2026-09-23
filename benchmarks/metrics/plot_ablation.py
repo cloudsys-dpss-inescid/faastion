@@ -10,6 +10,10 @@ import numpy as np
 if len(sys.argv) < 2:
 	sys.exit("Sytanx: " + sys.argv[0] + " <experiment_dir>")
 
+base_dir = sys.argv[1]
+dir_path = os.path.dirname(os.path.realpath(__file__))
+plots_dir = os.path.join(dir_path, 'plots')
+
 EXPERIMENTS_DIR = sys.argv[1]
 
 BENCHMARKS = ["gv_bfs", "gv_mst", "gv_pagerank", "gv_compression", "gv_thumbnail", "gv_classify", "gv_dna", "gv_dynamic_html", "gv_uploader"]
@@ -116,8 +120,14 @@ def create_plot():
     fig.legend(BASELINE_NAMES[1:], loc='upper right', bbox_to_anchor=(0.975, 0.97))
 
     plt.tight_layout()
-    plt.savefig("ablation_study.pdf", bbox_inches="tight")
-    plt.savefig("ablation_study.png", bbox_inches="tight")
+
+    if not os.path.exists(plots_dir):
+        os.makedirs(plots_dir)
+    
+    pdf_file = os.path.join(plots_dir, "ablation_study.pdf")
+    png_file = os.path.join(plots_dir, "ablation_study.png")
+    plt.savefig(pdf_file, bbox_inches="tight")
+    plt.savefig(png_file, bbox_inches="tight")
     plt.close()
 
 create_plot()
