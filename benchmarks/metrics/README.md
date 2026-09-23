@@ -30,6 +30,7 @@ Once the experiments have finished runnig, the results will be placed under `exp
 source common/setup_python_venv.sh # ensure matplotlib
 python3 plot_throughput.py experiments/<experiment_date>
 ```
+The resulting figures will be placed under the `plots` directory.
 
 ## Large Scale Experiment
 
